@@ -1,0 +1,6 @@
+logs/
+*.pdf
+*.txt
+*.out
+*.mw
+pattern*/
