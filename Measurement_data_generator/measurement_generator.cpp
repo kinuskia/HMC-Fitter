@@ -11,14 +11,15 @@ double f(double x, Vector<double> popt)
 
 int main ()
 {
-	std::size_t n_data = 100;
+	std::size_t n_data = 30;
 	Vector<double> popt(3);
 	popt[0] = 2.3;
 	popt[1] = 1.2;
-	popt[2] = 0.7;
-	Vector<double> pstd(3);
-	double rel = 0.04;
-	double abs = 0.04;
+	popt[2] = 1.1;
+	//popt[3] = 0.5;
+	Vector<double> pstd(popt.size());
+	double rel = 0.03;
+	double abs = 0.03;
 	pstd = rel*popt + abs;
 
 	double x_min = 0;
@@ -47,6 +48,7 @@ int main ()
 		for (int j = 0; j < popt.size(); ++j)
 		{
 			std::normal_distribution<> dis_norm(popt[j], pstd[j]);
+			//std::uniform_real_distribution<> dis_unif(popt[j]-sqrt(3)*pstd[j], popt[j]+sqrt(3)*pstd[j]);
 			//std::gamma_distribution<> dis_norm(popt[j]*popt[j]/pstd[j]/pstd[j], pstd[j]*pstd[j]/popt[j]);
 			fit_parameters[j] = dis_norm(gen);
 		}

@@ -75,11 +75,13 @@ int main ()
 	Vector<double> range_min(popt.size());
 	Vector<double> range_max(popt.size());
 	range_min[0] = 0;
-	range_max[0] = 5;
-	range_min[1] = 0;
-	range_max[1] = 6;
-	range_min[2] = 0.2;
-	range_max[2] = 1.4;
+	range_max[0] = 6;
+	range_min[1] = -1;
+	range_max[1] = 5;
+	range_min[2] = 0;
+	range_max[2] = 2;
+	// range_min[3] = -0.5;
+	// range_max[3] = 1.5;
 
 	//initialize HMC opbject
 	HMC<double> sampler(x_data, y_data, dy_data, 9e-3, 15);
@@ -94,7 +96,7 @@ int main ()
 
 	// initial guess for fitting variables : random pick from region above
 	fill_from_region(popt, range_min, range_max);
-	sampler.walk(1e8, 30, popt, 10);
+	sampler.walk(3e6, 60*8, popt, 10);
 	
 
 	return 0;
