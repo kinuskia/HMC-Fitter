@@ -2,9 +2,9 @@
 #include <cmath>
 #include <vector>
 #include <string>
-#include "vector.hpp"
-#include "hmc.hpp"
-#include "read_data.hpp"
+#include "auxiliary_files/vector.hpp"
+#include "auxiliary_files/hmc.hpp"
+#include "auxiliary_files/read_data.hpp"
 #include <fstream>
 
 
