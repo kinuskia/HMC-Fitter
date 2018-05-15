@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <random>
-#include "../vector.hpp"
+#include "../auxiliary_files/vector.hpp"
 
 double f(double x, Vector<double> popt)
 {
@@ -11,7 +11,7 @@ double f(double x, Vector<double> popt)
 
 int main ()
 {
-	std::size_t n_data = 30;
+	std::size_t n_data = 60;
 	Vector<double> popt(3);
 	popt[0] = 2.3;
 	popt[1] = 1.2;

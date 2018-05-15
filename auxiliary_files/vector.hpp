@@ -45,6 +45,17 @@ public:
 		return *this;
 	}
 
+	/* Division by a scalar */
+	Vector & operator/= (const REAL value)
+	{
+		Vector &self = *this;
+		for (size_type i = 0; i < this->size(); ++i)
+		{
+			self[i] /= value;
+		}
+		return *this;
+	}
+
 	/* Add another vector */
 	Vector & operator+= (const Vector & y)
 	{

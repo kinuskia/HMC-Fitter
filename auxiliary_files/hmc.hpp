@@ -6,6 +6,7 @@
 #include "random.hpp"
 #include <ctime>
 #include "storage.hpp"
+#include "../model.hpp"
 #include <algorithm>
 #include <fstream>
 
@@ -25,13 +26,8 @@ public:
 	, n_steps_max_(n_steps_max)
 	, counter_(0)
 	, counter_accepted_(0)
+	, model_()
 	{
-	}
-
-	/* model function used for fitting */
-	number_type f(number_type x, const Vector<number_type> & popt)
-	{
-		return popt[0] + popt[1]*sin(popt[2]*x);
 	}
 
 	/* reduced (!) chi2 sum used as potential energy */
@@ -43,7 +39,7 @@ public:
 		number_type chi2 = 0;
 		for (size_type i = 0; i<x_data_.size(); ++i)
 		{
-			chi2 += (y_data_[i] - f(x_data_[i], q))*(y_data_[i] - f(x_data_[i], q))/dy_data_[i]/dy_data_[i];
+			chi2 += (y_data_[i] - model_.f(x_data_[i], q))*(y_data_[i] - model_.f(x_data_[i], q))/dy_data_[i]/dy_data_[i];
 		}
 
 		size_type d_of_freedom = x_data_.size() - q.size();
@@ -71,17 +67,17 @@ public:
 	// 	output[0] = 0;
 	// 	for (size_type i = 0; i < x_data_.size(); ++i)
 	// 	{
-	// 		output[0] += -2.0*(y_data_[i]-f(x_data_[i], position))/dy_data_[i]/dy_data_[i]*1;
+	// 		output[0] += -2.0*(y_data_[i]-model_.f(x_data_[i], position))/dy_data_[i]/dy_data_[i]*1;
 	// 	}
 	// 	output[1] = 0;
 	// 	for (size_type i = 0; i < x_data_.size(); ++i)
 	// 	{
-	// 		output[1] += -2.0*(y_data_[i]-f(x_data_[i], position))/dy_data_[i]/dy_data_[i]*exp(-position[2]*x_data_[i]);
+	// 		output[1] += -2.0*(y_data_[i]-model_.f(x_data_[i], position))/dy_data_[i]/dy_data_[i]*exp(-position[2]*x_data_[i]);
 	// 	}
 	// 	output[2] = 0;
 	// 	for (size_type i = 0; i < x_data_.size(); ++i)
 	// 	{
-	// 		output[2] += -2.0*(y_data_[i]-f(x_data_[i], position))/dy_data_[i]/dy_data_[i]*(-x_data_[i]*position[1])*exp(-position[2]*x_data_[i]);
+	// 		output[2] += -2.0*(y_data_[i]-model_.f(x_data_[i], position))/dy_data_[i]/dy_data_[i]*(-x_data_[i]*position[1])*exp(-position[2]*x_data_[i]);
 	// 	}
 	// }
 	/* kinetic energy function */
@@ -123,6 +119,61 @@ public:
 		}
 		// make a half step for momentum at the end
 		p -= stepsize_ * grad_U / 2;
+
+	}
+
+	/* 
+	Leapfrog integrator with a tempering parameter alpha:
+	During the first half of the trajectory, there is a multiplication
+	of the momenta by alpha. In the second half, correspondingly, there 
+	is a division. The tempering scheme is supposed to be symmetrical
+	*/
+	void leapfrog (Vector<number_type> & q, Vector<number_type> & p, number_type temperature_max)
+	{
+		// Draw random number of leapfrog steps
+		Uniform_int_distribution<size_type> dis_unif(n_steps_min_, n_steps_max_);
+		size_type n_steps = dis_unif.draw();
+
+		// Adjust tempering parameter alpha according to maximal temperature to be reached
+		number_type alpha = pow(temperature_max, 2.0/n_steps);
+
+		// Make a half step for momentum at the beginning
+		Vector<number_type> grad_U(q.size());
+		grad_potential(grad_U, q);
+		p *= sqrt(alpha); //tempering
+		p -= stepsize_ * grad_U / 2;
+		
+
+		// Alternate full steps for position and momentum
+		for (size_type i = 0; i < n_steps; ++i)
+		{
+			// Make a full step for the position, update gradient of potential
+			q += stepsize_ * p;
+
+			grad_potential(grad_U, q);
+			// Make a full step for the momentum, except at the end of the trajectory
+			if (i != n_steps - 1)
+			{
+				p -= stepsize_ * grad_U;
+
+				// tempering
+				if (i < n_steps/2)
+				{
+					p *= alpha;
+				}
+				else if ((n_steps%2 == 1) && (i == n_steps/2)) // special treatment of odd number of steps
+				{
+					// do nothing
+				}
+				else 
+				{
+					p /= alpha;
+				}
+			}
+		}
+		// make a half step for momentum at the end
+		p -= stepsize_ * grad_U / 2;
+		p /= sqrt(alpha); // tempering
 
 	}
 
@@ -174,8 +225,8 @@ public:
 		Vector<number_type> current_p = p;
 
 		// Compute trajectory using the Leapfrog method
+		//leapfrog(q, p, 10);
 		leapfrog(q, p);
-
 		/* Negate momentum at the end of the trajectory to make the proposal symmetric
 		(doesn't change the outcome of the algorithm, but is mathematically nicer)
 		*/
@@ -349,10 +400,11 @@ public:
 
 
 private:
-	/* measured data */
+	/* measured data and model function */
 	Vector<number_type> x_data_;
 	Vector<number_type> y_data_;
 	Vector<number_type> dy_data_;
+	Model<number_type> model_;
 
 	/* parameters for the leapfrog integrator */
 	number_type stepsize_;
