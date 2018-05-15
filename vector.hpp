@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <assert.h>
+#include "random.hpp"
 #include <random>
 
 template<typename REAL>
@@ -151,14 +152,12 @@ public:
 	}
 
 /* Fill vector with random entries following a probability distribution */
-	template<typename REAL, typename Distribution>
+	template<typename REAL, class Distribution>
 	void fill_random(Vector<REAL> & vec, Distribution distribution)
 	{
-		std::random_device rd;
-		std::mt19937 gen(rd());
 		for (std::size_t i = 0; i < vec.size(); ++i)
 		{
-			vec[i] = distribution(gen);
+			vec[i] = distribution.draw();
 		}
 
 	}
@@ -168,12 +167,10 @@ public:
 	void fill_from_region(Vector<REAL> &vec, Vector<REAL> region_min, Vector<REAL> region_max)
 	{
 		assert(vec.size() == region_min.size() && vec.size() == region_max.size());
-		std::random_device rd;
-		std::mt19937 gen(rd());
 		for (std::size_t i = 0; i < vec.size(); ++i)
 		{
-			std::uniform_real_distribution<> dis_unif(region_min[i], region_max[i]);
-			vec[i] = dis_unif(gen);
+			Uniform_real_distribution<REAL> dis_unif(region_min[i], region_max[i]);
+			vec[i] = dis_unif.draw();
 		}
 
 	}

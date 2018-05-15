@@ -3,7 +3,7 @@
 
 #include "vector.hpp"
 #include <assert.h>
-#include <random>
+#include "random.hpp"
 #include <ctime>
 #include "storage.hpp"
 #include <algorithm>
@@ -16,12 +16,13 @@ public:
 	typedef std::size_t size_type;
 	typedef REAL number_type;
 	/* Standard constructor, fed with measured data */
-	HMC(Vector<number_type> x_data, Vector<number_type> y_data, Vector<number_type> dy_data, number_type stepsize, size_type n_steps)
+	HMC(Vector<number_type> x_data, Vector<number_type> y_data, Vector<number_type> dy_data, number_type stepsize, size_type n_steps_min, size_type n_steps_max)
 	: x_data_(x_data)
 	, y_data_(y_data)
 	, dy_data_(dy_data) 
 	, stepsize_(stepsize)
-	, n_steps_(n_steps)
+	, n_steps_min_(n_steps_min)
+	, n_steps_max_(n_steps_max)
 	, counter_(0)
 	, counter_accepted_(0)
 	{
@@ -57,9 +58,9 @@ public:
 		for (size_type i = 0; i < output.size(); ++i)
 		{
 			// estimation of partial derivative with respect to q_i
-			Vector<double> position_forward = position;
+			Vector<number_type> position_forward = position;
 			position_forward[i] += stepsize_;
-			Vector<double> position_backward = position;
+			Vector<number_type> position_backward = position;
 			position_backward[i] -= stepsize_;
 			output[i] = (potential(position_forward)-potential(position_backward))/2.0/stepsize_;
 		}
@@ -98,19 +99,58 @@ public:
 	void leapfrog(Vector<number_type> & q, Vector<number_type> & p)
 	{
 		// Make a half step for momentum at the beginning
-		Vector<double> grad_U(q.size());
+		Vector<number_type> grad_U(q.size());
+		grad_potential(grad_U, q);
+		p -= stepsize_ * grad_U / 2;
+
+		// Draw random number of leapfrog steps
+		Uniform_int_distribution<size_type> dis_unif(n_steps_min_, n_steps_max_);
+		size_type n_steps = dis_unif.draw();
+		
+
+		// Alternate full steps for position and momentum
+		for (size_type i = 0; i < n_steps; ++i)
+		{
+			// Make a full step for the position, update gradient of potential
+			q += stepsize_ * p;
+
+			grad_potential(grad_U, q);
+			// Make a full step for the momentum, except at the end of the trajectory
+			if (i != n_steps - 1)
+			{
+				p -= stepsize_ * grad_U;
+			}
+		}
+		// make a half step for momentum at the end
+		p -= stepsize_ * grad_U / 2;
+
+	}
+
+	/* 
+		Leapfrog integrator copying position to external vector after each step
+		and offering adjustable number of iterations
+	 */
+
+	void leapfrog(Vector<number_type> & q, Vector<number_type> & p, Storage<number_type> & q_copy, size_type nb_iterations)
+	{
+		// Make a half step for momentum at the beginning
+		Vector<number_type> grad_U(q.size());
 		grad_potential(grad_U, q);
 		p -= stepsize_ * grad_U / 2;
 
 		// Alternate full steps for position and momentum
-		for (size_type i = 0; i < n_steps_; ++i)
+		for (size_type i = 0; i < nb_iterations; ++i)
 		{
 			// Make a full step for the position, update gradient of potential
 			q += stepsize_ * p;
-			//std::cout << q[0] << "\n";
+
+			// Read values of q into the storage vector
+			q_copy.read_in(q);
+			
+
 			grad_potential(grad_U, q);
 			// Make a full step for the momentum, except at the end of the trajectory
-			if (i != n_steps_ - 1)
+			if (i != nb_iterations - 1)
 			{
 				p -= stepsize_ * grad_U;
 			}
@@ -128,7 +168,7 @@ public:
 		Vector<number_type> q = current_q;
 
 		// generate momenta from gaussian distribution
-		std::normal_distribution<> dis_norm(0, 1); // mean 0, std deviation 1
+		Normal_distribution<number_type> dis_norm(0, 1); // mean 0, std deviation 1
 		Vector<number_type> p(q.size());
 		fill_random(p, dis_norm);
 		Vector<number_type> current_p = p;
@@ -152,10 +192,8 @@ public:
 		Accept or reject the state at end of trajectory, returning either
 		the position at the end of the trajectory or the initial position
 		*/
-		std::random_device rd;
-		std::mt19937 gen(rd());
-		std::uniform_real_distribution<> dis_unif(0, 1);
-		if (dis_unif(gen) < exp(current_U+current_K-proposed_U-proposed_K))
+		Uniform_real_distribution<number_type> dis_unif(0, 1);
+		if (dis_unif.draw() < exp(current_U+current_K-proposed_U-proposed_K))
 		{
 			current_q = q; // accept
 			counter_accepted_++;
@@ -234,7 +272,7 @@ public:
 	}
 
 	/* preliminary run to estimate correct step size */
-	void get_acceptance_rates(const Vector<double> & range_min, const Vector<double> & range_max, size_type nb_positions, size_type nb_leapfrog_steps, std::string filename)
+	void get_acceptance_rates(const Vector<number_type> & range_min, const Vector<number_type> & range_max, size_type nb_positions, size_type nb_leapfrog_steps, std::string filename)
 	{
 		std::vector<number_type> acceptance_rates(0);
 
@@ -259,10 +297,55 @@ public:
 		for (size_type i = 0; i < acceptance_rates.size(); ++i)
 		{
 			outfile << acceptance_rates[i] << "\n";
+		}	
+	}
+
+
+
+		/* preliminary run to estimate number of leapfrog steps */
+	void get_optimal_number_of_steps(const Vector<number_type> & range_min, const Vector<number_type> & range_max, size_type nb_positions, size_type nb_iterations, std::string filename)
+	{
+		std::vector<number_type> number_steps(0);
+
+		for (size_type i = 0; i<nb_positions; ++i)
+		{
+			// Draw random position from the search region
+			Vector<number_type> popt(range_min.size());
+			fill_from_region(popt, range_min, range_max);
+			
+			// do one leapfrog step and save position values for each iteration
+			Storage<number_type> q_values(popt);
+			Normal_distribution<number_type> dis_norm(0, 1);
+			Vector<number_type> p(popt.size());
+			fill_random(p, dis_norm);
+			leapfrog(popt, p, q_values, nb_iterations);
+
+			// calculate period of each position component using autocorrelation
+			Vector<size_type> period_vector(popt.size());
+			q_values.period(period_vector);
+	
+
+			// Half a period corresponds to the optimal number of steps
+			for (size_type j = 0; j < period_vector.size(); ++j)
+			{
+				number_steps.push_back(period_vector[j]/2);
+			}
+			
 		}
 
-		
+		// Save array of optimal number of steps in a data file
+		std::ofstream outfile(filename);
+		for (size_type i = 0; i < number_steps.size(); ++i)
+		{
+			outfile << number_steps[i] << "\n";
+		}	
 	}
+
+	
+
+	
+
+
 
 
 private:
@@ -273,7 +356,8 @@ private:
 
 	/* parameters for the leapfrog integrator */
 	number_type stepsize_;
-	size_type n_steps_;
+	size_type n_steps_min_;
+	size_type n_steps_max_;
 
 	/* some statistics */
 	size_type counter_;
