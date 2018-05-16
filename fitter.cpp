@@ -3,11 +3,9 @@
 #include <vector>
 #include <string>
 #include "auxiliary_files/vector.hpp"
-#include "auxiliary_files/hmc.hpp"
 #include "auxiliary_files/read_data.hpp"
-#include "auxiliary_files/random.hpp"
+#include "auxiliary_files/hmc.hpp"
 #include <fstream>
-
 
 
 int main ()
@@ -35,23 +33,21 @@ int main ()
 	// range_max[3] = 1.5;
 
 	//initialize HMC opbject
-	HMC<double> sampler(x_data, y_data, dy_data, 8e-3, 10, 35);
+	HMC<double> sampler(x_data, y_data, dy_data, 8e-3, 26, 62, 3);
 	
 	/* PRELIMINARY RUN TOOLS */
 	// draws positions and returns acceptance rates in a file (to adjust leapfrog step size)
- 	//sampler.get_acceptance_rates(range_min, range_max, 500, 50, "Preliminary_tools/acceptrates.txt");
+	//sampler.get_acceptance_rates(range_min, range_max, 200, 50, "preliminary_tools/acceptrates.txt");
 	
 	// returns autocorrelation lengths for random starting points (to adjust number of leapfrog steps)
-	//sampler.get_optimal_number_of_steps(range_min, range_max, 500, 250, "Preliminary_tools/correlation_times.txt");
-	
+	//sampler.get_optimal_number_of_steps(range_min, range_max, 400, 400, "preliminary_tools/correlation_times.txt");
 
 
 	/* ACTUAL RUN */
 
 	// initial guess for fitting variables : random pick from region above
 	fill_from_region(popt, range_min, range_max);
-	sampler.walk(3e4, 60*8, popt, 10);
-	
+	sampler.walk(3e5, 60*8, popt, 10);
 	
 
 	return 0;

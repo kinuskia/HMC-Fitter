@@ -11,7 +11,7 @@ double f(double x, Vector<double> popt)
 
 int main ()
 {
-	std::size_t n_data = 60;
+	std::size_t n_data = 30;
 	Vector<double> popt(3);
 	popt[0] = 2.3;
 	popt[1] = 1.2;

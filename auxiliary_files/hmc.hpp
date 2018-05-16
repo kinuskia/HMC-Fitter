@@ -3,7 +3,7 @@
 
 #include "vector.hpp"
 #include <assert.h>
-#include "random.hpp"
+#include <random>
 #include <ctime>
 #include "storage.hpp"
 #include "../model.hpp"
@@ -17,7 +17,7 @@ public:
 	typedef std::size_t size_type;
 	typedef REAL number_type;
 	/* Standard constructor, fed with measured data */
-	HMC(Vector<number_type> x_data, Vector<number_type> y_data, Vector<number_type> dy_data, number_type stepsize, size_type n_steps_min, size_type n_steps_max)
+	HMC(Vector<number_type> x_data, Vector<number_type> y_data, Vector<number_type> dy_data, number_type stepsize, size_type n_steps_min, size_type n_steps_max, number_type temperature_max)
 	: x_data_(x_data)
 	, y_data_(y_data)
 	, dy_data_(dy_data) 
@@ -26,11 +26,13 @@ public:
 	, n_steps_max_(n_steps_max)
 	, counter_(0)
 	, counter_accepted_(0)
+	, temperature_max_(temperature_max)
 	, model_()
 	{
 	}
 
-	/* reduced (!) chi2 sum used as potential energy */
+
+	/* reduced (!) chi2 sum divided by the global temperature used as potential energy */
 	number_type potential(const Vector<number_type> & q)
 	{
 		/* checks if data arrays have equal lengths */
@@ -43,7 +45,7 @@ public:
 		}
 
 		size_type d_of_freedom = x_data_.size() - q.size();
-		return chi2/d_of_freedom;
+		return chi2/d_of_freedom/temperature_max_;
 
 	}
 
@@ -54,9 +56,9 @@ public:
 		for (size_type i = 0; i < output.size(); ++i)
 		{
 			// estimation of partial derivative with respect to q_i
-			Vector<number_type> position_forward = position;
+			Vector<double> position_forward = position;
 			position_forward[i] += stepsize_;
-			Vector<number_type> position_backward = position;
+			Vector<double> position_backward = position;
 			position_backward[i] -= stepsize_;
 			output[i] = (potential(position_forward)-potential(position_backward))/2.0/stepsize_;
 		}
@@ -95,21 +97,22 @@ public:
 	void leapfrog(Vector<number_type> & q, Vector<number_type> & p)
 	{
 		// Make a half step for momentum at the beginning
-		Vector<number_type> grad_U(q.size());
+		Vector<double> grad_U(q.size());
 		grad_potential(grad_U, q);
 		p -= stepsize_ * grad_U / 2;
 
 		// Draw random number of leapfrog steps
-		Uniform_int_distribution<size_type> dis_unif(n_steps_min_, n_steps_max_);
-		size_type n_steps = dis_unif.draw();
-		
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_int_distribution<> dis_unif(n_steps_min_, n_steps_max_);
+		size_type n_steps = dis_unif(gen);
 
 		// Alternate full steps for position and momentum
 		for (size_type i = 0; i < n_steps; ++i)
 		{
 			// Make a full step for the position, update gradient of potential
 			q += stepsize_ * p;
-
+			
 			grad_potential(grad_U, q);
 			// Make a full step for the momentum, except at the end of the trajectory
 			if (i != n_steps - 1)
@@ -119,8 +122,8 @@ public:
 		}
 		// make a half step for momentum at the end
 		p -= stepsize_ * grad_U / 2;
-
 	}
+
 
 	/* 
 	Leapfrog integrator with a tempering parameter alpha:
@@ -128,54 +131,108 @@ public:
 	of the momenta by alpha. In the second half, correspondingly, there 
 	is a division. The tempering scheme is supposed to be symmetrical
 	*/
-	void leapfrog (Vector<number_type> & q, Vector<number_type> & p, number_type temperature_max)
-	{
-		// Draw random number of leapfrog steps
-		Uniform_int_distribution<size_type> dis_unif(n_steps_min_, n_steps_max_);
-		size_type n_steps = dis_unif.draw();
+	// void leapfrog (Vector<number_type> & q, Vector<number_type> & p, number_type temperature_max)
+	// {
+	// 	// Draw random number of leapfrog steps
+	// 	std::random_device rd;
+	// 	std::mt19937 gen(rd());
+	// 	std::uniform_int_distribution<> dis_unif(n_steps_min_, n_steps_max_);
+	// 	size_type n_steps = dis_unif(gen);
 
-		// Adjust tempering parameter alpha according to maximal temperature to be reached
-		number_type alpha = pow(temperature_max, 2.0/n_steps);
+	// 	// Adjust tempering parameter alpha according to maximal temperature to be reached
+	// 	number_type alpha = pow(temperature_max, 2.0/n_steps);
 
-		// Make a half step for momentum at the beginning
-		Vector<number_type> grad_U(q.size());
-		grad_potential(grad_U, q);
-		p *= sqrt(alpha); //tempering
-		p -= stepsize_ * grad_U / 2;
+	// 	// Make a half step for momentum at the beginning
+	// 	Vector<number_type> grad_U(q.size());
+	// 	grad_potential(grad_U, q);
+	// 	p *= sqrt(alpha); //tempering
+	// 	p -= stepsize_ * grad_U / 2;
 		
 
-		// Alternate full steps for position and momentum
-		for (size_type i = 0; i < n_steps; ++i)
-		{
-			// Make a full step for the position, update gradient of potential
-			q += stepsize_ * p;
+	// 	// Alternate full steps for position and momentum
+	// 	for (size_type i = 0; i < n_steps; ++i)
+	// 	{
+	// 		// Make a full step for the position, update gradient of potential
+	// 		q += stepsize_ * p;
 
-			grad_potential(grad_U, q);
-			// Make a full step for the momentum, except at the end of the trajectory
-			if (i != n_steps - 1)
-			{
-				p -= stepsize_ * grad_U;
+	// 		grad_potential(grad_U, q);
+	// 		// Make a full step for the momentum, except at the end of the trajectory
+	// 		if (i != n_steps - 1)
+	// 		{
+	// 			p -= stepsize_ * grad_U;
 
-				// tempering
-				if (i < n_steps/2)
-				{
-					p *= alpha;
-				}
-				else if ((n_steps%2 == 1) && (i == n_steps/2)) // special treatment of odd number of steps
-				{
-					// do nothing
-				}
-				else 
-				{
-					p /= alpha;
-				}
-			}
-		}
-		// make a half step for momentum at the end
-		p -= stepsize_ * grad_U / 2;
-		p /= sqrt(alpha); // tempering
+	// 			// tempering
+	// 			if (i < n_steps/2)
+	// 			{
+	// 				p *= alpha;
+	// 			}
+	// 			else if ((n_steps%2 == 1) && (i == n_steps/2)) // special treatment of odd number of steps
+	// 			{
+	// 				// do nothing
+	// 			}
+	// 			else 
+	// 			{
+	// 				p /= alpha;
+	// 			}
+	// 		}
+	// 	}
+	// 	// make a half step for momentum at the end
+	// 	p -= stepsize_ * grad_U / 2;
+	// 	p /= sqrt(alpha); // tempering
 
-	}
+	// }
+
+	/* 
+	Leapfrog integrator with a tempering parameter and adjustable number of leapfrog steps
+	*/
+	// void leapfrog (Vector<number_type> & q, Vector<number_type> & p, Storage<number_type> & q_copy, number_type temperature_max, size_type n_steps)
+	// {
+	// 	// Adjust tempering parameter alpha according to maximal temperature to be reached
+	// 	number_type alpha = pow(temperature_max, 2.0/n_steps);
+
+	// 	// Make a half step for momentum at the beginning
+	// 	Vector<number_type> grad_U(q.size());
+	// 	grad_potential(grad_U, q);
+	// 	p *= sqrt(alpha); //tempering
+	// 	p -= stepsize_ * grad_U / 2;
+		
+
+	// 	// Alternate full steps for position and momentum
+	// 	for (size_type i = 0; i < n_steps; ++i)
+	// 	{
+	// 		// Make a full step for the position, update gradient of potential
+	// 		q += stepsize_ * p;
+
+	// 		// Read values of q into the storage vector
+	// 		q_copy.read_in(q);
+
+	// 		grad_potential(grad_U, q);
+	// 		// Make a full step for the momentum, except at the end of the trajectory
+	// 		if (i != n_steps - 1)
+	// 		{
+	// 			p -= stepsize_ * grad_U;
+
+	// 			// tempering
+	// 			if (i < n_steps/2)
+	// 			{
+	// 				p *= alpha;
+	// 			}
+	// 			else if ((n_steps%2 == 1) && (i == n_steps/2)) // special treatment of odd number of steps
+	// 			{
+	// 				// do nothing
+	// 			}
+	// 			else 
+	// 			{
+	// 				p /= alpha;
+	// 			}
+	// 		}
+	// 	}
+	// 	// make a half step for momentum at the end
+	// 	p -= stepsize_ * grad_U / 2;
+	// 	p /= sqrt(alpha); // tempering
+
+	// }
+
 
 	/* 
 		Leapfrog integrator copying position to external vector after each step
@@ -219,14 +276,15 @@ public:
 		Vector<number_type> q = current_q;
 
 		// generate momenta from gaussian distribution
-		Normal_distribution<number_type> dis_norm(0, 1); // mean 0, std deviation 1
+		std::normal_distribution<> dis_norm(0, 1); // mean 0, std deviation 1
 		Vector<number_type> p(q.size());
 		fill_random(p, dis_norm);
 		Vector<number_type> current_p = p;
 
 		// Compute trajectory using the Leapfrog method
-		//leapfrog(q, p, 10);
 		leapfrog(q, p);
+		//leapfrog(q, p, temperature_max_);
+
 		/* Negate momentum at the end of the trajectory to make the proposal symmetric
 		(doesn't change the outcome of the algorithm, but is mathematically nicer)
 		*/
@@ -243,8 +301,10 @@ public:
 		Accept or reject the state at end of trajectory, returning either
 		the position at the end of the trajectory or the initial position
 		*/
-		Uniform_real_distribution<number_type> dis_unif(0, 1);
-		if (dis_unif.draw() < exp(current_U+current_K-proposed_U-proposed_K))
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_real_distribution<> dis_unif(0, 1);
+		if (dis_unif(gen) < exp(current_U+current_K-proposed_U-proposed_K))
 		{
 			current_q = q; // accept
 			counter_accepted_++;
@@ -276,7 +336,7 @@ public:
 
 			// save updated data to storage
 			data.read_in(initial); // save fitting parameters
-			data.read_in(potential(initial)); // save chi2
+			data.read_in(potential(initial)*temperature_max_); // save chi2
 			data.read_in(acceptance_rate()); // save acceptance rate
 
 			// After 10s: Estimate duration of the walk
@@ -323,7 +383,7 @@ public:
 	}
 
 	/* preliminary run to estimate correct step size */
-	void get_acceptance_rates(const Vector<number_type> & range_min, const Vector<number_type> & range_max, size_type nb_positions, size_type nb_leapfrog_steps, std::string filename)
+	void get_acceptance_rates(const Vector<double> & range_min, const Vector<double> & range_max, size_type nb_positions, size_type nb_leapfrog_steps, std::string filename)
 	{
 		std::vector<number_type> acceptance_rates(0);
 
@@ -348,12 +408,12 @@ public:
 		for (size_type i = 0; i < acceptance_rates.size(); ++i)
 		{
 			outfile << acceptance_rates[i] << "\n";
-		}	
+		}
+
+		
 	}
 
-
-
-		/* preliminary run to estimate number of leapfrog steps */
+	/* preliminary run to estimate number of leapfrog steps */
 	void get_optimal_number_of_steps(const Vector<number_type> & range_min, const Vector<number_type> & range_max, size_type nb_positions, size_type nb_iterations, std::string filename)
 	{
 		std::vector<number_type> number_steps(0);
@@ -366,7 +426,9 @@ public:
 			
 			// do one leapfrog step and save position values for each iteration
 			Storage<number_type> q_values(popt);
-			Normal_distribution<number_type> dis_norm(0, 1);
+			std::random_device rd;
+			std::mt19937 gen(rd());
+			std::normal_distribution<> dis_norm(0, 1);
 			Vector<number_type> p(popt.size());
 			fill_random(p, dis_norm);
 			leapfrog(popt, p, q_values, nb_iterations);
@@ -392,15 +454,9 @@ public:
 		}	
 	}
 
-	
-
-	
-
-
-
 
 private:
-	/* measured data and model function */
+	/* measured data */
 	Vector<number_type> x_data_;
 	Vector<number_type> y_data_;
 	Vector<number_type> dy_data_;
@@ -410,6 +466,7 @@ private:
 	number_type stepsize_;
 	size_type n_steps_min_;
 	size_type n_steps_max_;
+	number_type temperature_max_;
 
 	/* some statistics */
 	size_type counter_;

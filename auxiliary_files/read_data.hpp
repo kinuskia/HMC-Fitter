@@ -1,7 +1,10 @@
 #ifndef READ_DATA_HPP
 #define READ_DATA_HPP
 
-/* Free functions to read in measurement data and saving it to vectors */
+#include <fstream>
+#include "vector.hpp"
+
+/* free functions to read in a data file and save it in a vector */
 
 void insert(double number, std::size_t counter, Vector<double> &x_data, Vector<double> &y_data, Vector<double> &dy_data)
 {

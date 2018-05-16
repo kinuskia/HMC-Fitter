@@ -2,7 +2,6 @@
 #define STORAGE_HPP
 
 #include "vector.hpp"
-#include <assert.h>
 #include <string>
 #include <fstream>
 
