@@ -1,22 +1,23 @@
 #include <iostream>
 #include <cmath>
 #include <random>
+#include <fstream>
 #include "../auxiliary_files/vector.hpp"
 
 double f(double x, Vector<double> popt)
 {
-	return popt[0] + popt[1]*sin(popt[2]*x);
+	return popt[0] + popt[1]*sin(popt[2]*x + popt[3]);
 }
 
 
 int main ()
 {
-	std::size_t n_data = 30;
-	Vector<double> popt(3);
+	std::size_t n_data = 40;
+	Vector<double> popt(4);
 	popt[0] = 2.3;
 	popt[1] = 1.2;
 	popt[2] = 1.1;
-	//popt[3] = 0.5;
+	popt[3] = 0.5;
 	Vector<double> pstd(popt.size());
 	double rel = 0.03;
 	double abs = 0.03;
@@ -56,10 +57,11 @@ int main ()
 		dy[i] = rel*y[i] + abs;
 	}
 
-	// Print output
+	// save output to text file
+	std::ofstream outfile("measurements.txt");
 	for (std::size_t i = 0; i < n_data; ++i)
 	{
-		std::cout << x[i] << "  " << y[i] << " " << dy[i] << "\n";
+		outfile << x[i] << "  " << y[i] << " " << dy[i] << "\n";
 	}
 
 
