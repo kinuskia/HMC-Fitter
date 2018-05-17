@@ -33,7 +33,22 @@ public:
 		}
 	}
 
-	/* calculate Average vector */
+	/* calculate average of variable i */
+	number_type average(size_type index)
+	{
+		assert((index >= 0) && (index < n_variables_)); //check if index within valid bounds
+		number_type result = 0;
+		for (size_type i = index; i < data_.size(); i+=n_variables_)
+		{
+			result += data_[i];
+		}
+		number_type entries_per_variable = data_.size()/n_variables_;
+		result /= entries_per_variable;
+		return result;
+
+	}
+
+	/* calculate Average of each variable at once and save it into a vector */
 	void average(Vector<number_type> & average_vector)
 	{
 		average_vector = 0;
@@ -44,6 +59,34 @@ public:
 		}
 		number_type entries_per_variable = data_.size()/n_variables_;
 		average_vector = average_vector / entries_per_variable;
+	}
+
+	/* calculate (unbiased) variance of variable i */
+	number_type variance(size_type index)
+	{
+		number_type mean = average(index);
+		number_type result = 0;
+		for (size_type i = index; i < data_.size(); i+=n_variables_)
+		{
+			result += (data_[i] - mean)*(data_[i] - mean);
+		}
+		number_type entries_per_variable = data_.size()/n_variables_;
+		result /= (entries_per_variable -1);
+		return result;
+	}
+
+	/* Calculate unbiased standard deviation of variable i */
+	number_type std_deviation(size_type index)
+	{
+		number_type result = sqrt(variance(index));
+		return result;
+	}
+
+	/* Calculate uncertitude of average of variable i */
+	number_type err_average(size_type i)
+	{
+		number_type entries_per_variable = data_.size()/n_variables_;
+		return std_deviation(i)/sqrt(entries_per_variable);	
 	}
 
 	/* Renormalize by subtraction of the average vector  */

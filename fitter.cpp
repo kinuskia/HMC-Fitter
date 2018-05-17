@@ -34,7 +34,7 @@ int main ()
 	range_max[3] = 1.5;
 
 	//initialize HMC opbject
-	HMC<double> sampler(x_data, y_data, dy_data, 6e-3, 20, 40, 1);
+	HMC<double> sampler(x_data, y_data, dy_data, 6e-3, 25, 60, 2);
 	
 	/* PRELIMINARY RUN TOOLS */
 	// draws positions and returns acceptance rates in a file (to adjust leapfrog step size)
@@ -48,7 +48,7 @@ int main ()
 
 	// initial guess for fitting variables : random pick from region above
 	fill_from_region(popt, range_min, range_max);
-	sampler.walk(3e5, 60*8, popt, 10);
+	sampler.walk(3e3, 60*8, popt, 10);
 	
 
 	return 0;

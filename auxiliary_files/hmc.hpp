@@ -370,10 +370,26 @@ public:
 		// write data to output file
 		data.write("data.txt");
 
+		// Calculate fitting result
+		Vector<number_type> popt(initial.size());
+		Vector<number_type> perr(initial.size());
+		for (size_type i = 0; i < initial.size(); ++i)
+		{
+			popt[i] = data.average(i);
+			perr[i] = data.err_average(i);
+
+		}
+
 		// report total calculation time
 		std::time_t end = std::time(nullptr);
 		number_type diff = (end - start)/60;
 		std::cout << "Total calculation time in min : " << diff << "\n";
+
+		// report fitting result
+		for (size_type i = 0; i < initial.size(); ++i)
+		{
+			std::cout << "Parameter " << i << " : " << popt[i] << " + - " << perr[i] << "\n";
+		}
 
 	}
 
