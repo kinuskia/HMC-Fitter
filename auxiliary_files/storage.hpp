@@ -73,7 +73,6 @@ public:
 						if (thermalization_ < burn_in_length)
 						{
 							thermalization_ = burn_in_length;
-							std::cout << thermalization_ << "\n";
 						}
 						break; // break when median passed
 					}
@@ -83,6 +82,11 @@ public:
 			}
 		}
 
+	}
+
+	number_type get_burn_in_length() const
+	{
+		return thermalization_;
 	}
 
 	/* calculate average of variable i */
@@ -108,6 +112,7 @@ public:
 
 		// Determine burn-in length
 		determine_burn_in_length();
+		
 
 		// Calculation of the mean vector
 		average_vector = 0;
@@ -121,6 +126,7 @@ public:
 		Vector<number_type> autocorr_times(n_popt_);
 		Vector<number_type> autocorr_times_err(n_popt_);
 		autocorr_time(autocorr_times, autocorr_times_err); // calculate integrated autocorrelation times
+
 		for (size_type i = 0; i<n_popt_; ++i)
 		{
 			number_type ESS = entries_per_variable_/(2*autocorr_times[i]); //effective sample size

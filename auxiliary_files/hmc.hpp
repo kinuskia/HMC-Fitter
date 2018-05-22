@@ -375,18 +375,14 @@ public:
 		Vector<number_type> perr(initial.size());
 		data.mean(popt, perr);
 		
-		Vector<number_type> corr_times(initial.size());
-		Vector<number_type> corr_times_err(initial.size());
-		data.autocorr_time(corr_times, corr_times_err);
-		for (size_type i = 0; i < initial.size(); ++i)
-		{
-			std::cout << corr_times[i] << " + - " << corr_times_err[i] << "\n";
-		}
 
 		// report total calculation time
 		std::time_t end = std::time(nullptr);
 		number_type diff = (end - start)/60;
 		std::cout << "Total calculation time in min : " << diff << "\n";
+
+		// report burn-in length
+		std::cout << "Burn-in length: " << data.get_burn_in_length() << "\n";
 
 		// report fitting result
 		for (size_type i = 0; i < initial.size(); ++i)
