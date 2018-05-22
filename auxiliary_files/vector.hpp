@@ -4,6 +4,7 @@
 #include <vector>
 #include <assert.h>
 #include <random>
+#include <fstream>
 
 template<typename REAL>
 class Vector : public std::vector<REAL> // inherit from the STL vector
@@ -126,6 +127,28 @@ public:
 			sum += self[i] * self[i];
 		}
 		return sum;
+	}
+
+	/* Mean of the entries */
+	REAL mean() const
+	{
+		REAL mean = 0;
+		for (size_type i = 0; i< this->size(); ++i)
+		{
+			mean += (*this)[i];
+		}
+		mean /= this->size();
+		return mean;
+	}
+
+	// Save vector entries in text file
+	void save_as (std::string filename) const
+	{
+		std::ofstream outfile(filename);
+		for (size_type i = 0; i < this->size(); ++i)
+		{
+			outfile << (*this)[i] << "\n";
+		}
 	}
 
 };
