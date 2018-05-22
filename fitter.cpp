@@ -48,11 +48,11 @@ int main ()
 
 	// initial guess for fitting variables : random pick from region above
 	// commented to avoid burn-in time (to be uncommented !!)
-	//fill_from_region(popt, range_min, range_max);
-	popt[0] = 2.31;
-	popt[1] = 1.14;
-	popt[2] = 1.10;
-	popt[3] = 0.57;
+	fill_from_region(popt, range_min, range_max);
+	// popt[0] = 2.31;
+	// popt[1] = 1.14;
+	// popt[2] = 1.10;
+	// popt[3] = 0.57;
 	sampler.walk(3e4, 60*8, popt, 10);
 	
 

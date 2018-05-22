@@ -16,16 +16,16 @@ public:
 	, n_extra_(n_of_extra) 
 	, n_variables_(popt.size() + n_of_extra)
 	, data_()
+	, thermalization_(0)
+	, entries_per_variable_(0)
 	{
 	}
-
-	// TODO: Include bool for whether data has been read in
-
 
 	/* receive and save input value */
 	void read_in (number_type value)
 	{
 		data_.push_back(value);
+		entries_per_variable_ = (data_.size()/n_variables_ - thermalization_); // discarding non thermalized data
 	}
 	/* receive and save input vector */
 	void read_in (Vector<number_type> popt)
@@ -34,6 +34,55 @@ public:
 		{
 			data_.push_back(popt[i]);
 		}
+		entries_per_variable_ = data_.size()/n_variables_;
+	}
+
+	/* Determine median of parameter i */
+	number_type median(size_type index)
+	{
+		// Fill a vector with paramter values
+		Vector<number_type> values(data_.size()/n_variables_);
+		for (size_type i = 0; i < values.size(); ++i)
+		{
+			values[i] = data_[index + i*n_variables_];
+		}
+		// Place the median value in the middle of the vector
+		std::nth_element(values.begin(), values.begin()+values.size()/2, values.end());
+		return values[values.size()/2];
+	}
+
+	/* Determine burn_in length */
+	void determine_burn_in_length()
+	{
+		number_type burn_in_length = 0;
+		for (size_type i = 0; i < n_popt_; ++i)
+		{
+			number_type median = this->median(i);
+			size_type counter = 0;
+			// Count steps until median is passed
+			bool sign = (data_[i] >= median);
+			bool sign_old = sign;
+			for (size_type j = 0; j < data_.size()/n_variables_; ++j)
+			{
+				sign = (data_[i + n_variables_*j] >= median);
+				if (j > 0)
+				{
+					if (sign != sign_old)
+					{
+						burn_in_length = counter + 2;
+						if (thermalization_ < burn_in_length)
+						{
+							thermalization_ = burn_in_length;
+							std::cout << thermalization_ << "\n";
+						}
+						break; // break when median passed
+					}
+					counter++;
+				}
+				sign_old = sign;
+			}
+		}
+
 	}
 
 	/* calculate average of variable i */
@@ -41,12 +90,11 @@ public:
 	{
 		assert((index >= 0) && (index < n_variables_)); //check if index within valid bounds
 		number_type result = 0;
-		for (size_type i = index; i < data_.size(); i+=n_variables_)
+		for (size_type i = index + n_variables_*thermalization_; i < data_.size(); i+=n_variables_)
 		{
 			result += data_[i];
 		}
-		number_type entries_per_variable = data_.size()/n_variables_;
-		result /= entries_per_variable;
+		result /= entries_per_variable_;
 		return result;
 
 	}
@@ -57,14 +105,17 @@ public:
 	{
 		assert(average_vector.size() == err_vector.size());
 		assert(average_vector.size() == n_popt_);
+
+		// Determine burn-in length
+		determine_burn_in_length();
+
 		// Calculation of the mean vector
 		average_vector = 0;
-		for (size_type i = 0; i < data_.size(); ++i)
+		for (size_type i = n_variables_*thermalization_; i < data_.size(); ++i)
 		{
 			average_vector[i%n_variables_] += data_[i];
 		}
-		number_type entries_per_variable = data_.size()/n_variables_;
-		average_vector = average_vector / entries_per_variable;
+		average_vector = average_vector / entries_per_variable_;
 
 		// Calculation of its uncertainty
 		Vector<number_type> autocorr_times(n_popt_);
@@ -72,7 +123,7 @@ public:
 		autocorr_time(autocorr_times, autocorr_times_err); // calculate integrated autocorrelation times
 		for (size_type i = 0; i<n_popt_; ++i)
 		{
-			number_type ESS = entries_per_variable/(2*autocorr_times[i]); //effective sample size
+			number_type ESS = entries_per_variable_/(2*autocorr_times[i]); //effective sample size
 			number_type variance = this->variance(i);
 			err_vector[i] = sqrt(variance/ESS);
 		}
@@ -84,16 +135,15 @@ public:
 	*/
 	number_type gamma(size_type alpha, size_type beta, size_type lag)
 	{
-		size_type entries_per_variable = data_.size()/n_variables_;
 		number_type mean_alpha = this->mean(alpha);
 		number_type mean_beta = this->mean(beta);
-		assert(entries_per_variable > lag); // condition for validity of this estimator
+		assert(entries_per_variable_ > lag); // condition for validity of this estimator
 		number_type result = 0;
-		for (size_type i = 0; i < (entries_per_variable-lag); ++i)
+		for (size_type i = 0; i < (entries_per_variable_ - lag); ++i)
 		{
-			result += (data_[alpha + i*n_variables_] - mean_alpha) * (data_[beta + (i+lag)*n_variables_] - mean_beta);
+			result += (data_[alpha + (i+thermalization_)*n_variables_] - mean_alpha) * (data_[beta + (i+ thermalization_ +lag)*n_variables_] - mean_beta);
 		}
-		result /= (entries_per_variable-lag);
+		result /= (entries_per_variable_ - lag);
 		return result;
 	}
 
@@ -103,7 +153,6 @@ public:
 	{
 		assert(times.size() == n_popt_); // check for correct dimensions
 		assert(times_err.size() == n_popt_);
-		size_type entries_per_variable = data_.size()/n_variables_;
 		for (size_type i = 0; i < times.size(); ++i)
 		{
 			// Calculate integrated autocorrelation time for parameter i
@@ -111,7 +160,7 @@ public:
 			size_type W = 0;
 			number_type gamma_old;
 			number_type gamma_current;
-			for (size_type t = 1; t<=entries_per_variable; ++t)
+			for (size_type t = 1; t<=entries_per_variable_; ++t)
 			{
 				gamma_current = abs(this->gamma(i, i, t));
 				C+= 2*gamma_current;
@@ -133,7 +182,7 @@ public:
 			}
 			number_type v = abs(this->gamma(i, i, 0));
 			times[i] = C/2.0/v;
-			times_err[i] = times[i]*sqrt(4./entries_per_variable*(W+1./2-times[i])) + C*exp(-1.*W/times[i]);
+			times_err[i] = times[i]*sqrt(4./entries_per_variable_*(W+1./2-times[i])) + C*exp(-1.*W/times[i]);
 		}
 	}
 
@@ -142,12 +191,11 @@ public:
 	{
 		number_type mean = this->mean(index);
 		number_type result = 0;
-		for (size_type i = index; i < data_.size(); i+=n_variables_)
+		for (size_type i = index + n_variables_*thermalization_; i < data_.size(); i+=n_variables_)
 		{
 			result += (data_[i] - mean)*(data_[i] - mean);
 		}
-		number_type entries_per_variable = data_.size()/n_variables_;
-		result /= (entries_per_variable -1);
+		result /= (entries_per_variable_ -1);
 		return result;
 	}
 
@@ -159,20 +207,6 @@ public:
 	}
 
 
-
-
-	/* Renormalize by subtraction of the average vector  */
-	void renormalize()
-	{
-		// Calculate average vector and subtract it from the data
-		Vector<number_type> average_vector(n_variables_);
-		average(average_vector);
-		for (size_type i = 0; i < data_.size(); ++i)
-		{
-			data_[i] -= average_vector[i%n_variables_];
-		}
-	}
-
 	/* Determine a vector containing the period of each signal */
 	void period(Vector<size_type> & period_vector)
 	{
@@ -180,7 +214,6 @@ public:
 
 		for (size_type i = 0; i < n_popt_; ++i)
 		{
-			size_type entries_per_variable = data_.size()/n_variables_;
 			/* 
 			To calculate the period of the signal, we determine the
 			number of steps for two sign changes
@@ -189,7 +222,7 @@ public:
 			size_type sign_changes = 0;
 			bool sign = true; // true = '+', false = '-'
 			bool sign_old = sign;
-			for (size_type j = 0; j < entries_per_variable; ++j)
+			for (size_type j = 0; j < entries_per_variable_; ++j)
 			{
 				number_type gamma = this->gamma(i, i, j);
 				sign = (gamma >= 0);
@@ -243,6 +276,8 @@ private:
 	size_type n_variables_; // number of variables stored in the vector
 	size_type n_popt_; // number of fitting parameters
 	size_type n_extra_; // number of additional variables
+	size_type thermalization_; // number of steps to reach thermalization (values up to this index are discarded)
+	size_type entries_per_variable_; // to be calculated once data has been read in
 };
 
 
