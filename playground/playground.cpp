@@ -125,7 +125,7 @@ int main ()
 	Vector<number_type> result(2);
 	correlation_time(q, result);
 	std::cout << "tau_int: " << result[0] << " + - " << result[1] << "\n";
-
+	std::cout << -1.0 << " " << abs(-1.0) << "\n";
 
 
 	return 0;

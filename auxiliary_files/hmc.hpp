@@ -373,11 +373,14 @@ public:
 		// Calculate fitting result
 		Vector<number_type> popt(initial.size());
 		Vector<number_type> perr(initial.size());
+		data.mean(popt, perr);
+		
+		Vector<number_type> corr_times(initial.size());
+		Vector<number_type> corr_times_err(initial.size());
+		data.autocorr_time(corr_times, corr_times_err);
 		for (size_type i = 0; i < initial.size(); ++i)
 		{
-			popt[i] = data.average(i);
-			perr[i] = data.err_average(i);
-
+			std::cout << corr_times[i] << " + - " << corr_times_err[i] << "\n";
 		}
 
 		// report total calculation time
@@ -388,7 +391,7 @@ public:
 		// report fitting result
 		for (size_type i = 0; i < initial.size(); ++i)
 		{
-			std::cout << "Parameter " << i << " : " << popt[i] << " + - " << perr[i] << "\n";
+			std::cout << "Parameter " << i << " : " << popt[i] << " + - " << perr[i]  << "\n";
 		}
 
 	}
