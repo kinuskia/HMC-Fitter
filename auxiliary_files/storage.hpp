@@ -112,7 +112,6 @@ public:
 
 		// Determine burn-in length
 		determine_burn_in_length();
-		
 
 		// Calculation of the mean vector
 		average_vector = 0;
@@ -122,10 +121,13 @@ public:
 		}
 		average_vector = average_vector / entries_per_variable_;
 
+
 		// Calculation of its uncertainty
 		Vector<number_type> autocorr_times(n_popt_);
 		Vector<number_type> autocorr_times_err(n_popt_);
 		autocorr_time(autocorr_times, autocorr_times_err); // calculate integrated autocorrelation times
+
+	
 
 		for (size_type i = 0; i<n_popt_; ++i)
 		{
@@ -145,9 +147,9 @@ public:
 		number_type mean_beta = this->mean(beta);
 		assert(entries_per_variable_ > lag); // condition for validity of this estimator
 		number_type result = 0;
-		for (size_type i = 0; i < (entries_per_variable_ - lag); ++i)
+		for (size_type i = thermalization_; i < (entries_per_variable_ - lag); ++i)
 		{
-			result += (data_[alpha + (i+thermalization_)*n_variables_] - mean_alpha) * (data_[beta + (i+ thermalization_ +lag)*n_variables_] - mean_beta);
+			result += (data_[alpha + (i)*n_variables_] - mean_alpha) * (data_[beta + (i+lag)*n_variables_] - mean_beta);
 		}
 		result /= (entries_per_variable_ - lag);
 		return result;
@@ -161,6 +163,7 @@ public:
 		assert(times_err.size() == n_popt_);
 		for (size_type i = 0; i < times.size(); ++i)
 		{
+			std::cout << "Check " << i << "\n";
 			// Calculate integrated autocorrelation time for parameter i
 			number_type C = abs(this->gamma(i, i, 0));
 			size_type W = 0;

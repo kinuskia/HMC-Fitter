@@ -17,7 +17,7 @@ public:
 	typedef std::size_t size_type;
 	typedef REAL number_type;
 	/* Standard constructor, fed with measured data */
-	HMC(Vector<number_type> x_data, Vector<number_type> y_data, Vector<number_type> dy_data, number_type stepsize, size_type n_steps_min, size_type n_steps_max, number_type temperature_max)
+	HMC(Vector<number_type> x_data, Vector<number_type> y_data, Vector<number_type> dy_data, number_type stepsize, size_type n_steps_min, size_type n_steps_max, number_type temperature)
 	: x_data_(x_data)
 	, y_data_(y_data)
 	, dy_data_(dy_data) 
@@ -26,7 +26,7 @@ public:
 	, n_steps_max_(n_steps_max)
 	, counter_(0)
 	, counter_accepted_(0)
-	, temperature_max_(temperature_max)
+	, temperature_(temperature)
 	, model_()
 	{
 	}
@@ -45,7 +45,7 @@ public:
 		}
 
 		size_type d_of_freedom = x_data_.size() - q.size();
-		return chi2/d_of_freedom/temperature_max_;
+		return chi2/d_of_freedom/temperature_;
 
 	}
 
@@ -56,14 +56,36 @@ public:
 		for (size_type i = 0; i < output.size(); ++i)
 		{
 			// estimation of partial derivative with respect to q_i
-			Vector<double> position_forward = position;
+			Vector<number_type> position_forward = position;
 			position_forward[i] += stepsize_;
-			Vector<double> position_backward = position;
+			Vector<number_type> position_backward = position;
 			position_backward[i] -= stepsize_;
 			output[i] = (potential(position_forward)-potential(position_backward))/2.0/stepsize_;
 		}
 
 	}
+	/* Calculate intrinsic uncertainty of parameter i */
+	number_type intrinsic_err(const Vector<number_type> & position, size_type index)
+	{
+		size_type d_of_freedom = x_data_.size() - position.size();
+		number_type sec_deriv_chi2 = sec_deriv_potential(position, index) * d_of_freedom * temperature_;
+		return sqrt(2.0/sec_deriv_chi2);
+	}
+
+	/* second derivative of the potential with respect to parameter i */
+	number_type sec_deriv_potential (const Vector<number_type> & position, size_type i)
+	{
+		number_type h = 0.1*stepsize_;
+		Vector<number_type> position_forward = position;
+		position_forward[i] += h;
+		Vector<number_type> position_backward = position;
+		position_backward[i] -= h;
+
+		return (potential(position_backward)-2.0*potential(position)+potential(position_forward))/h/h;
+	}
+
+
+
 	// void grad_potential_exact(Vector<number_type> & output, const Vector<number_type> & position)
 	// {
 	// 	output[0] = 0;
@@ -97,7 +119,7 @@ public:
 	void leapfrog(Vector<number_type> & q, Vector<number_type> & p)
 	{
 		// Make a half step for momentum at the beginning
-		Vector<double> grad_U(q.size());
+		Vector<number_type> grad_U(q.size());
 		grad_potential(grad_U, q);
 		p -= stepsize_ * grad_U / 2;
 
@@ -283,7 +305,7 @@ public:
 
 		// Compute trajectory using the Leapfrog method
 		leapfrog(q, p);
-		//leapfrog(q, p, temperature_max_);
+		//leapfrog(q, p, temperature_);
 
 		/* Negate momentum at the end of the trajectory to make the proposal symmetric
 		(doesn't change the outcome of the algorithm, but is mathematically nicer)
@@ -336,7 +358,7 @@ public:
 
 			// save updated data to storage
 			data.read_in(initial); // save fitting parameters
-			data.read_in(potential(initial)*temperature_max_); // save chi2
+			data.read_in(potential(initial)*temperature_); // save chi2_red
 			data.read_in(acceptance_rate()); // save acceptance rate
 
 			// After 10s: Estimate duration of the walk
@@ -374,7 +396,7 @@ public:
 		Vector<number_type> popt(initial.size());
 		Vector<number_type> perr(initial.size());
 		data.mean(popt, perr);
-		
+	
 
 		// report total calculation time
 		std::time_t end = std::time(nullptr);
@@ -390,6 +412,14 @@ public:
 			std::cout << "Parameter " << i << " : " << popt[i] << " + - " << perr[i]  << "\n";
 		}
 
+		std::cout << "chi2_red: " << potential(popt)*temperature_ << "\n";
+
+		// report intrinsic uncertainties
+		std::cout << "Intrinsic uncertainties: \n";
+		for (size_type i = 0; i < initial.size(); ++i)
+		{
+			std::cout << "Parameter " << i << " : " << intrinsic_err(popt, i)  << "\n";
+		}
 	}
 
 	number_type acceptance_rate()
@@ -398,7 +428,7 @@ public:
 	}
 
 	/* preliminary run to estimate correct step size */
-	void get_acceptance_rates(const Vector<double> & range_min, const Vector<double> & range_max, size_type nb_positions, size_type nb_leapfrog_steps, std::string filename)
+	void get_acceptance_rates(const Vector<number_type> & range_min, const Vector<number_type> & range_max, size_type nb_positions, size_type nb_leapfrog_steps, std::string filename)
 	{
 		std::vector<number_type> acceptance_rates(0);
 
@@ -481,7 +511,7 @@ private:
 	number_type stepsize_;
 	size_type n_steps_min_;
 	size_type n_steps_max_;
-	number_type temperature_max_;
+	number_type temperature_;
 
 	/* some statistics */
 	size_type counter_;

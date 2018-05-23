@@ -15,14 +15,14 @@ public:
 	/* number of fitting parameters */
 	size_type n_parameters() const
 	{
-		return 4;
+		return 5;
 	}
 
 	/* model function definition used for fitting */
 	number_type f(number_type x, const Vector<number_type> & popt)
 	{
 		assert(n_parameters() == popt.size());
-		return popt[0] + popt[1]*sin(popt[2]*x+popt[3]);
+		return popt[0] + popt[1]*exp(-popt[2]*x)*sin(popt[3]*x + popt[4]);
 	}
 
 private:

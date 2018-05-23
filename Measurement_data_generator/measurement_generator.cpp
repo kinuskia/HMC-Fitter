@@ -6,21 +6,22 @@
 
 double f(double x, Vector<double> popt)
 {
-	return popt[0] + popt[1]*sin(popt[2]*x + popt[3]);
+	return popt[0] + popt[1]*exp(-popt[2]*x)*sin(popt[3]*x + popt[4]);
 }
 
 
 int main ()
 {
 	std::size_t n_data = 40;
-	Vector<double> popt(4);
+	Vector<double> popt(5);
 	popt[0] = 2.3;
 	popt[1] = 1.2;
-	popt[2] = 1.1;
-	popt[3] = 0.5;
+	popt[2] = 0.3;
+	popt[3] = 2.0;
+	popt[4] = 0.8;
 	Vector<double> pstd(popt.size());
-	double rel = 0.03;
-	double abs = 0.03;
+	double rel = 0.02;
+	double abs = 0.02;
 	pstd = rel*popt + abs;
 
 	double x_min = 0;
