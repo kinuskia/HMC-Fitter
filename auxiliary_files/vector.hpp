@@ -165,16 +165,28 @@ public:
 	}
 /* Multiplication from the right hand side by scalar */
 	template<typename REAL>
-	Vector<REAL> operator* (const Vector<REAL> x, const REAL & alpha)
+	Vector<REAL> operator* (const Vector<REAL> & x, const REAL & alpha)
 	{
 		Vector<REAL> result(x);
 		result *= alpha;
 		return result;
 	}
 
+/* Component-wise multiplication of two vectors, resulting in a vector (!), no inner product ! */
+	template<typename REAL>
+	Vector<REAL> operator* (const Vector<REAL> & x, const Vector<REAL> & y)
+	{
+		Vector<REAL> result(x);
+		for (std::size_t i = 0; i < result.size(); ++i)
+		{
+			result[i] *= y[i];
+		}
+		return result;
+	}
+
 /* Division from the right hand side by scalar */
 	template<typename REAL1, typename REAL2>
-	Vector<REAL1> operator/ (const Vector<REAL1> x, const REAL2 & alpha)
+	Vector<REAL1> operator/ (const Vector<REAL1> & x, const REAL2 & alpha)
 	{
 		Vector<REAL1> result(x);
 		for (std::size_t i = 0; i < result.size(); ++i)

@@ -35,15 +35,24 @@ int main ()
 	range_min[4] = -2.58;
 	range_max[4] = -2.08;
 
+	// Characteristic length scales for the parameters // default 1
+	Vector<double> c_lengths(popt.size(), 1);
+	c_lengths[0] = 0.0101;
+	c_lengths[1] = 0.0350;
+	c_lengths[2] = 0.0115;
+	c_lengths[3] = 0.0136;
+	c_lengths[4] = 0.0352;
+
+
 	//initialize HMC opbject
-	HMC<double> sampler(x_data, y_data, dy_data, 5e-3, 10, 20, 0.01);
+	HMC<double> sampler(x_data, y_data, dy_data, c_lengths, 3e-1, 6, 10, 0.01);
 	
 	/* PRELIMINARY RUN TOOLS */
 	// draws positions and returns acceptance rates in a file (to adjust leapfrog step size)
 	//sampler.get_acceptance_rates(range_min, range_max, 400, 50, "preliminary_tools/acceptrates.txt");
 	
 	// returns autocorrelation lengths for random starting points (to adjust number of leapfrog steps)
-	//sampler.get_optimal_number_of_steps(range_min, range_max, 500, 120, "preliminary_tools/correlation_times.txt");
+	//sampler.get_optimal_number_of_steps(range_min, range_max, 500, 100, "preliminary_tools/correlation_times.txt");
 
 
 	/* ACTUAL RUN */

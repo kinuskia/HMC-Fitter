@@ -17,10 +17,11 @@ public:
 	typedef std::size_t size_type;
 	typedef REAL number_type;
 	/* Standard constructor, fed with measured data */
-	HMC(Vector<number_type> x_data, Vector<number_type> y_data, Vector<number_type> dy_data, number_type stepsize, size_type n_steps_min, size_type n_steps_max, number_type temperature)
+	HMC(Vector<number_type> x_data, Vector<number_type> y_data, Vector<number_type> dy_data, Vector<number_type> c_lengths, number_type stepsize, size_type n_steps_min, size_type n_steps_max, number_type temperature)
 	: x_data_(x_data)
 	, y_data_(y_data)
 	, dy_data_(dy_data) 
+	, c_lengths_(c_lengths)
 	, stepsize_(stepsize)
 	, n_steps_min_(n_steps_min)
 	, n_steps_max_(n_steps_max)
@@ -57,10 +58,10 @@ public:
 		{
 			// estimation of partial derivative with respect to q_i
 			Vector<number_type> position_forward = position;
-			position_forward[i] += stepsize_;
+			position_forward[i] += stepsize_*c_lengths_[i];
 			Vector<number_type> position_backward = position;
-			position_backward[i] -= stepsize_;
-			output[i] = (potential(position_forward)-potential(position_backward))/2.0/stepsize_;
+			position_backward[i] -= stepsize_*c_lengths_[i];
+			output[i] = (potential(position_forward)-potential(position_backward))/2.0/stepsize_/c_lengths_[i];
 		}
 
 	}
@@ -75,7 +76,7 @@ public:
 	/* second derivative of the potential with respect to parameter i */
 	number_type sec_deriv_potential (const Vector<number_type> & position, size_type i)
 	{
-		number_type h = 0.1*stepsize_;
+		number_type h = c_lengths_[i]*stepsize_;
 		Vector<number_type> position_forward = position;
 		position_forward[i] += h;
 		Vector<number_type> position_backward = position;
@@ -118,10 +119,12 @@ public:
 	/* Leapfrog integrator */
 	void leapfrog(Vector<number_type> & q, Vector<number_type> & p)
 	{
+		// Introducing a step size vector: We scale the vector of characteristic length scales with the stepsize_ scalar
+		Vector<number_type> stepsizes = stepsize_ * c_lengths_;
 		// Make a half step for momentum at the beginning
 		Vector<number_type> grad_U(q.size());
 		grad_potential(grad_U, q);
-		p -= stepsize_ * grad_U / 2;
+		p -= stepsizes * grad_U / 2;
 
 		// Draw random number of leapfrog steps
 		std::random_device rd;
@@ -133,17 +136,17 @@ public:
 		for (size_type i = 0; i < n_steps; ++i)
 		{
 			// Make a full step for the position, update gradient of potential
-			q += stepsize_ * p;
+			q += stepsizes * p;
 			
 			grad_potential(grad_U, q);
 			// Make a full step for the momentum, except at the end of the trajectory
 			if (i != n_steps - 1)
 			{
-				p -= stepsize_ * grad_U;
+				p -= stepsizes * grad_U;
 			}
 		}
 		// make a half step for momentum at the end
-		p -= stepsize_ * grad_U / 2;
+		p -= stepsizes * grad_U / 2;
 	}
 
 
@@ -263,16 +266,19 @@ public:
 
 	void leapfrog(Vector<number_type> & q, Vector<number_type> & p, Storage<number_type> & q_copy, size_type nb_iterations)
 	{
+		// Introducing a step size vector: We scale the vector of characteristic length scales with the stepsize_ scalar
+		Vector<number_type> stepsizes = stepsize_ * c_lengths_;
+
 		// Make a half step for momentum at the beginning
 		Vector<number_type> grad_U(q.size());
 		grad_potential(grad_U, q);
-		p -= stepsize_ * grad_U / 2;
+		p -= stepsizes * grad_U / 2;
 
 		// Alternate full steps for position and momentum
 		for (size_type i = 0; i < nb_iterations; ++i)
 		{
 			// Make a full step for the position, update gradient of potential
-			q += stepsize_ * p;
+			q += stepsizes * p;
 
 			// Read values of q into the storage vector
 			q_copy.read_in(q);
@@ -282,11 +288,11 @@ public:
 			// Make a full step for the momentum, except at the end of the trajectory
 			if (i != nb_iterations - 1)
 			{
-				p -= stepsize_ * grad_U;
+				p -= stepsizes * grad_U;
 			}
 		}
 		// make a half step for momentum at the end
-		p -= stepsize_ * grad_U / 2;
+		p -= stepsizes * grad_U / 2;
 	}
 
 
@@ -519,6 +525,7 @@ private:
 	size_type n_steps_min_;
 	size_type n_steps_max_;
 	number_type temperature_;
+	Vector<number_type> c_lengths_; // characteristic length scales for parameters
 
 	/* some statistics */
 	size_type counter_;
