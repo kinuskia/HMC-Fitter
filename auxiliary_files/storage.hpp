@@ -21,6 +21,19 @@ public:
 	{
 	}
 
+	/* Getter methods */
+	size_type n_variables() const
+	{
+		return n_variables_;
+	}
+
+	size_type entries_per_variable() const
+	{
+		return entries_per_variable_;
+	}
+
+
+
 	/* receive and save input value */
 	void read_in (number_type value)
 	{
@@ -108,7 +121,7 @@ public:
 	void mean(Vector<number_type> & average_vector, Vector<number_type> & err_vector)
 	{
 		assert(average_vector.size() == err_vector.size());
-		assert(average_vector.size() == n_popt_);
+		assert(average_vector.size() == n_variables_);
 
 		// Determine burn-in length
 		determine_burn_in_length();
@@ -123,8 +136,8 @@ public:
 
 
 		// Calculation of its uncertainty
-		Vector<number_type> autocorr_times(n_popt_);
-		Vector<number_type> autocorr_times_err(n_popt_);
+		Vector<number_type> autocorr_times(average_vector.size());
+		Vector<number_type> autocorr_times_err(err_vector.size());
 		autocorr_time(autocorr_times, autocorr_times_err); // calculate integrated autocorrelation times
 		std::cout << "Integrated autocorrelation times: \n";
 		for (size_type i = 0; i < autocorr_times.size(); ++i)
@@ -133,13 +146,17 @@ public:
 		}
 	
 
-		for (size_type i = 0; i<n_popt_; ++i)
+		for (size_type i = 0; i<n_variables_; ++i)
 		{
-			number_type ESS = entries_per_variable_/(2*autocorr_times[i]); //effective sample size
+			number_type ESS = entries_per_variable_/(2.*autocorr_times[i]); //effective sample size
 			number_type variance = this->variance(i);
 			err_vector[i] = sqrt(variance/ESS);
 		}
 	}
+
+
+
+
 
 	/* 
 	Autocorrelation function \Gamma_{\alpha, \beta}(n)
@@ -159,12 +176,38 @@ public:
 		return result;
 	}
 
+	/* Autocorrelation function for chi2_red as derived quantity */
+	number_type gamma_chi2red(Vector<number_type> & derivatives, size_type lag)
+	{
+		assert(derivatives.size() == n_popt_);
+		number_type result = 0;
+		for (size_type alpha = 0; alpha < n_popt_; ++alpha)
+		{
+			for (size_type beta = 0; beta < n_popt_; ++beta)
+			{
+				result += derivatives[alpha] * derivatives[beta] * gamma(alpha, beta, lag);
+			}
+		}
+		
+		return result;
+	}
 
 	/* calculate a integrated autocorrelation time vector (one entry for each fitting parameter) */
 	void autocorr_time(Vector<number_type> & times, Vector<number_type> & times_err)
 	{
-		assert(times.size() == n_popt_); // check for correct dimensions
-		assert(times_err.size() == n_popt_);
+		assert(times.size() == n_variables_); // check for correct dimensions
+		assert(times_err.size() == n_variables_);
+
+		// // Print cross-correlations
+		// for (size_type i = 0; i < times.size(); ++i)
+		// {
+		// 	for (size_type j = 0; j < times.size(); ++j)
+		// 	{
+		// 		std::cout << this->gamma(i, j, 0) << " ";
+		// 	}
+		// 	std::cout << "\n";
+		// }
+
 		for (size_type i = 0; i < times.size(); ++i)
 		{
 			std::cout << "Calculating autocorrelation time for parameter " << i+1  << " / " << times.size() << "\n";
@@ -178,7 +221,7 @@ public:
 				gamma_current = abs(this->gamma(i, i, t));
 				// if (i == 0)
 				// 	std::cout << this->gamma(i, i, t-1) << "\n";
-				C+= 2*gamma_current;
+				C+= 2.*gamma_current;
 
 				/* 
 				procedure to find optimal summation window W: 

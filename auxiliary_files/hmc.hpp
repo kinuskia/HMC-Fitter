@@ -57,11 +57,12 @@ public:
 		for (size_type i = 0; i < output.size(); ++i)
 		{
 			// estimation of partial derivative with respect to q_i
+			number_type h = 0.1*stepsize_*c_lengths_[i];
 			Vector<number_type> position_forward = position;
-			position_forward[i] += stepsize_*c_lengths_[i];
+			position_forward[i] += h;
 			Vector<number_type> position_backward = position;
-			position_backward[i] -= stepsize_*c_lengths_[i];
-			output[i] = (potential(position_forward)-potential(position_backward))/2.0/stepsize_/c_lengths_[i];
+			position_backward[i] -= h;
+			output[i] = (potential(position_forward)-potential(position_backward))/2.0/h;
 		}
 
 	}
@@ -399,9 +400,54 @@ public:
 		data.write("data.txt");
 
 		// Calculate fitting result
+		Vector<number_type> result(data.n_variables());
+		Vector<number_type> result_err(result.size());
+		data.mean(result, result_err);
 		Vector<number_type> popt(initial.size());
 		Vector<number_type> perr(initial.size());
-		data.mean(popt, perr);
+		for (size_type i = 0; i < popt.size(); ++i)
+		{
+			popt[i] = result[i];
+			perr[i] = result_err[i];
+		}
+
+		// Calculate minimal chi2_red and its error
+		number_type chi2redmin = potential(popt)*temperature_;
+		Vector<number_type> derivatives(popt.size());
+		grad_potential(derivatives, popt);
+		derivatives *= temperature_;
+		 	// procedure to calculate integrated autocorrelation time
+		number_type C_F = abs(data.gamma_chi2red(derivatives, 0));
+		size_type W = 0;
+		number_type gamma_old;
+		number_type gamma_current;
+		for (size_type t = 1; t <= data.entries_per_variable(); ++t)
+		{
+			gamma_current = abs(data.gamma_chi2red(derivatives, t));
+
+			C_F += 2.0 * gamma_current;
+
+			// finding optimal summation window W
+			if (t>1)
+			{
+				if (gamma_old < gamma_current)
+				{
+					W = t;
+					break;
+				}
+			}
+
+			gamma_old = abs(gamma_current);
+		}
+		number_type v_F = abs(data.gamma_chi2red(derivatives, 0));
+
+		number_type time_F = C_F/2.0/v_F;
+		number_type time_F_err = time_F * sqrt(4./data.entries_per_variable()*(W+1./2- time_F )) + C_F*exp(-1.*W/time_F);
+		
+		std::cout << "Integrated autocorrelation time for chi2_red_min: "
+		<< time_F << " + - " << time_F_err << "\n";
+		number_type ESS = data.entries_per_variable()/(2.*time_F); // effective sample size
+		number_type chi2redmin_err = sqrt(v_F/ESS);
 	
 
 		// report total calculation time
@@ -419,12 +465,12 @@ public:
 			std::cout << "Parameter " << i << " : " << popt[i] << " + - " << perr[i]  << "\n";
 		}
 
-		number_type chi2redmin = potential(popt)*temperature_;
+		
 		number_type chi2redmean = data.mean(5);
 		number_type chi2reddiff = chi2redmean - chi2redmin;
 		number_type chi2reddiff_theo = initial.size() * temperature_ / 2;
-		std::cout << "chi2_red (best fit): " << chi2redmin << "\n";
-		std::cout << "chi2_red (mean): " << chi2redmean << "\n";
+		std::cout << "chi2_red (best fit): " << chi2redmin << " + - " << chi2redmin_err << "\n";
+		std::cout << "chi2_red (mean): " << chi2redmean << " + - " << result_err[popt.size()] << "\n";
 		std::cout << "Ratio of measured difference to theoretical difference: " 
 		<< chi2reddiff/chi2reddiff_theo << "\n";
 		// report intrinsic uncertainties
@@ -434,6 +480,8 @@ public:
 			std::cout << "Parameter " << i << " : " << intrinsic_err(popt, i)  << "\n";
 		}
 	}
+
+	
 
 	number_type acceptance_rate()
 	{
