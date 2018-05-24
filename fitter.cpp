@@ -24,26 +24,26 @@ int main ()
 	// Estimated search region
 	Vector<double> range_min(popt.size());
 	Vector<double> range_max(popt.size());
-	range_min[0] = 2.15;
-	range_max[0] = 2.40;
-	range_min[1] = -2.0;
-	range_max[1] = -0.6;
-	range_min[2] = 0.1;
-	range_max[2] = 0.8;
-	range_min[3] = 1.6;
-	range_max[3] = 2.4;
-	range_min[4] = -2.8;
-	range_max[4] = -1.8;
+	range_min[0] = 2.24;
+	range_max[0] = 2.35;
+	range_min[1] = -1.4;
+	range_max[1] = -0.9;
+	range_min[2] = 0.2;
+	range_max[2] = 0.4;
+	range_min[3] = 1.88;
+	range_max[3] = 2.08;
+	range_min[4] = -2.58;
+	range_max[4] = -2.08;
 
 	//initialize HMC opbject
-	HMC<double> sampler(x_data, y_data, dy_data, 1e-2, 15, 35, 0.1);
+	HMC<double> sampler(x_data, y_data, dy_data, 5e-3, 10, 20, 0.01);
 	
 	/* PRELIMINARY RUN TOOLS */
 	// draws positions and returns acceptance rates in a file (to adjust leapfrog step size)
 	//sampler.get_acceptance_rates(range_min, range_max, 400, 50, "preliminary_tools/acceptrates.txt");
 	
 	// returns autocorrelation lengths for random starting points (to adjust number of leapfrog steps)
-	//sampler.get_optimal_number_of_steps(range_min, range_max, 500, 150, "preliminary_tools/correlation_times.txt");
+	//sampler.get_optimal_number_of_steps(range_min, range_max, 500, 120, "preliminary_tools/correlation_times.txt");
 
 
 	/* ACTUAL RUN */

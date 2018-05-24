@@ -126,7 +126,11 @@ public:
 		Vector<number_type> autocorr_times(n_popt_);
 		Vector<number_type> autocorr_times_err(n_popt_);
 		autocorr_time(autocorr_times, autocorr_times_err); // calculate integrated autocorrelation times
-
+		std::cout << "Integrated autocorrelation times: \n";
+		for (size_type i = 0; i < autocorr_times.size(); ++i)
+		{
+			std::cout << "Parameter " << i << " : " << autocorr_times[i] << " + - " << autocorr_times_err[i] << "\n";
+		}
 	
 
 		for (size_type i = 0; i<n_popt_; ++i)
@@ -163,7 +167,7 @@ public:
 		assert(times_err.size() == n_popt_);
 		for (size_type i = 0; i < times.size(); ++i)
 		{
-			std::cout << "Check " << i << "\n";
+			std::cout << "Calculating autocorrelation time for parameter " << i+1  << " / " << times.size() << "\n";
 			// Calculate integrated autocorrelation time for parameter i
 			number_type C = abs(this->gamma(i, i, 0));
 			size_type W = 0;
@@ -172,6 +176,8 @@ public:
 			for (size_type t = 1; t<=entries_per_variable_; ++t)
 			{
 				gamma_current = abs(this->gamma(i, i, t));
+				// if (i == 0)
+				// 	std::cout << this->gamma(i, i, t-1) << "\n";
 				C+= 2*gamma_current;
 
 				/* 

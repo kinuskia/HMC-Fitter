@@ -407,13 +407,20 @@ public:
 		std::cout << "Burn-in length: " << data.get_burn_in_length() << "\n";
 
 		// report fitting result
+		std::cout << "FITTING RESULT: \n";
 		for (size_type i = 0; i < initial.size(); ++i)
 		{
 			std::cout << "Parameter " << i << " : " << popt[i] << " + - " << perr[i]  << "\n";
 		}
 
-		std::cout << "chi2_red: " << potential(popt)*temperature_ << "\n";
-
+		number_type chi2redmin = potential(popt)*temperature_;
+		number_type chi2redmean = data.mean(5);
+		number_type chi2reddiff = chi2redmean - chi2redmin;
+		number_type chi2reddiff_theo = initial.size() * temperature_ / 2;
+		std::cout << "chi2_red (best fit): " << chi2redmin << "\n";
+		std::cout << "chi2_red (mean): " << chi2redmean << "\n";
+		std::cout << "Ratio of measured difference to theoretical difference: " 
+		<< chi2reddiff/chi2reddiff_theo << "\n";
 		// report intrinsic uncertainties
 		std::cout << "Intrinsic uncertainties: \n";
 		for (size_type i = 0; i < initial.size(); ++i)
