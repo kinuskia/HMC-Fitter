@@ -2,6 +2,7 @@
 #define HMC_HPP
 
 #include "vector.hpp"
+#include "matrix.hpp"
 #include <assert.h>
 #include <random>
 #include <ctime>
@@ -74,10 +75,38 @@ public:
 		return sqrt(2.0/sec_deriv_chi2);
 	}
 
+	/* Calculate intrinsic uncertainty of fitting result */
+	void intrinsic_err(const Vector<number_type> & position, Vector<number_type> & errors)
+	{
+		Matrix<number_type> Hessian(position.size(), position.size());
+		for (size_type i = 0; i < Hessian.rowsize(); ++i)
+		{
+			for (size_type j = 0; j <= i; ++j) 
+			{
+				Hessian(i, j) = sec_deriv_potential(position, i, j);
+				if (i != j)
+				{
+					Hessian(j, i) = Hessian(i, j); // Using symmetry of second derivatives
+				}
+			}
+		}
+		size_type d_of_freedom = x_data_.size() - position.size();
+		Hessian *=  d_of_freedom * temperature_;
+		Hessian /= 2.0;
+		Matrix<number_type> pcov(Hessian.rowsize(), Hessian.colsize());
+		MatrixInverse(Hessian, pcov);
+
+		for (size_type i = 0; i < errors.size(); ++i)
+		{
+			errors[i] = sqrt(pcov[i][i]);
+		}
+	}
+
 	/* second derivative of the potential with respect to parameter i */
 	number_type sec_deriv_potential (const Vector<number_type> & position, size_type i)
 	{
-		number_type h = c_lengths_[i]*stepsize_;
+		assert( i >= 0 && i < position.size()); // Verify that index is not out of bounds 
+		number_type h = 0.1 * c_lengths_[i]*stepsize_;
 		Vector<number_type> position_forward = position;
 		position_forward[i] += h;
 		Vector<number_type> position_backward = position;
@@ -85,6 +114,41 @@ public:
 
 		return (potential(position_backward)-2.0*potential(position)+potential(position_forward))/h/h;
 	}
+
+	/* mixed second derivative of the potential with respect to parameters i ans j */
+	number_type sec_deriv_potential (const Vector<number_type> & position, size_type i, size_type j)
+	{
+		if (i == j)
+		{
+			return sec_deriv_potential(position, i);
+		}
+		else
+		{
+			assert( i >= 0 && i < position.size()); // Verify that index is not out of bounds
+			assert( j >= 0 && j < position.size());
+			number_type hi = 0.1 * c_lengths_[i]*stepsize_;
+			number_type hj = 0.1 * c_lengths_[j]*stepsize_;
+			Vector<number_type> position_ff = position; // f: forward, b: backward
+			position_ff[i] += hi;
+			position_ff[j] += hj;
+			number_type pot_ff = potential(position_ff);
+			Vector<number_type> position_bb = position; 
+			position_bb[i] -= hi;
+			position_bb[j] -= hj;
+			number_type pot_bb = potential(position_bb);
+			Vector<number_type> position_fb = position; 
+			position_fb[i] += hi;
+			position_fb[j] -= hj;
+			number_type pot_fb = potential(position_fb);
+			Vector<number_type> position_bf = position; 
+			position_bf[i] -= hi;
+			position_bf[j] += hj;
+			number_type pot_bf = potential(position_bf);
+
+			return (pot_ff - pot_bf - pot_fb + pot_bb)/4.0/hi/hj;
+		}
+	}
+
 
 
 
@@ -466,18 +530,21 @@ public:
 		}
 
 		
-		number_type chi2redmean = data.mean(5);
+		number_type chi2redmean = result[popt.size()];
 		number_type chi2reddiff = chi2redmean - chi2redmin;
 		number_type chi2reddiff_theo = initial.size() * temperature_ / 2;
 		std::cout << "chi2_red (best fit): " << chi2redmin << " + - " << chi2redmin_err << "\n";
 		std::cout << "chi2_red (mean): " << chi2redmean << " + - " << result_err[popt.size()] << "\n";
 		std::cout << "Ratio of measured difference to theoretical difference: " 
 		<< chi2reddiff/chi2reddiff_theo << "\n";
+		
 		// report intrinsic uncertainties
 		std::cout << "Intrinsic uncertainties: \n";
-		for (size_type i = 0; i < initial.size(); ++i)
+		Vector<number_type> err_intr(popt.size());
+		intrinsic_err(popt, err_intr);
+		for (size_type i = 0; i < err_intr.size(); ++i)
 		{
-			std::cout << "Parameter " << i << " : " << intrinsic_err(popt, i)  << "\n";
+			std::cout << "Parameter " << i << " : " << err_intr[i]  << "\n";
 		}
 	}
 

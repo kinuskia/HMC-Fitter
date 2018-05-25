@@ -1,73 +1,62 @@
 import numpy as np 
 import matplotlib.pyplot as plt 
 
-n, a, b, c, d, e, U, accept = np.loadtxt("data.txt", unpack = True)
+n, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, U, accept = np.loadtxt("data.txt", unpack = True)
+
+keep = (U < 100)
+
+parameters = [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9]
 
 plt.figure(1)
-plt.plot(n, a)
-plt.xlabel("n")
-plt.ylabel("popt[0]")
-plt.savefig("plots/popt0.pdf", format = "pdf", bbox_inches = "tight")
-
-plt.figure(2)
-plt.plot(n, b)
-plt.xlabel("n")
-plt.ylabel("popt[1]")
-plt.savefig("plots/popt1.pdf", format = "pdf", bbox_inches = "tight")
-
-plt.figure(3)
-plt.plot(n, c)
-plt.xlabel("n")
-plt.ylabel("popt[2]")
-plt.savefig("plots/popt2.pdf", format = "pdf", bbox_inches = "tight")
-
-plt.figure(4)
-plt.plot(n, d)
-plt.xlabel("n")
-plt.ylabel("popt[3]")
-plt.savefig("plots/popt3.pdf", format = "pdf", bbox_inches = "tight")
-
-plt.figure(5)
-plt.plot(n, e)
-plt.xlabel("n")
-plt.ylabel("popt[4]")
-plt.savefig("plots/popt4.pdf", format = "pdf", bbox_inches = "tight")
-
-plt.figure(6)
-plt.hist(a, 300)
-plt.xlabel("popt[0]")
-plt.ylabel("#")
-plt.savefig("plots/hist_popt0.pdf", format = "pdf", bbox_inches = "tight")
-
-plt.figure(7)
-plt.hist(b, 300)
-plt.xlabel("popt[1]")
-plt.ylabel("#")
-plt.savefig("plots/hist_popt1.pdf", format = "pdf", bbox_inches = "tight")
-
-plt.figure(8)
-plt.hist(c, 300)
-plt.xlabel("popt[2]")
-plt.ylabel("#")
-plt.savefig("plots/hist_popt2.pdf", format = "pdf", bbox_inches = "tight")
-
-plt.figure(9)
-plt.hist(d, 300)
-plt.xlabel("popt[3]")
-plt.ylabel("#")
-plt.savefig("plots/hist_popt3.pdf", format = "pdf", bbox_inches = "tight")
-
-plt.figure(10)
-plt.hist(e, 300)
-plt.xlabel("popt[4]")
-plt.ylabel("#")
-plt.savefig("plots/hist_popt4.pdf", format = "pdf", bbox_inches = "tight")
-
-plt.figure(11)
-plt.hist(U, 300)
+plt.hist(U[keep], 300)
 plt.xlabel("$\\chi^2_\\mathrm{red}$")
 plt.ylabel("#")
 plt.savefig("plots/hist_U.pdf", format = "pdf", bbox_inches = "tight")
+plt.close(1)
+plt.figure(2)
+plt.plot(n[keep], U[keep])
+plt.xlabel("$\\chi^2_\\mathrm{red}$")
+plt.ylabel("#")
+plt.savefig("plots/U.pdf", format = "pdf", bbox_inches = "tight")
+plt.close(1)
+
+counter_param = 0
+counter_fig = 3
+n = n[keep]
+
+for item in parameters:
+	item = item[keep]
+	plt.figure(counter_fig)
+	plt.plot(n, item)
+	plt.xlabel("n")
+	lab1 = "popt[" + str(counter_param) + "]"
+	plt.ylabel(lab1)
+	filename1 = "plots/popt" + str(counter_param) + ".pdf"
+	plt.savefig(filename1, format = "pdf", bbox_inches = "tight")
+	plt.close(counter_fig)
+	counter_fig = counter_fig + 1
+	
+	plt.figure(counter_fig)
+	plt.hist(item, 300)
+	plt.xlabel(lab1)
+	plt.ylabel("#")
+	filename2 = "plots/hist_popt" + str(counter_param) + ".pdf"
+	plt.savefig(filename2, format = "pdf", bbox_inches = "tight")
+	plt.close(counter_fig)
+	counter_fig = counter_fig + 1
+	counter_param = counter_param + 1
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

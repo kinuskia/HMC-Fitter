@@ -6,19 +6,25 @@
 
 double f(double x, Vector<double> popt)
 {
-	return popt[0] + popt[1]*exp(-popt[2]*x)*sin(popt[3]*x + popt[4]);
+	return popt[0] * atan(popt[1]*x +popt[2]) + popt[3]+ popt[4]*exp(-(x-popt[5])*(x-popt[5])/2/popt[6]/popt[6]) + popt[7]*exp(-(x-popt[8])*(x-popt[8])/2/popt[9]/popt[9]);
 }
 
 
 int main ()
 {
-	std::size_t n_data = 40;
-	Vector<double> popt(5);
-	popt[0] = 2.3;
+	std::size_t n_data = 60;
+	Vector<double> popt(10);
+	popt[0] = -1.0;
 	popt[1] = 1.2;
-	popt[2] = 0.3;
-	popt[3] = 2.0;
-	popt[4] = 0.8;
+	popt[2] = -3.0;
+	popt[3] = 3.0;
+	popt[4] = 4.;
+	popt[5] = 4.;
+	popt[6] = 1.2;
+	popt[7] = 5.;
+	popt[8] = 7.;
+	popt[9] = 0.7;
+	
 	Vector<double> pstd(popt.size());
 	double rel = 0.02;
 	double abs = 0.02;

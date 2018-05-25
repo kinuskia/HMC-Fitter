@@ -95,6 +95,9 @@ public:
 			}
 		}
 
+		// Recalculate entries per variable
+		entries_per_variable_ = (data_.size()/n_variables_ - thermalization_); // discarding non thermalized data
+
 	}
 
 	number_type get_burn_in_length() const
@@ -125,6 +128,7 @@ public:
 
 		// Determine burn-in length
 		determine_burn_in_length();
+
 
 		// Calculation of the mean vector
 		average_vector = 0;
@@ -216,7 +220,7 @@ public:
 			size_type W = 0;
 			number_type gamma_old;
 			number_type gamma_current;
-			for (size_type t = 1; t<=entries_per_variable_; ++t)
+			for (size_type t = 1; t < entries_per_variable_; ++t)
 			{
 				gamma_current = abs(this->gamma(i, i, t));
 				// if (i == 0)
