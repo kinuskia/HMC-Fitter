@@ -139,8 +139,17 @@ public:
 		size_type d_of_freedom = x_data_.size() - position.size();
 		Hessian *=  d_of_freedom * temperature_;
 		Hessian /= 2.0;
+
 		Matrix<number_type> pcov(Hessian.rowsize(), Hessian.colsize());
 		MatrixInverse(Hessian, pcov);
+		for (size_type i = 0; i < Hessian.rowsize(); ++i)
+		{
+			for (size_type j = 0; j < Hessian.colsize(); ++j)
+			{
+				std::cout << pcov(i, j) << " ";
+			}
+			std::cout << "\n";
+		}
 
 		for (size_type i = 0; i < errors.size(); ++i)
 		{
@@ -152,13 +161,22 @@ public:
 	number_type sec_deriv_potential (const Vector<number_type> & position, size_type i)
 	{
 		assert( i >= 0 && i < position.size()); // Verify that index is not out of bounds 
-		number_type h = 0.1 * c_lengths_[i]*stepsize_;
-		Vector<number_type> position_forward = position;
-		position_forward[i] += h;
-		Vector<number_type> position_backward = position;
-		position_backward[i] -= h;
+		number_type h = 1e-7 * c_lengths_[i]*stepsize_;
+		Vector<number_type> position_f = position;
+		position_f[i] += h;
+		number_type pot_f = potential(position_f);
+		Vector<number_type> position_ff = position;
+		position_ff[i] += 2.*h;
+		number_type pot_ff = potential(position_ff);
+		Vector<number_type> position_b = position;
+		position_b[i] -= h;
+		number_type pot_b = potential(position_b);
+		Vector<number_type> position_bb = position;
+		position_bb[i] -= 2.*h;
+		number_type pot_bb = potential(position_bb);
+		number_type pot = potential(position);
 
-		return (potential(position_backward)-2.0*potential(position)+potential(position_forward))/h/h;
+		return (-1.*pot_ff + 16.*pot_f -30.*pot + 16.*pot_b -1.*pot_bb)/12./h/h;
 	}
 
 	/* mixed second derivative of the potential with respect to parameters i ans j */
@@ -172,26 +190,98 @@ public:
 		{
 			assert( i >= 0 && i < position.size()); // Verify that index is not out of bounds
 			assert( j >= 0 && j < position.size());
-			number_type hi = 0.1 * c_lengths_[i]*stepsize_;
-			number_type hj = 0.1 * c_lengths_[j]*stepsize_;
-			Vector<number_type> position_ff = position; // f: forward, b: backward
-			position_ff[i] += hi;
-			position_ff[j] += hj;
-			number_type pot_ff = potential(position_ff);
-			Vector<number_type> position_bb = position; 
-			position_bb[i] -= hi;
-			position_bb[j] -= hj;
-			number_type pot_bb = potential(position_bb);
-			Vector<number_type> position_fb = position; 
-			position_fb[i] += hi;
-			position_fb[j] -= hj;
-			number_type pot_fb = potential(position_fb);
-			Vector<number_type> position_bf = position; 
-			position_bf[i] -= hi;
-			position_bf[j] += hj;
-			number_type pot_bf = potential(position_bf);
+			number_type hi = 1e-7 * c_lengths_[i]*stepsize_;
+			number_type hj = 1e-7 * c_lengths_[j]*stepsize_;
 
-			return (pot_ff - pot_bf - pot_fb + pot_bb)/4.0/hi/hj;
+			Vector<number_type> position_2b_2b = position; // f: forward, b: backward
+			position_2b_2b[i] -= 2.*hi;
+			position_2b_2b[j] -= 2.*hj;
+			number_type pot_2b_2b = potential(position_2b_2b);
+
+			Vector<number_type> position_2b_1b = position; 
+			position_2b_1b[i] -= 2.*hi;
+			position_2b_1b[j] -= 1.*hj;
+			number_type pot_2b_1b = potential(position_2b_1b);
+
+			Vector<number_type> position_2b_1f = position; 
+			position_2b_1f[i] -= 2.*hi;
+			position_2b_1f[j] += 1.*hj;
+			number_type pot_2b_1f = potential(position_2b_1f);
+
+			Vector<number_type> position_2b_2f = position; 
+			position_2b_2f[i] -= 2.*hi;
+			position_2b_2f[j] += 2.*hj;
+			number_type pot_2b_2f = potential(position_2b_2f);
+
+			Vector<number_type> position_1b_2b = position; 
+			position_1b_2b[i] -= 1.*hi;
+			position_1b_2b[j] -= 2.*hj;
+			number_type pot_1b_2b = potential(position_1b_2b);
+
+			Vector<number_type> position_1b_1b = position; 
+			position_1b_1b[i] -= 1.*hi;
+			position_1b_1b[j] -= 1.*hj;
+			number_type pot_1b_1b = potential(position_1b_1b);
+
+			Vector<number_type> position_1b_1f = position; 
+			position_1b_1f[i] -= 1.*hi;
+			position_1b_1f[j] += 1.*hj;
+			number_type pot_1b_1f = potential(position_1b_1f);
+
+			Vector<number_type> position_1b_2f = position; 
+			position_1b_2f[i] -= 1.*hi;
+			position_1b_2f[j] += 2.*hj;
+			number_type pot_1b_2f = potential(position_1b_2f);
+
+			Vector<number_type> position_1f_2b = position; 
+			position_1f_2b[i] += 1.*hi;
+			position_1f_2b[j] -= 2.*hj;
+			number_type pot_1f_2b = potential(position_1f_2b);
+
+			Vector<number_type> position_1f_1b = position; 
+			position_1f_1b[i] += 1.*hi;
+			position_1f_1b[j] -= 1.*hj;
+			number_type pot_1f_1b = potential(position_1f_1b);
+
+			Vector<number_type> position_1f_1f = position; 
+			position_1f_1f[i] += 1.*hi;
+			position_1f_1f[j] += 1.*hj;
+			number_type pot_1f_1f = potential(position_1f_1f);
+
+			Vector<number_type> position_1f_2f = position; 
+			position_1f_2f[i] += 1.*hi;
+			position_1f_2f[j] += 2.*hj;
+			number_type pot_1f_2f = potential(position_1f_2f);
+
+			Vector<number_type> position_2f_2b = position; 
+			position_2f_2b[i] += 2.*hi;
+			position_2f_2b[j] -= 2.*hj;
+			number_type pot_2f_2b = potential(position_2f_2b);
+
+			Vector<number_type> position_2f_1b = position; 
+			position_2f_1b[i] += 2.*hi;
+			position_2f_1b[j] -= 1.*hj;
+			number_type pot_2f_1b = potential(position_2f_1b);
+
+			Vector<number_type> position_2f_1f = position; 
+			position_2f_1f[i] += 2.*hi;
+			position_2f_1f[j] += 1.*hj;
+			number_type pot_2f_1f = potential(position_2f_1f);
+
+			Vector<number_type> position_2f_2f = position; 
+			position_2f_2f[i] += 2.*hi;
+			position_2f_2f[j] += 2.*hj;
+			number_type pot_2f_2f = potential(position_2f_2f);
+
+			number_type result = 
+			(pot_2b_2b - 8. * pot_2b_1b + 8. * pot_2b_1f - pot_2b_2f) +
+			(pot_1b_2b - 8. * pot_1b_1b + 8. * pot_1b_1f - pot_1b_2f) * (-8.) +
+			(pot_1f_2b - 8. * pot_1f_1b + 8. * pot_1f_1f - pot_1f_2f) * 8. -
+			(pot_2f_2b - 8. * pot_2f_1b + 8. * pot_2f_1f - pot_2f_2f);
+			result /= (144. * hi * hi);
+			
+
+			return result;
 		}
 	}
 

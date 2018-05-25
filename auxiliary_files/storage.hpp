@@ -53,7 +53,7 @@ public:
 	/* Determine median of parameter i */
 	number_type median(size_type index)
 	{
-		// Fill a vector with paramter values
+		// Fill a vector with parameter values
 		Vector<number_type> values(data_.size()/n_variables_);
 		for (size_type i = 0; i < values.size(); ++i)
 		{
@@ -223,8 +223,8 @@ public:
 			for (size_type t = 1; t < entries_per_variable_; ++t)
 			{
 				gamma_current = abs(this->gamma(i, i, t));
-				// if (i == 0)
-				// 	std::cout << this->gamma(i, i, t-1) << "\n";
+				//if (i == 0)
+					//std::cout << this->gamma(i, i, t-1) << "\n";
 				C+= 2.*gamma_current;
 
 				/* 

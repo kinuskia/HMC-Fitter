@@ -44,34 +44,44 @@ int main ()
 	// range_max[8] = 8.;
 	// range_min[9] = 0.01;
 	// range_max[9] = 2.;
-	range_min[0] = -1.1;
+	range_min[0] = -1.05;
 	range_max[0] = -1.0;
-	range_min[1] = 1.0;
-	range_max[1] = 1.2;
+	range_min[1] = 1.04;
+	range_max[1] = 1.17;
 	range_min[2] = -1.6;
-	range_max[2] = -1.4;
-	range_min[3] = 2.9;
-	range_max[3] = 3.1;
-	range_min[4] = 3.9;
-	range_max[4] = 4.1;
-	range_min[5] = 3.8;
-	range_max[5] = 4.0;
-	range_min[6] = 1.6;
-	range_max[6] = 1.8;
-	range_min[7] = 4.2;
-	range_max[7] = 4.4;
-	range_min[8] = 7.0;
-	range_max[8] = 7.2;
-	range_min[9] = 0.5;
-	range_max[9] = 0.7;
+	range_max[2] = -1.43;
+	range_min[3] = 2.96;
+	range_max[3] = 3.04;
+	range_min[4] = 3.95;
+	range_max[4] = 4.0;
+	range_min[5] = 3.88;
+	range_max[5] = 3.91;
+	range_min[6] = 1.65;
+	range_max[6] = 1.70;
+	range_min[7] = 4.25;
+	range_max[7] = 4.31;
+	range_min[8] = 7.1275;
+	range_max[8] = 7.1375;
+	range_min[9] = 0.61;
+	range_max[9] = 0.62;
 
 	// Characteristic length scales for the parameters // default 1
 	Vector<double> c_lengths(popt.size(), 1);
+	c_lengths[0] = 0.05;
+	c_lengths[1] = 0.13;
+	c_lengths[2] = 0.17;
+	c_lengths[3] = 0.08;
+	c_lengths[4] = 0.05;
+	c_lengths[5] = 0.03;
+	c_lengths[6] = 0.05;
+	c_lengths[7] = 0.06;
+	c_lengths[8] = 0.01;
+	c_lengths[9] = 0.01;
 	
 
 
 	//initialize HMC opbject
-	HMC<double> sampler(x_data, y_data, dy_data, range_min, range_max, c_lengths, 5e-4, 20, 30, 0.01);
+	HMC<double> sampler(x_data, y_data, dy_data, range_min, range_max, c_lengths, 2e-2, 10, 30, 1e-3);
 	//sampler.bounds_fixed(true);
 	//sampler.do_analysis(false);
 	//sampler.discard_from(50);
@@ -81,7 +91,7 @@ int main ()
 	//sampler.get_acceptance_rates(range_min, range_max, 200, 50, "preliminary_tools/acceptrates.txt");
 	
 	// returns autocorrelation lengths for random starting points (to adjust number of leapfrog steps)
-	//sampler.get_optimal_number_of_steps(range_min, range_max, 300, 500, "preliminary_tools/correlation_times.txt");
+	//sampler.get_optimal_number_of_steps(range_min, range_max, 300, 700, "preliminary_tools/correlation_times.txt");
 
 
 	/* ACTUAL RUN */
