@@ -18,10 +18,16 @@ public:
 	typedef std::size_t size_type;
 	typedef REAL number_type;
 	/* Standard constructor, fed with measured data */
-	HMC(Vector<number_type> x_data, Vector<number_type> y_data, Vector<number_type> dy_data, Vector<number_type> c_lengths, number_type stepsize, size_type n_steps_min, size_type n_steps_max, number_type temperature)
+	HMC(Vector<number_type> x_data, Vector<number_type> y_data, Vector<number_type> dy_data, Vector<number_type> range_min, Vector<number_type> range_max, Vector<number_type> c_lengths, number_type stepsize, size_type n_steps_min, size_type n_steps_max, number_type temperature)
 	: x_data_(x_data)
 	, y_data_(y_data)
-	, dy_data_(dy_data) 
+	, dy_data_(dy_data)
+	, range_min_(range_min)
+	, range_max_(range_max) 
+	, bounds_fixed_(false)
+	, do_analysis_(true)
+	, discard_data_(false)
+	, chi2redmax_(0)
 	, c_lengths_(c_lengths)
 	, stepsize_(stepsize)
 	, n_steps_min_(n_steps_min)
@@ -49,6 +55,46 @@ public:
 		size_type d_of_freedom = x_data_.size() - q.size();
 		return chi2/d_of_freedom/temperature_;
 
+	}
+
+	/* setter for whether bounds are supposed to be fixed */
+	void bounds_fixed(bool fixed)
+	{
+		bounds_fixed_ = fixed;
+	}
+
+	/* Setter of whether output includes analysis */
+	void do_analysis (bool yes)
+	{
+		do_analysis_ = yes;
+	}
+
+	/* Setter for maximal chi2red value */
+	void discard_from(number_type value)
+	{
+		chi2redmax_ = value;
+		discard_data_ = true;
+	}
+
+	/* Setter for whether data above chi2redmax should be discarded */
+	void discard_data(bool yes)
+	{
+		discard_data_ = yes;
+	}
+
+	/* check if given position is within bounds */
+	bool is_in_range(Vector<number_type> position) const
+	{
+		bool inbounds = true;
+		for (size_type i = 0; i < position.size(); ++i)
+		{
+			inbounds = (position[i] < range_max_[i]) && (position[i] > range_min_[i]);
+			if (!inbounds)
+			{
+				break;
+			}
+		}
+		return inbounds;
 	}
 
 	/* gradient of the potential */
@@ -394,15 +440,23 @@ public:
 		Accept or reject the state at end of trajectory, returning either
 		the position at the end of the trajectory or the initial position
 		*/
+
 		std::random_device rd;
 		std::mt19937 gen(rd());
 		std::uniform_real_distribution<> dis_unif(0, 1);
-		if (dis_unif(gen) < exp(current_U+current_K-proposed_U-proposed_K))
+		bool accepted = dis_unif(gen) < exp(current_U+current_K-proposed_U-proposed_K);
+		if (bounds_fixed_)
+		{
+			accepted = accepted && is_in_range(q); // automatical rejection if proposition is out of bounds
+		}
+		if (accepted)
 		{
 			current_q = q; // accept
 			counter_accepted_++;
 		}
 		// otherwise q is refused.
+
+
 
 	}
 
@@ -462,89 +516,98 @@ public:
 
 		// write data to output file
 		data.write("data.txt");
-
-		// Calculate fitting result
-		Vector<number_type> result(data.n_variables());
-		Vector<number_type> result_err(result.size());
-		data.mean(result, result_err);
-		Vector<number_type> popt(initial.size());
-		Vector<number_type> perr(initial.size());
-		for (size_type i = 0; i < popt.size(); ++i)
+		
+		if (discard_data_)
 		{
-			popt[i] = result[i];
-			perr[i] = result_err[i];
+			data.write("data_kept.txt", chi2redmax_);
 		}
 
-		// Calculate minimal chi2_red and its error
-		number_type chi2redmin = potential(popt)*temperature_;
-		Vector<number_type> derivatives(popt.size());
-		grad_potential(derivatives, popt);
-		derivatives *= temperature_;
-		 	// procedure to calculate integrated autocorrelation time
-		number_type C_F = abs(data.gamma_chi2red(derivatives, 0));
-		size_type W = 0;
-		number_type gamma_old;
-		number_type gamma_current;
-		for (size_type t = 1; t <= data.entries_per_variable(); ++t)
+		// do analysis if requested
+		if (do_analysis_)
 		{
-			gamma_current = abs(data.gamma_chi2red(derivatives, t));
-
-			C_F += 2.0 * gamma_current;
-
-			// finding optimal summation window W
-			if (t>1)
+			// Calculate fitting result
+			Vector<number_type> result(data.n_variables());
+			Vector<number_type> result_err(result.size());
+			data.mean(result, result_err);
+			Vector<number_type> popt(initial.size());
+			Vector<number_type> perr(initial.size());
+			for (size_type i = 0; i < popt.size(); ++i)
 			{
-				if (gamma_old < gamma_current)
-				{
-					W = t;
-					break;
-				}
+				popt[i] = result[i];
+				perr[i] = result_err[i];
 			}
 
-			gamma_old = abs(gamma_current);
-		}
-		number_type v_F = abs(data.gamma_chi2red(derivatives, 0));
+			// Calculate minimal chi2_red and its error
+			number_type chi2redmin = potential(popt)*temperature_;
+			Vector<number_type> derivatives(popt.size());
+			grad_potential(derivatives, popt);
+			derivatives *= temperature_;
+			 	// procedure to calculate integrated autocorrelation time
+			number_type C_F = abs(data.gamma_chi2red(derivatives, 0));
+			size_type W = 0;
+			number_type gamma_old;
+			number_type gamma_current;
+			for (size_type t = 1; t <= data.entries_per_variable(); ++t)
+			{
+				gamma_current = abs(data.gamma_chi2red(derivatives, t));
 
-		number_type time_F = C_F/2.0/v_F;
-		number_type time_F_err = time_F * sqrt(4./data.entries_per_variable()*(W+1./2- time_F )) + C_F*exp(-1.*W/time_F);
+				C_F += 2.0 * gamma_current;
+
+				// finding optimal summation window W
+				if (t>1)
+				{
+					if (gamma_old < gamma_current)
+					{
+						W = t;
+						break;
+					}
+				}
+
+				gamma_old = abs(gamma_current);
+			}
+			number_type v_F = abs(data.gamma_chi2red(derivatives, 0));
+
+			number_type time_F = C_F/2.0/v_F;
+			number_type time_F_err = time_F * sqrt(4./data.entries_per_variable()*(W+1./2- time_F )) + C_F*exp(-1.*W/time_F);
+			
+			std::cout << "Integrated autocorrelation time for chi2_red_min: "
+			<< time_F << " + - " << time_F_err << "\n";
+			number_type ESS = data.entries_per_variable()/(2.*time_F); // effective sample size
+			number_type chi2redmin_err = sqrt(v_F/ESS);
 		
-		std::cout << "Integrated autocorrelation time for chi2_red_min: "
-		<< time_F << " + - " << time_F_err << "\n";
-		number_type ESS = data.entries_per_variable()/(2.*time_F); // effective sample size
-		number_type chi2redmin_err = sqrt(v_F/ESS);
-	
 
-		// report total calculation time
-		std::time_t end = std::time(nullptr);
-		number_type diff = (end - start)/60;
-		std::cout << "Total calculation time in min : " << diff << "\n";
+			// report total calculation time
+			std::time_t end = std::time(nullptr);
+			number_type diff = (end - start)/60;
+			std::cout << "Total calculation time in min : " << diff << "\n";
 
-		// report burn-in length
-		std::cout << "Burn-in length: " << data.get_burn_in_length() << "\n";
+			// report burn-in length
+			std::cout << "Burn-in length: " << data.get_burn_in_length() << "\n";
 
-		// report fitting result
-		std::cout << "FITTING RESULT: \n";
-		for (size_type i = 0; i < initial.size(); ++i)
-		{
-			std::cout << "Parameter " << i << " : " << popt[i] << " + - " << perr[i]  << "\n";
-		}
+			// report fitting result
+			std::cout << "FITTING RESULT: \n";
+			for (size_type i = 0; i < initial.size(); ++i)
+			{
+				std::cout << "Parameter " << i << " : " << popt[i] << " + - " << perr[i]  << "\n";
+			}
 
-		
-		number_type chi2redmean = result[popt.size()];
-		number_type chi2reddiff = chi2redmean - chi2redmin;
-		number_type chi2reddiff_theo = initial.size() * temperature_ / 2;
-		std::cout << "chi2_red (best fit): " << chi2redmin << " + - " << chi2redmin_err << "\n";
-		std::cout << "chi2_red (mean): " << chi2redmean << " + - " << result_err[popt.size()] << "\n";
-		std::cout << "Ratio of measured difference to theoretical difference: " 
-		<< chi2reddiff/chi2reddiff_theo << "\n";
-		
-		// report intrinsic uncertainties
-		std::cout << "Intrinsic uncertainties: \n";
-		Vector<number_type> err_intr(popt.size());
-		intrinsic_err(popt, err_intr);
-		for (size_type i = 0; i < err_intr.size(); ++i)
-		{
-			std::cout << "Parameter " << i << " : " << err_intr[i]  << "\n";
+			
+			number_type chi2redmean = result[popt.size()];
+			number_type chi2reddiff = chi2redmean - chi2redmin;
+			number_type chi2reddiff_theo = initial.size() * temperature_ / 2;
+			std::cout << "chi2_red (best fit): " << chi2redmin << " + - " << chi2redmin_err << "\n";
+			std::cout << "chi2_red (mean): " << chi2redmean << " + - " << result_err[popt.size()] << "\n";
+			std::cout << "Ratio of measured difference to theoretical difference: " 
+			<< chi2reddiff/chi2reddiff_theo << "\n";
+			
+			// report intrinsic uncertainties
+			std::cout << "Intrinsic uncertainties: \n";
+			Vector<number_type> err_intr(popt.size());
+			intrinsic_err(popt, err_intr);
+			for (size_type i = 0; i < err_intr.size(); ++i)
+			{
+				std::cout << "Parameter " << i << " : " << err_intr[i]  << "\n";
+			}
 		}
 	}
 
@@ -634,6 +697,12 @@ private:
 	Vector<number_type> y_data_;
 	Vector<number_type> dy_data_;
 	Model<number_type> model_;
+	Vector<number_type> range_min_;
+	Vector<number_type> range_max_;
+	bool bounds_fixed_;
+	bool do_analysis_;
+	bool discard_data_;
+	number_type chi2redmax_;
 
 	/* parameters for the leapfrog integrator */
 	number_type stepsize_;

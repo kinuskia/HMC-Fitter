@@ -332,6 +332,38 @@ public:
 
 	}
 
+	/* Overload: Write data in an output file while discarding data with chi2red larger than a limit */
+	void write(std::string filename, number_type maxvalue)
+	{
+		std::ofstream outfile(filename);
+		size_type N = data_.size();
+		for (size_type i = 0; i < N; ++i)
+		{
+			if ((i%n_variables_) == 0) // add counter at beginning of line
+			{
+				// check if chi2 is below maxvalue
+				if (data_[i+n_popt_] > maxvalue)
+				{
+					i += n_variables_-1;
+					continue;
+				}
+
+				outfile << i/n_variables_ + 1;
+				outfile << " ";
+			}
+
+			outfile << data_[i];
+			
+			if((i%n_variables_) == (n_variables_ - 1)) // new line
+			{
+				outfile << "\n";
+				continue;
+			}
+			outfile << " ";
+		}
+
+	}
+
 
 private:
 	Vector<number_type> data_; // data vector
