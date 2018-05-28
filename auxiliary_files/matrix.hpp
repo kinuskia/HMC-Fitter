@@ -93,6 +93,19 @@ public:
 		return *this;
 	}
 
+	// Assignment operator for scalar
+	Matrix & operator= (number_type s)
+	{
+		for (size_type i = 0; i < rowsize(); ++i)
+		{
+			for (size_type j = 0; j < colsize(); ++j)
+			{
+				(*this)(i, j) *= s;
+			}
+		}
+		return *this;
+	}
+
 	// Addition assignment
 	Matrix & operator+= (const Matrix & B)
 	{
@@ -494,6 +507,93 @@ void MatrixInverse (Matrix<T> & A, Matrix<T> & inverse)
 	
 
 }
+
+// Cholesky decomposition: H is overwritten with entries of G (and G^T)
+
+template<class T>
+void cholesky (Matrix<T> & H)
+{
+	typedef T number_type;
+	for (int i = 0; i < H.rowsize(); ++i) 
+	{
+		for (int j = 0; j <= i; ++j) // using int instead of std::size_t because index becomes negative
+		{
+			number_type sum = H(i, j);
+			for (int k = 0; k <= j-1; ++k)
+			{
+				sum -= H(i, k) * H(j, k);
+			}
+			if ( i > j)
+			{
+				H(i, j) = sum/H(j, j);
+				H(j, i) = sum/H(j, j);
+			}
+			else 
+			{
+				assert(sum > 0);
+				H(i, i) = sqrt(sum);
+			}
+		}
+	}
+}
+
+/* Use Cholesky decomposition to calculate to inverse of a Matrix */
+
+template<class T>
+void MatrixInverse_cholesky (Matrix<T> & A, Matrix<T> & inverse)
+{
+	typedef T number_type;
+	assert(A.colsize() == inverse.colsize());
+	assert(A.rowsize() == inverse.rowsize());
+	inverse = number_type(0.0);
+	cholesky(A);
+
+	// Compute each column of the inverse matrix separately (each column defines a linear system)
+	for (size_type j = 0; j < inverse.colsize(); ++j)
+	{
+		Vector<number_type> x(A.rowsize()); // solution vector
+		Vector<number_type> b(A.rowsize(), 0); // jth column of identity matrix
+		b[j] = 1.0;
+
+		x = number_type(0.0);
+		// solve G y = b
+		Vector<number_type> y = x;
+		for (size_type i = 0; i < A.rowsize(); ++i)
+		{
+			number_type rhs(b[i]);
+			for (size_type k = 0; k < i; ++k)
+			{
+				rhs -= A[i][k] * y[k];
+			}
+			y[i] = rhs / A[i][i];
+		}
+		// solve G^T x = y
+		for (int i = A.rowsize() - 1; i >=0; --i)
+		{
+			number_type rhs(y[i]);
+			for (size_type k = i+1; k < A.colsize(); ++k)
+			{
+				rhs -= A[i][k] * x[k];
+			}
+			x[i] = rhs/A[i][i];
+		}
+
+		// save result to output
+		for (size_type i = 0; i < inverse.rowsize(); ++i)
+		{
+			inverse[i][j] = x[i];
+		}
+
+
+	}
+	
+
+	
+
+
+}
+
+
 
 #endif
 

@@ -125,6 +125,8 @@ public:
 	void intrinsic_err(const Vector<number_type> & position, Vector<number_type> & errors)
 	{
 		Matrix<number_type> Hessian(position.size(), position.size());
+		Vector<number_type> jac(position.size());
+		grad_potential(jac, position);
 		for (size_type i = 0; i < Hessian.rowsize(); ++i)
 		{
 			for (size_type j = 0; j <= i; ++j) 
@@ -138,6 +140,17 @@ public:
 		}
 		size_type d_of_freedom = x_data_.size() - position.size();
 		Hessian *=  d_of_freedom * temperature_;
+		
+		for (size_type i = 0; i < Hessian.rowsize(); ++i)
+		{
+			for (size_type j = 0; j < Hessian.colsize(); ++j)
+			{
+				if (i == j)
+					std::cout << Hessian(i, j) << " ";
+			}
+			std::cout << "\n";
+		}
+		std::cout << "\n";
 		Hessian /= 2.0;
 
 		Matrix<number_type> pcov(Hessian.rowsize(), Hessian.colsize());
@@ -146,7 +159,8 @@ public:
 		{
 			for (size_type j = 0; j < Hessian.colsize(); ++j)
 			{
-				std::cout << pcov(i, j) << " ";
+				if (i == j)
+					std::cout << pcov(i, j) << " ";
 			}
 			std::cout << "\n";
 		}
@@ -161,7 +175,7 @@ public:
 	number_type sec_deriv_potential (const Vector<number_type> & position, size_type i)
 	{
 		assert( i >= 0 && i < position.size()); // Verify that index is not out of bounds 
-		number_type h = 1e-7 * c_lengths_[i]*stepsize_;
+		number_type h = 1e-1 * c_lengths_[i]*stepsize_;
 		Vector<number_type> position_f = position;
 		position_f[i] += h;
 		number_type pot_f = potential(position_f);
@@ -190,8 +204,8 @@ public:
 		{
 			assert( i >= 0 && i < position.size()); // Verify that index is not out of bounds
 			assert( j >= 0 && j < position.size());
-			number_type hi = 1e-7 * c_lengths_[i]*stepsize_;
-			number_type hj = 1e-7 * c_lengths_[j]*stepsize_;
+			number_type hi = 1e-1 * c_lengths_[i]*stepsize_;
+			number_type hj = 1e-1 * c_lengths_[j]*stepsize_;
 
 			Vector<number_type> position_2b_2b = position; // f: forward, b: backward
 			position_2b_2b[i] -= 2.*hi;
