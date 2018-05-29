@@ -18,6 +18,9 @@ void insert(double number, std::size_t counter, Vector<double> &x_data, Vector<d
 
 void read_data(std::string filename, Vector<double> &x_data, Vector<double> &y_data, Vector<double> &dy_data)
 {
+	x_data.clear();
+	y_data.clear();
+	dy_data.clear();
 	std::ifstream infile(filename);
 	std::string line;
 

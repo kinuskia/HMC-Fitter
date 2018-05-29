@@ -40,7 +40,7 @@ public:
 	/* reduced (!) chi2 sum divided by the global temperature used as potential energy */
 	number_type potential(const Vector<number_type> & q)
 	{
-		return model_.chi2(q)/model_.d_of_freedom()/temperature_;
+		return model_.potential(q)/temperature_;
 
 	}
 
@@ -100,6 +100,8 @@ public:
 		}
 
 	}
+
+	// TO DO : Move intrinsic error functions to the model class so that HMC doesn't need d_of_freedom()
 	/* Calculate intrinsic uncertainty of parameter i */
 	number_type intrinsic_err(const Vector<number_type> & position, size_type index)
 	{
@@ -108,6 +110,7 @@ public:
 		return sqrt(2.0/sec_deriv_chi2);
 	}
 
+	// TO DO : Move intrinsic error functions to the model class so that HMC doesn't need d_of_freedom()
 	/* Calculate intrinsic uncertainty of fitting result */
 	void intrinsic_err(const Vector<number_type> & position, Vector<number_type> & errors)
 	{

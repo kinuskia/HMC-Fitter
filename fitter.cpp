@@ -12,62 +12,103 @@
 
 int main ()
 {
-	Vector<double> x_data(0);
-	Vector<double> y_data(0);
-	Vector<double> dy_data(0);
+	Vector<double> t(0);
+	Vector<double> A0l_A0l(0);
+	Vector<double> A0l_A0s(0);
+	Vector<double> A0l_Pl(0);
+	Vector<double> A0l_Ps(0);
+	Vector<double> A0s_A0l(0);
+	Vector<double> A0s_A0s(0);
+	Vector<double> A0s_Pl(0);
+	Vector<double> A0s_Ps(0);
+	Vector<double> Pl_A0l(0);
+	Vector<double> Pl_A0s(0);
+	Vector<double> Pl_Pl(0);
+	Vector<double> Pl_Ps(0);
+	Vector<double> Ps_A0l(0);
+	Vector<double> Ps_A0s(0);
+	Vector<double> Ps_Pl(0);
+	Vector<double> Ps_Ps(0);
+	Vector<double> d_A0l_A0l(0);
+	Vector<double> d_A0l_A0s(0);
+	Vector<double> d_A0l_Pl(0);
+	Vector<double> d_A0l_Ps(0);
+	Vector<double> d_A0s_A0l(0);
+	Vector<double> d_A0s_A0s(0);
+	Vector<double> d_A0s_Pl(0);
+	Vector<double> d_A0s_Ps(0);
+	Vector<double> d_Pl_A0l(0);
+	Vector<double> d_Pl_A0s(0);
+	Vector<double> d_Pl_Pl(0);
+	Vector<double> d_Pl_Ps(0);
+	Vector<double> d_Ps_A0l(0);
+	Vector<double> d_Ps_A0s(0);
+	Vector<double> d_Ps_Pl(0);
+	Vector<double> d_Ps_Ps(0);
 
 	// Read in measured data
-	read_data("Measurement_data_generator/measurements.txt", x_data, y_data, dy_data);
+	read_data("correlators/correlator_A0l-A0l", t, A0l_A0l, d_A0l_A0l);
+	read_data("correlators/correlator_A0l-A0s", t, A0l_A0s, d_A0l_A0s);
+	read_data("correlators/correlator_A0l-Pl", t, A0l_Pl, d_A0l_Pl);
+	read_data("correlators/correlator_A0l-Ps", t, A0l_Ps, d_A0l_Ps);
+	read_data("correlators/correlator_A0s-A0l", t, A0s_A0l, d_A0s_A0l);
+	read_data("correlators/correlator_A0s-A0s", t, A0s_A0s, d_A0s_A0s);
+	read_data("correlators/correlator_A0s-Pl", t, A0s_Pl, d_A0s_Pl);
+	read_data("correlators/correlator_A0s-Ps", t, A0s_Ps, d_A0s_Ps);
+	read_data("correlators/correlator_Pl-A0l", t, Pl_A0l, d_Pl_A0l);
+	read_data("correlators/correlator_Pl-A0s", t, Pl_A0s, d_Pl_A0s);
+	read_data("correlators/correlator_Pl-Pl", t, Pl_Pl, d_Pl_Pl);
+	read_data("correlators/correlator_Pl-Ps", t, Pl_Ps, d_Pl_Ps);
+	read_data("correlators/correlator_Ps-A0l", t, Ps_A0l, d_Ps_A0l);
+	read_data("correlators/correlator_Ps-A0s", t, Ps_A0s, d_Ps_A0s);
+	read_data("correlators/correlator_Ps-Pl", t, Ps_Pl, d_Ps_Pl);
+	read_data("correlators/correlator_Ps-Ps", t, Ps_Ps, d_Ps_Ps);
 
 	// Set up fitting model
-	Model<double> correlators(x_data, y_data, dy_data);
+	Model<double> correlators(
+	t,
+	A0l_A0l,
+	A0l_A0s,
+	A0l_Pl,
+	A0l_Ps,
+	A0s_A0l,
+	A0s_A0s,
+	A0s_Pl,
+	A0s_Ps,
+	Pl_A0l,
+	Pl_A0s,
+	Pl_Pl,
+	Pl_Ps,
+	Ps_A0l,
+	Ps_A0s,
+	Ps_Pl,
+	Ps_Ps,
+	d_A0l_A0l,
+	d_A0l_A0s,
+	d_A0l_Pl,
+	d_A0l_Ps,
+	d_A0s_A0l,
+	d_A0s_A0s,
+	d_A0s_Pl,
+	d_A0s_Ps,
+	d_Pl_A0l,
+	d_Pl_A0s,
+	d_Pl_Pl,
+	d_Pl_Ps,
+	d_Ps_A0l,
+	d_Ps_A0s,
+	d_Ps_Pl,
+	d_Ps_Ps
+	);
 
 	// Vector for fitting parameters
-	Vector<double> popt(10);
+	Vector<double> popt(6);
 
 	// Estimated search region
-	Vector<double> range_min(popt.size());
-	Vector<double> range_max(popt.size());
-	range_min[0] = -4.;
-	range_max[0] = 4.;
-	range_min[1] = 0.;
-	range_max[1] = 5.;
-	range_min[2] = 2.;
-	range_max[2] = 8.;
-	range_min[3] = 0.;
-	range_max[3] = 4.;
-	range_min[4] = 0.5;
-	range_max[4] = 4.;
-	range_min[5] = 2.;
-	range_max[5] = 6.;
-	range_min[6] = 0.01;
-	range_max[6] = 2.;
-	range_min[7] = 0.5;
-	range_max[7] = 5.;
-	range_min[8] = 6.;
-	range_max[8] = 8.;
-	range_min[9] = 0.01;
-	range_max[9] = 2.;
-	// range_min[0] = -1.05;
-	// range_max[0] = -1.0;
-	// range_min[1] = 1.04;
-	// range_max[1] = 1.17;
-	// range_min[2] = -1.6;
-	// range_max[2] = -1.43;
-	// range_min[3] = 2.96;
-	// range_max[3] = 3.04;
-	// range_min[4] = 3.95;
-	// range_max[4] = 4.0;
-	// range_min[5] = 3.88;
-	// range_max[5] = 3.91;
-	// range_min[6] = 1.65;
-	// range_max[6] = 1.70;
-	// range_min[7] = 4.25;
-	// range_max[7] = 4.31;
-	// range_min[8] = 7.1275;
-	// range_max[8] = 7.1375;
-	// range_min[9] = 0.61;
-	// range_max[9] = 0.62;
+	Vector<double> range_min(popt.size(), 0.1);
+	Vector<double> range_max(popt.size(), 0.11);
+	
+	
 
 	// Characteristic length scales for the parameters // default 1
 	Vector<double> c_lengths(popt.size(), 1);
@@ -77,7 +118,7 @@ int main ()
 
 	//initialize HMC opbject
 	HMC<double> sampler(correlators, range_min, range_max, c_lengths, 3e-4, 20, 30, 1e-1);
-	sampler.bounds_fixed(true);
+	sampler.bounds_fixed(false);
 	sampler.do_analysis(false);
 	sampler.discard_from(50);
 
@@ -100,7 +141,7 @@ int main ()
 
 	//sampler.intrinsic_err(popt, perr);
 
-	sampler.walk(1e4, 60*30, popt, 10);
+	sampler.walk(1, 60*30, popt, 10);
 	
 
 	return 0;
