@@ -4,209 +4,70 @@
 #include "../auxiliary_files/matrix.hpp"
 #include <random>
 #include <assert.h>
+#include <fstream>
 
 typedef double number_type;
 typedef std::size_t size_type;
 
-template<typename REAL>
-class Playground
-{
-public:
-	typedef double number_type;
-	typedef std::size_t size_type;
-	Playground(Vector<number_type> c_lengths, number_type stepsize)
-	: c_lengths_(c_lengths)
-	, stepsize_(stepsize)
-	{}
 
-	number_type potential (Vector<number_type> x)
+/* free functions to read in a data file and save it in a vector */
+
+
+void insert(double number, std::size_t counter, Vector<double> &x_data, Vector<double> &y_data, Vector<double> &dy_data)
 {
-	number_type result = -cos(sqrt((2*x[0]-x[1])*(2*x[0]-x[1])+(2*x[0]+x[1])*(2*x[0]+x[1])));
-	return result;
+	if (counter%3 == 0)
+		x_data.push_back(number);
+	if (counter%3 == 1)
+		y_data.push_back(number);
+	if (counter%3 == 2)
+		dy_data.push_back(number);
 }
 
-/* second derivative of the potential with respect to parameter i */
-	number_type sec_deriv_potential (const Vector<number_type> & position, size_type i)
-	{
-		assert( i >= 0 && i < position.size()); // Verify that index is not out of bounds 
-		number_type h = 1e0 * c_lengths_[i]*stepsize_;
-		Vector<number_type> position_f = position;
-		position_f[i] += h;
-		number_type pot_f = potential(position_f);
-		Vector<number_type> position_ff = position;
-		position_ff[i] += 2.*h;
-		number_type pot_ff = potential(position_ff);
-		Vector<number_type> position_b = position;
-		position_b[i] -= h;
-		number_type pot_b = potential(position_b);
-		Vector<number_type> position_bb = position;
-		position_bb[i] -= 2.*h;
-		number_type pot_bb = potential(position_bb);
-		number_type pot = potential(position);
+void read_data(std::string filename, Vector<double> &x_data, Vector<double> &y_data, Vector<double> &dy_data)
+{
+	std::ifstream infile(filename);
+	std::string line;
 
-		number_type result = (-1.*pot_ff + 16.*pot_f -30.*pot + 16.*pot_b -1.*pot_bb)/12./h/h;
-		std::cout << result << "\n";
-		return result;
-	}
-
-	/* mixed second derivative of the potential with respect to parameters i ans j */
-	number_type sec_deriv_potential (const Vector<number_type> & position, size_type i, size_type j)
+	std::size_t counter_numbers = 0;
+	while (infile)
 	{
-		if (i == j)
+		std::getline(infile, line); // Read in current line
+		if (line == "")
 		{
-			return sec_deriv_potential(position, i);
+			continue;  // ignore empty lines
 		}
-		else
+		bool end_of_number = true;
+		std::string numberstring = "";
+		for (int i = 0; i < line.length(); ++i)
 		{
-			assert( i >= 0 && i < position.size()); // Verify that index is not out of bounds
-			assert( j >= 0 && j < position.size());
-			number_type hi = 1e-7 * c_lengths_[i]*stepsize_;
-			number_type hj = 1e-7 * c_lengths_[j]*stepsize_;
-
-			Vector<number_type> position_2b_2b = position; // f: forward, b: backward
-			position_2b_2b[i] -= 2.*hi;
-			position_2b_2b[j] -= 2.*hj;
-			number_type pot_2b_2b = potential(position_2b_2b);
-
-			Vector<number_type> position_2b_1b = position; 
-			position_2b_1b[i] -= 2.*hi;
-			position_2b_1b[j] -= 1.*hj;
-			number_type pot_2b_1b = potential(position_2b_1b);
-
-			Vector<number_type> position_2b_1f = position; 
-			position_2b_1f[i] -= 2.*hi;
-			position_2b_1f[j] += 1.*hj;
-			number_type pot_2b_1f = potential(position_2b_1f);
-
-			Vector<number_type> position_2b_2f = position; 
-			position_2b_2f[i] -= 2.*hi;
-			position_2b_2f[j] += 2.*hj;
-			number_type pot_2b_2f = potential(position_2b_2f);
-
-			Vector<number_type> position_1b_2b = position; 
-			position_1b_2b[i] -= 1.*hi;
-			position_1b_2b[j] -= 2.*hj;
-			number_type pot_1b_2b = potential(position_1b_2b);
-
-			Vector<number_type> position_1b_1b = position; 
-			position_1b_1b[i] -= 1.*hi;
-			position_1b_1b[j] -= 1.*hj;
-			number_type pot_1b_1b = potential(position_1b_1b);
-
-			Vector<number_type> position_1b_1f = position; 
-			position_1b_1f[i] -= 1.*hi;
-			position_1b_1f[j] += 1.*hj;
-			number_type pot_1b_1f = potential(position_1b_1f);
-
-			Vector<number_type> position_1b_2f = position; 
-			position_1b_2f[i] -= 1.*hi;
-			position_1b_2f[j] += 2.*hj;
-			number_type pot_1b_2f = potential(position_1b_2f);
-
-			Vector<number_type> position_1f_2b = position; 
-			position_1f_2b[i] += 1.*hi;
-			position_1f_2b[j] -= 2.*hj;
-			number_type pot_1f_2b = potential(position_1f_2b);
-
-			Vector<number_type> position_1f_1b = position; 
-			position_1f_1b[i] += 1.*hi;
-			position_1f_1b[j] -= 1.*hj;
-			number_type pot_1f_1b = potential(position_1f_1b);
-
-			Vector<number_type> position_1f_1f = position; 
-			position_1f_1f[i] += 1.*hi;
-			position_1f_1f[j] += 1.*hj;
-			number_type pot_1f_1f = potential(position_1f_1f);
-
-			Vector<number_type> position_1f_2f = position; 
-			position_1f_2f[i] += 1.*hi;
-			position_1f_2f[j] += 2.*hj;
-			number_type pot_1f_2f = potential(position_1f_2f);
-
-			Vector<number_type> position_2f_2b = position; 
-			position_2f_2b[i] += 2.*hi;
-			position_2f_2b[j] -= 2.*hj;
-			number_type pot_2f_2b = potential(position_2f_2b);
-
-			Vector<number_type> position_2f_1b = position; 
-			position_2f_1b[i] += 2.*hi;
-			position_2f_1b[j] -= 1.*hj;
-			number_type pot_2f_1b = potential(position_2f_1b);
-
-			Vector<number_type> position_2f_1f = position; 
-			position_2f_1f[i] += 2.*hi;
-			position_2f_1f[j] += 1.*hj;
-			number_type pot_2f_1f = potential(position_2f_1f);
-
-			Vector<number_type> position_2f_2f = position; 
-			position_2f_2f[i] += 2.*hi;
-			position_2f_2f[j] += 2.*hj;
-			number_type pot_2f_2f = potential(position_2f_2f);
-
-			number_type result = 
-			(pot_2b_2b - 8. * pot_2b_1b + 8. * pot_2b_1f - pot_2b_2f) +
-			(pot_1b_2b - 8. * pot_1b_1b + 8. * pot_1b_1f - pot_1b_2f) * (-8.) +
-			(pot_1f_2b - 8. * pot_1f_1b + 8. * pot_1f_1f - pot_1f_2f) * 8. -
-			(pot_2f_2b - 8. * pot_2f_1b + 8. * pot_2f_1f - pot_2f_2f);
-			result /= (144. * hi * hi);
-			std::cout << result << "\n";
-
-			return result;
-		}
-	}
-
-	/* Calculate intrinsic uncertainty of fitting result */
-	void intrinsic_err(const Vector<number_type> & position, Vector<number_type> & errors)
-	{
-		Matrix<number_type> Hessian(position.size(), position.size());
-		for (size_type i = 0; i < Hessian.rowsize(); ++i)
-		{
-			for (size_type j = 0; j <= i; ++j) 
+			// Detect beginning of a number
+			bool is_number = std::isalnum(line[i]) || (line[i] == '.') || (line[i] == '-');
+			bool is_seperator = (line[i] == ' ' && line[i] == '\t');
+			if (is_number) // Detect beginning of a number
 			{
-				Hessian(i, j) = sec_deriv_potential(position, i, j);
-				if (i != j)
-				{
-					Hessian(j, i) = Hessian(i, j); // Using symmetry of second derivatives
-				}
+				end_of_number = false;
+				numberstring += line[i];
+			}
+			else if (!end_of_number)
+			{
+				end_of_number = true;
+				double number = std::stod(numberstring);
+				insert(number, counter_numbers, x_data, y_data, dy_data); // save number in the correct vector
+				counter_numbers++;
+				numberstring = "";
+			}
+			else
+			{
+				continue; // ignore second, third ... space in a series of spaces
 			}
 		}
-		for (size_type i = 0; i < Hessian.rowsize(); ++i)
-		{
-			for (size_type j = 0; j < Hessian.colsize(); ++j)
-			{
-				std::cout << Hessian(i, j) << " ";
-			}
-			std::cout << "\n";
-		}
-		
-		//size_type d_of_freedom = x_data_.size() - position.size();
-		//Hessian *=  d_of_freedom * temperature_;
-		Hessian /= 2.0;
-
-		Matrix<number_type> pcov(Hessian.rowsize(), Hessian.colsize());
-		MatrixInverse(Hessian, pcov);
-		for (size_type i = 0; i < Hessian.rowsize(); ++i)
-		{
-			for (size_type j = 0; j < Hessian.colsize(); ++j)
-			{
-				std::cout << pcov(i, j) << " ";
-			}
-			std::cout << "\n";
-		}
-
-		for (size_type i = 0; i < errors.size(); ++i)
-		{
-			errors[i] = sqrt(pcov[i][i]);
-		}
+		double number = std::stod(numberstring); // end of line finishes number
+		insert(number, counter_numbers, x_data, y_data, dy_data);
+		counter_numbers++;
+		numberstring = "";
 	}
 
-
-
-private:
-	Vector<number_type> c_lengths_;
-	number_type stepsize_;
-};
-
+}
 
 
 
@@ -216,48 +77,17 @@ private:
 
 int main ()
 {
-	Vector<number_type> popt(2,0);
-	Vector<number_type> c_lengths(2, 1);
-	number_type stepsize = 1e-3;
+	Vector<double> t(0);
+	Vector<double> Pl_Pl(0);
+	Vector<double> d_Pl_Pl(0);
 
-	Playground<number_type> playground(c_lengths, stepsize);
+	read_data("../correlators/correlator_Pl-Pl", t, Pl_Pl, d_Pl_Pl);
 
-	
-	Vector<number_type> perr(2);
-	//playground.intrinsic_err(popt, perr);
-
-	Matrix<number_type> H(3,3);
-	H(0,0) = 1;
-	H(0,1) = 1;
-	H(0,2) = 2;
-	H(1,0) = 1;
-	H(1,1) = 2;
-	H(1,2) = 1;
-	H(2,0) = 2;
-	H(2,1) = 1;
-	H(2,2) = 6;
-
-	Matrix<number_type> H_inv = H;
-
-	MatrixInverse_cholesky(H, H_inv);
-	
-	
-	// for (size_type i = 0; i < popt.size(); ++i)
-	// 	std::cout << popt[i] << "\n";
-
-	// for (size_type i = 0; i < perr.size(); ++i)
-	// 	std::cout << perr[i] << "\n";
-
-	for (size_type i = 0; i < H.colsize(); ++i)
+	for (size_type i = 0; i < t.size(); ++i)
 	{
-		for (size_type j = 0; j < H.rowsize(); ++j)
-		{
-			std::cout << H_inv(i,j) << " ";
-		}
-		std::cout << "\n";
+		std::cout << t[i] << " " << Pl_Pl[i] << " " << d_Pl_Pl[i] << "\n";
 	}
-
-
+	
 
 	return 0;
 }

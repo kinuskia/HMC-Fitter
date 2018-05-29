@@ -29,11 +29,14 @@ void read_data(std::string filename, Vector<double> &x_data, Vector<double> &y_d
 		{
 			continue;  // ignore empty lines
 		}
-		bool end_of_number = false;
+		bool end_of_number = true;
 		std::string numberstring = "";
 		for (int i = 0; i < line.length(); ++i)
 		{
-			if (line[i] != ' ') // Read in until spaces
+			// Detect beginning of a number
+			bool is_number = std::isalnum(line[i]) || (line[i] == '.') || (line[i] == '-');
+			bool is_seperator = (line[i] == ' ' && line[i] == '\t');
+			if (is_number) // Detect beginning of a number
 			{
 				end_of_number = false;
 				numberstring += line[i];

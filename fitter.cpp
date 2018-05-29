@@ -6,6 +6,7 @@
 #include "auxiliary_files/read_data.hpp"
 #include "auxiliary_files/hmc.hpp"
 #include "model.hpp"
+#include "model.hpp"
 #include <fstream>
 
 
@@ -17,6 +18,9 @@ int main ()
 
 	// Read in measured data
 	read_data("Measurement_data_generator/measurements.txt", x_data, y_data, dy_data);
+
+	// Set up fitting model
+	Model<double> correlators(x_data, y_data, dy_data);
 
 	// Vector for fitting parameters
 	Vector<double> popt(10);
@@ -67,21 +71,12 @@ int main ()
 
 	// Characteristic length scales for the parameters // default 1
 	Vector<double> c_lengths(popt.size(), 1);
-	// c_lengths[0] = 0.05;
-	// c_lengths[1] = 0.13;
-	// c_lengths[2] = 0.17;
-	// c_lengths[3] = 0.08;
-	// c_lengths[4] = 0.05;
-	// c_lengths[5] = 0.03;
-	// c_lengths[6] = 0.05;
-	// c_lengths[7] = 0.06;
-	// c_lengths[8] = 0.01;
-	// c_lengths[9] = 0.01;
+
 	
 
 
 	//initialize HMC opbject
-	HMC<double> sampler(x_data, y_data, dy_data, range_min, range_max, c_lengths, 2e-4, 50, 70, 1e-1);
+	HMC<double> sampler(correlators, range_min, range_max, c_lengths, 3e-4, 20, 30, 1e-1);
 	sampler.bounds_fixed(true);
 	sampler.do_analysis(false);
 	sampler.discard_from(50);
@@ -100,21 +95,12 @@ int main ()
 	// commented to avoid burn-in time (to be uncommented !!)
 	
 	fill_from_region(popt, range_min, range_max);
-	// popt[0] = -1.02813235022;
-	// popt[1] = 1.09070131382;
-	// popt[2] = -1.49770662438;
-	// popt[3] = 3.00762824513;
-	// popt[4] = 3.97095733249;
-	// popt[5] = 3.89567875037;
-	// popt[6] = 1.67076043721;
-	// popt[7] = 4.27963797423;
-	// popt[8] = 7.13321500346;
-	// popt[9] = 0.615462284398;
+
 	Vector<double> perr(popt.size());
 
 	//sampler.intrinsic_err(popt, perr);
 
-	sampler.walk(1e5, 60*30, popt, 10);
+	sampler.walk(1e4, 60*30, popt, 10);
 	
 
 	return 0;

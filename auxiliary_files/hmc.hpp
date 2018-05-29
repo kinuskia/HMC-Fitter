@@ -18,11 +18,8 @@ public:
 	typedef std::size_t size_type;
 	typedef REAL number_type;
 	/* Standard constructor, fed with measured data */
-	HMC(Vector<number_type> x_data, Vector<number_type> y_data, Vector<number_type> dy_data, Vector<number_type> range_min, Vector<number_type> range_max, Vector<number_type> c_lengths, number_type stepsize, size_type n_steps_min, size_type n_steps_max, number_type temperature)
-	: x_data_(x_data)
-	, y_data_(y_data)
-	, dy_data_(dy_data)
-	, range_min_(range_min)
+	HMC(Model<number_type> model, Vector<number_type> range_min, Vector<number_type> range_max, Vector<number_type> c_lengths, number_type stepsize, size_type n_steps_min, size_type n_steps_max, number_type temperature)
+	: range_min_(range_min)
 	, range_max_(range_max) 
 	, bounds_fixed_(false)
 	, do_analysis_(true)
@@ -35,7 +32,7 @@ public:
 	, counter_(0)
 	, counter_accepted_(0)
 	, temperature_(temperature)
-	, model_()
+	, model_(model)
 	{
 	}
 
@@ -43,17 +40,7 @@ public:
 	/* reduced (!) chi2 sum divided by the global temperature used as potential energy */
 	number_type potential(const Vector<number_type> & q)
 	{
-		/* checks if data arrays have equal lengths */
-		assert(x_data_.size() == y_data_.size());
-		assert(x_data_.size() == dy_data_.size());
-		number_type chi2 = 0;
-		for (size_type i = 0; i<x_data_.size(); ++i)
-		{
-			chi2 += (y_data_[i] - model_.f(x_data_[i], q))*(y_data_[i] - model_.f(x_data_[i], q))/dy_data_[i]/dy_data_[i];
-		}
-
-		size_type d_of_freedom = x_data_.size() - q.size();
-		return chi2/d_of_freedom/temperature_;
+		return model_.chi2(q)/model_.d_of_freedom()/temperature_;
 
 	}
 
@@ -116,7 +103,7 @@ public:
 	/* Calculate intrinsic uncertainty of parameter i */
 	number_type intrinsic_err(const Vector<number_type> & position, size_type index)
 	{
-		size_type d_of_freedom = x_data_.size() - position.size();
+		size_type d_of_freedom = model_.d_of_freedom();
 		number_type sec_deriv_chi2 = sec_deriv_potential(position, index) * d_of_freedom * temperature_;
 		return sqrt(2.0/sec_deriv_chi2);
 	}
@@ -138,7 +125,7 @@ public:
 				}
 			}
 		}
-		size_type d_of_freedom = x_data_.size() - position.size();
+		size_type d_of_freedom = model_.d_of_freedom();;
 		Hessian *=  d_of_freedom * temperature_;
 		
 		for (size_type i = 0; i < Hessian.rowsize(); ++i)
@@ -797,9 +784,6 @@ public:
 
 private:
 	/* measured data */
-	Vector<number_type> x_data_;
-	Vector<number_type> y_data_;
-	Vector<number_type> dy_data_;
 	Model<number_type> model_;
 	Vector<number_type> range_min_;
 	Vector<number_type> range_max_;
