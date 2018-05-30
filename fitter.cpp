@@ -101,12 +101,26 @@ int main ()
 	d_Ps_Ps
 	);
 
+	//correlators.print_content();
+
 	// Vector for fitting parameters
 	Vector<double> popt(6);
 
 	// Estimated search region
-	Vector<double> range_min(popt.size(), 0.1);
-	Vector<double> range_max(popt.size(), 0.11);
+	Vector<double> range_min(popt.size());
+	Vector<double> range_max(popt.size());
+	range_min[0] = 0.96;
+	range_max[0] = 1.02;
+	range_min[1] = 1.4;
+	range_max[1] = 2.0;
+	range_min[2] = 0.22;
+	range_max[2] = 0.34;
+	range_min[3] = 0.7;
+	range_max[3] = 1.5;
+	range_min[4] = 0.5;
+	range_max[4] = 1.0;
+	range_min[5] = 3.0;
+	range_max[5] = 7.0;
 	
 	
 
@@ -117,17 +131,17 @@ int main ()
 
 
 	//initialize HMC opbject
-	HMC<double> sampler(correlators, range_min, range_max, c_lengths, 3e-4, 20, 30, 1e-1);
+	HMC<double> sampler(correlators, range_min, range_max, c_lengths, 9e-4, 50, 60, 1e2);
 	sampler.bounds_fixed(false);
 	sampler.do_analysis(false);
-	sampler.discard_from(50);
+	//sampler.discard_from(50);
 
 	/* PRELIMINARY RUN TOOLS */
 	// draws positions and returns acceptance rates in a file (to adjust leapfrog step size)
-	//sampler.get_acceptance_rates(range_min, range_max, 50, 50, "preliminary_tools/acceptrates.txt");
+	//sampler.get_acceptance_rates(range_min, range_max, 200, 50, "preliminary_tools/acceptrates.txt");
 	
 	// returns autocorrelation lengths for random starting points (to adjust number of leapfrog steps)
-	//sampler.get_optimal_number_of_steps(range_min, range_max, 300, 500, "preliminary_tools/correlation_times.txt");
+	//sampler.get_optimal_number_of_steps(range_min, range_max, 300, 1000, "preliminary_tools/correlation_times.txt");
 
 
 	/* ACTUAL RUN */
@@ -141,7 +155,7 @@ int main ()
 
 	//sampler.intrinsic_err(popt, perr);
 
-	sampler.walk(1, 60*30, popt, 10);
+	sampler.walk(1e4, 10, 60*30, popt, 10);
 	
 
 	return 0;

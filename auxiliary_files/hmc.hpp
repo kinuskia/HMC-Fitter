@@ -342,6 +342,7 @@ public:
 		{
 			// Make a full step for the position, update gradient of potential
 			q += stepsizes * p;
+			//std::cout << i  << "\t" << q[0] << "\n";
 			
 			grad_potential(grad_U, q);
 			// Make a full step for the momentum, except at the end of the trajectory
@@ -541,8 +542,10 @@ public:
 		bool accepted = dis_unif(gen) < exp(current_U+current_K-proposed_U-proposed_K);
 		if (bounds_fixed_)
 		{
-			accepted = accepted && is_in_range(q); // automatical rejection if proposition is out of bounds
+			accepted = accepted && is_in_range(q) ; // automatical rejection if proposition is out of bounds
 		}
+		
+		accepted = accepted && model_.constraints_respected(q); // automatical rejection if contraints not respected
 		if (accepted)
 		{
 			current_q = q; // accept
@@ -560,6 +563,7 @@ public:
 		// reinitialize internal counters
 		counter_ = 0;
 		counter_accepted_ = 0;
+
 
 		// Set timer
 		std::time_t start = std::time(nullptr);
@@ -705,12 +709,99 @@ public:
 		}
 	}
 
+	/* do n steps for m starting points without analysis */
+	void walk (size_type nb_steps, size_type nb_initials, number_type max_duration, Vector<number_type> & initial, size_type progress_steps)
+	{
+		// reinitialize internal counters
+		counter_ = 0;
+		counter_accepted_ = 0;
+
+
+		// Set timer
+		std::time_t start = std::time(nullptr);
+		number_type expected_duration;
+		bool estimate_given = false;
+
+		// Set up storage vector
+		Storage<number_type> data(initial, 2); // records values of "initial" and two additional things
+
+
+		for (size_type i = 0; i < nb_initials; ++i)
+		{
+			// choose random starting point that respects constraints
+			bool permitted_initial_found = false;
+			number_type counter_constraints = 0;
+			while (!permitted_initial_found)
+			{
+				fill_from_region(initial, range_min_, range_max_);
+				if (model_.constraints_respected(initial))
+				{
+					permitted_initial_found = true;
+				}
+				counter_constraints++;	
+				assert(counter_constraints < 20);
+			}
+			
+			
+			// Start walking
+			size_type counter = 0;
+			while (counter < nb_steps)
+			{
+				step_forward(initial);
+
+				// save updated data to storage
+				data.read_in(initial); // save fitting parameters
+				data.read_in(potential(initial)*temperature_); // save chi2_red
+				data.read_in(acceptance_rate()); // save acceptance rate
+
+				// After 10s: Estimate duration of the walk
+				std::time_t end = std::time(nullptr);
+				number_type diff = end - start;
+				if ( (diff > 10) && !estimate_given)
+				{
+					expected_duration = nb_steps * nb_initials * diff / counter_ / 60;
+					std::cout << "Computation time in min: " << expected_duration << "\n";
+					estimate_given = true;
+				}
+
+				// Cancel calculation if time exceeds max_duration
+				if (diff > max_duration) 
+				{
+					std::cout << "Computation aborted as time ran out. " << "\n";
+					break;
+				}
+
+				// Print progress
+				for (size_type i = 1; i < progress_steps; ++i)
+				{
+					if (counter_ == size_type(i*nb_steps*nb_initials/progress_steps))
+					{
+						std::cout << "Progress: " << size_type(i*100./progress_steps) << "%" << "\n";
+					}
+				}
+
+
+
+
+				counter++;
+			}
+
+		
+		}
+
+		// write data to output file
+		data.write("data.txt");
+		
+	}
+
 	
 
 	number_type acceptance_rate()
 	{
 		return 1.0 * counter_accepted_ / counter_;
 	}
+
+	
 
 	/* preliminary run to estimate correct step size */
 	void get_acceptance_rates(const Vector<number_type> & range_min, const Vector<number_type> & range_max, size_type nb_positions, size_type nb_leapfrog_steps, std::string filename)
@@ -719,13 +810,26 @@ public:
 
 		for (size_type i = 0; i<nb_positions; ++i)
 		{
-			// Draw random position from the search region
+			// Draw random but permitted position from the search region
 			Vector<number_type> popt(range_min.size());
-			fill_from_region(popt, range_min, range_max);
+			bool permitted_initial_found = false;
+			number_type counter_constraints = 0;
+			while (!permitted_initial_found)
+			{
+				fill_from_region(popt, range_min_, range_max_);
+				if (model_.constraints_respected(popt))
+				{
+					permitted_initial_found = true;
+				}
+				counter_constraints++;	
+				assert(counter_constraints < 20);
+			}
 			
 			// do some leapfrog steps and save acceptance rate
 			counter_ = 0;
 			counter_accepted_ = 0;
+		
+
 			for (size_type j = 0; j < nb_leapfrog_steps; ++j)
 			{
 				step_forward(popt);
@@ -805,6 +909,7 @@ private:
 	/* some statistics */
 	size_type counter_;
 	size_type counter_accepted_;
+	
 
 };
 

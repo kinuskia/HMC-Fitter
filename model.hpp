@@ -2,6 +2,7 @@
 #define MODEL_HPP
 #include <cmath>
 #include <assert.h>
+#include "auxiliary_files/vector.hpp"
 
 template<typename REAL>
 class Model
@@ -53,7 +54,7 @@ public:
 	, A0s_A0s_(A0s_A0s)
 	, A0s_Pl_(A0s_Pl)
 	, A0s_Ps_(A0s_Ps)
-	, Pl_A0l_(A0s_A0l)
+	, Pl_A0l_(Pl_A0l)
 	, Pl_A0s_(Pl_A0s)
 	, Pl_Pl_(Pl_Pl)
 	, Pl_Ps_(Pl_Ps)
@@ -69,7 +70,7 @@ public:
 	, d_A0s_A0s_(d_A0s_A0s)
 	, d_A0s_Pl_(d_A0s_Pl)
 	, d_A0s_Ps_(d_A0s_Ps)
-	, d_Pl_A0l_(d_A0s_A0l)
+	, d_Pl_A0l_(d_Pl_A0l)
 	, d_Pl_A0s_(d_Pl_A0s)
 	, d_Pl_Pl_(d_Pl_Pl)
 	, d_Pl_Ps_(d_Pl_Ps)
@@ -78,6 +79,20 @@ public:
 	, d_Ps_Pl_(d_Ps_Pl)
 	, d_Ps_Ps_(d_Ps_Ps)
 	{}
+
+	// /* print content of three vectors to console */
+	// void print_content() const
+	// {
+	// 	Vector<number_type> x = Ps_Ps_;
+	// 	Vector<number_type> dx = d_Ps_Ps_;
+	// 	assert(t_.size() == x.size());
+	// 	assert(x.size() == dx.size());
+	// 	for (size_type i = 0; i < t_.size(); ++i)
+	// 	{
+	// 		std::cout << t_[i] << "\t" << x[i] << " +/- " << dx[i] <<"\n"; 
+	// 	}
+
+	// }
 
 	/* number of fitting parameters */
 	size_type n_parameters() const
@@ -122,7 +137,7 @@ private:
 		number_type Z22;
 		number_type Ar;
 		number_type mr;
-		number_type result;
+		number_type result = 0;
 		if (i == 0 && j == 0)
 		{
 			Z11 = popt[2];
@@ -134,26 +149,29 @@ private:
 			result += Z11*Z21/2./m1 * (exp(-m1*t) + exp(-m1*(T-t)));
 			result += Z12*Z22/2./m2 * (exp(-m2*t) + exp(-m2*(T-t)));
 			result += Ar * (exp(-mr*t) + exp(-mr*(T-t)));
+			return result;
 		}
 
 		return result;
 	}
 	number_type C_exp(size_type t_index, size_type i, size_type j)
 	{
-		number_type result;
+		number_type result = 0;
 		if (i == 0 && j == 0)
 		{
 			result = Pl_Pl_[t_index];
+			return result;
 		}
 		return result;
 	}
 
 	number_type d_C_exp(size_type t_index, size_type i, size_type j)
 	{
-		number_type result;
+		number_type result = 0;
 		if (i == 0 && j == 0)
 		{
 			result = d_Pl_Pl_[t_index];
+			return result;
 		}
 		return result;
 	}
@@ -210,6 +228,38 @@ public:
 
 		return chi2/d_of_freedom();
 
+	}
+
+	/* Constraints to the parameters */
+	bool constraints_respected(const Vector<number_type> &q)
+	{
+		bool respected = true;
+		if (q[1] < q[0] )
+		{
+			respected = false; // mass of excited state smaller than ground state
+			return respected;
+		}
+
+		/* masses are positive */
+		if (q[0] < 0)
+		{
+			respected = false; 
+			return respected;
+		}
+
+		if (q[5] < q[1]) // residual mass has to be the biggest mass
+		{
+			respected = false; 
+			return respected;
+		}
+
+		/* coupling constants */
+		if (q[2] * q[3] < 0) // diagonal coupling constants are positive
+		{
+			respected = false;
+		}
+
+		return respected;
 	}
 
 private:
