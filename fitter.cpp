@@ -131,7 +131,7 @@ int main ()
 
 
 	//initialize HMC opbject
-	HMC<double> sampler(correlators, range_min, range_max, c_lengths, 9e-4, 50, 60, 1e2);
+	HMC<double> sampler(correlators, range_min, range_max, c_lengths, 2e-4, 40, 60, 1e1);
 	sampler.bounds_fixed(false);
 	sampler.do_analysis(false);
 	//sampler.discard_from(50);
