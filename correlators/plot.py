@@ -1,7 +1,7 @@
 import numpy as np 
 import matplotlib.pyplot as plt 
 
-x, y, dy = np.loadtxt("correlator_Pl-Pl", unpack = True)
+x, y, dy = np.loadtxt("correlator_Pl-Pl", unpack = True, skiprows = 0)
 
 T = 64.
 def fit(t, m1, m2, Z1, Z2, Ar, mr):
@@ -11,15 +11,13 @@ def fit(t, m1, m2, Z1, Z2, Ar, mr):
 	return result
 
 from scipy.optimize import curve_fit
-for i in range(0, len(x)):
-	print(x[i], y[i], dy[i])
 
-popt, pcov = curve_fit(fit, x, y, p0 = [2.9, 3.6, 8, 1.4, 0.05, 1.05], sigma = dy, absolute_sigma=True) 
-#p0 = [3.59, 1.638, 2.4358, 1.028, 0.04083, 0.9912]
+popt, pcov = curve_fit(fit, x, y, p0 = [0.99, 1.64, 0.28, 1.03, 0.83, 3.58], sigma = dy, absolute_sigma=True) 
+#p0 = [0.99, 1.64, 0.28, 1.03, 0.83, 3.58]
 plt.errorbar(x, y, yerr = dy, linestyle = "none", capsize = 2)
-values = np.linspace(x[0], x[-1],100)
+values = np.linspace(0., 29., num = 100)
 plt.yscale("log")
-plt.plot(fit(values, *popt))
+plt.plot(values, fit(values, *popt))
 
 plt.savefig("measurements.pdf", format = "pdf", bbox_inches = "tight")
 chi2 = np.sum((y-fit(x,*popt))**2/dy**2)

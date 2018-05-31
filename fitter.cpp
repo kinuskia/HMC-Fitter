@@ -109,39 +109,46 @@ int main ()
 	// Estimated search region
 	Vector<double> range_min(popt.size());
 	Vector<double> range_max(popt.size());
-	range_min[0] = 0.96;
-	range_max[0] = 1.02;
-	range_min[1] = 1.4;
-	range_max[1] = 2.0;
-	range_min[2] = 0.22;
-	range_max[2] = 0.34;
-	range_min[3] = 0.7;
-	range_max[3] = 1.5;
-	range_min[4] = 0.5;
-	range_max[4] = 1.0;
-	range_min[5] = 3.0;
-	range_max[5] = 7.0;
+	range_min[0] = 0.8;
+	range_max[0] = 1.1;
+	range_min[1] = 1.2;
+	range_max[1] = 1.7;
+	range_min[2] = 0.1;
+	range_max[2] = 0.4;
+	range_min[3] = 0.4;
+	range_max[3] = 1.1;
+	range_min[4] = 0.4;
+	range_max[4] = 0.9;
+	range_min[5] = 2.1;
+	range_max[5] = 4;
 	
 	
 
 	// Characteristic length scales for the parameters // default 1
 	Vector<double> c_lengths(popt.size(), 1);
+	// c_lengths[0] = 0.0015;
+	// c_lengths[1] = 0.02;
+	// c_lengths[2] = 0.003;
+	// c_lengths[3] = 0.035;
+	// c_lengths[4] = 0.015;
+	// c_lengths[5] = 0.075;
+
 
 	
 
 
 	//initialize HMC opbject
-	HMC<double> sampler(correlators, range_min, range_max, c_lengths, 2e-4, 40, 60, 1e1);
+	HMC<double> sampler(correlators, range_min, range_max, c_lengths, 9e-4, 4, 5, 1e0);
 	sampler.bounds_fixed(false);
-	sampler.do_analysis(false);
+	sampler.do_analysis(true);
 	//sampler.discard_from(50);
 
 	/* PRELIMINARY RUN TOOLS */
 	// draws positions and returns acceptance rates in a file (to adjust leapfrog step size)
-	//sampler.get_acceptance_rates(range_min, range_max, 200, 50, "preliminary_tools/acceptrates.txt");
+	sampler.get_acceptance_rates(range_min, range_max, 200, 50, "preliminary_tools/acceptrates.txt");
 	
 	// returns autocorrelation lengths for random starting points (to adjust number of leapfrog steps)
-	//sampler.get_optimal_number_of_steps(range_min, range_max, 300, 1000, "preliminary_tools/correlation_times.txt");
+	//sampler.get_optimal_number_of_steps(range_min, range_max, 300, 700, "preliminary_tools/correlation_times.txt");
 
 
 	/* ACTUAL RUN */
@@ -155,7 +162,8 @@ int main ()
 
 	//sampler.intrinsic_err(popt, perr);
 
-	sampler.walk(1e4, 10, 60*30, popt, 10);
+	//sampler.walk(1e4, 10, 60*30, popt, 10);
+	//sampler.walk(1e5, 60*30, popt, 10);
 	
 
 	return 0;
