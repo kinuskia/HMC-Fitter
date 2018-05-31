@@ -706,6 +706,16 @@ public:
 			{
 				std::cout << "Parameter " << i << " : " << err_intr[i]  << "\n";
 			}
+
+			//report lower and upper bounds for parameters
+			Vector<number_type> lower_bound(initial.size());
+			Vector<number_type> upper_bound(initial.size());
+			data.min_max_percentile(lower_bound, upper_bound, 10., 0.0015);
+			std::cout << "Lower and upper bounds for the parameters: \n";
+			for (size_type i = 0; i < lower_bound.size(); ++i)
+			{
+				std::cout << "Parameter " << i << " : " << lower_bound[i] << " -> " << upper_bound[i] << "\n";
+			}
 		}
 	}
 

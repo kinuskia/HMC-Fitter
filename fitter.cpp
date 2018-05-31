@@ -136,7 +136,7 @@ int main ()
 	HMC<double> sampler(correlators, range_min, range_max, c_lengths, 9e-4, 60, 110, 1e-2);
 	sampler.bounds_fixed(false);
 	sampler.do_analysis(true);
-	//sampler.discard_from(50);
+	 
 
 	/* PRELIMINARY RUN TOOLS */
 	// draws positions and returns acceptance rates in a file (to adjust leapfrog step size)
@@ -158,7 +158,11 @@ int main ()
 	//sampler.intrinsic_err(popt, perr);
 
 	//sampler.walk(1e4, 10, 60*30, popt, 10);
-	sampler.walk(1e5, 60*30, popt, 10);
+	sampler.walk(1e4, 60*30, popt, 10);
+
+	/* ANALYSIS */
+	sampler.discard_from(1);
+
 	
 
 	return 0;
