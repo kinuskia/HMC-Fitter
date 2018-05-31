@@ -101,6 +101,7 @@ public:
 				continue;
 			}
 		}
+
 		size_type entries_per_variable = values_cutoff[0].size();
 		// Find the lower and upper percentile for each parameter
 		for (size_type i = 0; i < values_cutoff.size(); ++i)

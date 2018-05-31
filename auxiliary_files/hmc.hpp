@@ -23,8 +23,8 @@ public:
 	, range_max_(range_max) 
 	, bounds_fixed_(false)
 	, do_analysis_(true)
-	, discard_data_(false)
-	, chi2redmax_(0)
+	//, discard_data_(false)
+	, chi2redmax_(1e2)
 	, c_lengths_(c_lengths)
 	, stepsize_(stepsize)
 	, n_steps_min_(n_steps_min)
@@ -60,14 +60,14 @@ public:
 	void discard_from(number_type value)
 	{
 		chi2redmax_ = value;
-		discard_data_ = true;
+		//discard_data_ = true;
 	}
 
-	/* Setter for whether data above chi2redmax should be discarded */
-	void discard_data(bool yes)
-	{
-		discard_data_ = yes;
-	}
+	//  Setter for whether data above chi2redmax should be discarded 
+	// void discard_data(bool yes)
+	// {
+	// 	discard_data_ = yes;
+	// }
 
 	/* check if given position is within bounds */
 	bool is_in_range(Vector<number_type> position) const
@@ -615,10 +615,10 @@ public:
 		// write data to output file
 		data.write("data.txt");
 		
-		if (discard_data_)
-		{
-			data.write("data_kept.txt", chi2redmax_);
-		}
+		// if (discard_data_)
+		// {
+		// 	data.write("data_kept.txt", chi2redmax_);
+		// }
 
 		// do analysis if requested
 		if (do_analysis_)
@@ -710,7 +710,7 @@ public:
 			//report lower and upper bounds for parameters
 			Vector<number_type> lower_bound(initial.size());
 			Vector<number_type> upper_bound(initial.size());
-			data.min_max_percentile(lower_bound, upper_bound, 10., 0.0015);
+			data.min_max_percentile(lower_bound, upper_bound, chi2redmax_, 0.0015);
 			std::cout << "Lower and upper bounds for the parameters: \n";
 			for (size_type i = 0; i < lower_bound.size(); ++i)
 			{
@@ -801,6 +801,16 @@ public:
 
 		// write data to output file
 		data.write("data.txt");
+
+		//report lower and upper bounds for parameters
+		Vector<number_type> lower_bound(initial.size());
+		Vector<number_type> upper_bound(initial.size());
+		data.min_max_percentile(lower_bound, upper_bound, chi2redmax_, 0.0015);
+		std::cout << "Lower and upper bounds for the parameters: \n";
+		for (size_type i = 0; i < lower_bound.size(); ++i)
+		{
+			std::cout << "Parameter " << i << " : " << lower_bound[i] << " -> " << upper_bound[i] << "\n";
+		}
 		
 	}
 
@@ -906,7 +916,7 @@ private:
 	Vector<number_type> range_max_;
 	bool bounds_fixed_;
 	bool do_analysis_;
-	bool discard_data_;
+	//bool discard_data_;
 	number_type chi2redmax_;
 
 	/* parameters for the leapfrog integrator */

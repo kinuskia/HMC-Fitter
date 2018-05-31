@@ -80,30 +80,30 @@ public:
 	, d_Ps_Ps_(d_Ps_Ps)
 	{}
 
-	/* print content of three vectors to console */
-	void print_content() const
-	{
-		Vector<number_type> x = Ps_Ps_;
-		Vector<number_type> dx = d_Ps_Ps_;
-		assert(t_.size() == x.size());
-		assert(x.size() == dx.size());
-		for (size_type i = 0; i < t_.size(); ++i)
-		{
-			std::cout << t_[i] << "\t" << x[i] << " +/- " << dx[i] <<"\n"; 
-		}
+	// /* print content of three vectors to console */
+	// void print_content() const
+	// {
+	// 	Vector<number_type> x = Ps_Ps_;
+	// 	Vector<number_type> dx = d_Ps_Ps_;
+	// 	assert(t_.size() == x.size());
+	// 	assert(x.size() == dx.size());
+	// 	for (size_type i = 0; i < t_.size(); ++i)
+	// 	{
+	// 		std::cout << t_[i] << "\t" << x[i] << " +/- " << dx[i] <<"\n"; 
+	// 	}
 
-	}
+	// }
 
 	/* number of fitting parameters */
 	size_type n_parameters() const
 	{
-		return 6;
+		return 12;
 	}
 public: // needs to become private once I focus on intrinsic errors
 	/* degrees of freedom */
 	size_type d_of_freedom() const
 	{
-		return t_.size() * 1 * 1 - n_parameters();
+		return t_.size() * 2 * 2 - n_parameters();
 	}
 private:
 	/* fitting model for correlator C_ij(t) */
@@ -121,8 +121,14 @@ private:
 	1 		mass of first excited state
 	2		Z0 of m1
 	3		Z0 of m2
-	4		A_00
-	5		m_00
+	4		Z1 of m1
+	5		Z1 of m2
+	6		A_00
+	7		A_01
+	8		A_11
+	9		m_00
+	10		m_01
+	11		m_11
 
 	*/
 	number_type C(number_type t, size_type i, size_type j, const Vector<number_type> & popt)
@@ -131,29 +137,62 @@ private:
 		number_type T = 64.;
 		number_type m1 = popt[0];
 		number_type m2 = popt[1];
-		number_type Z11;
-		number_type Z12;
-		number_type Z21;
-		number_type Z22;
+		number_type Zl1;
+		number_type Zl2;
+		number_type Zr1;
+		number_type Zr2;
 		number_type Ar;
 		number_type mr;
 		number_type result = 0;
 		if (i == 0 && j == 0)
 		{
-			Z11 = popt[2];
-			Z21 = popt[2];
-			Z12 = popt[3];
-			Z22 = popt[3];
-			Ar = popt[4];
-			mr = popt[5];
-			result += Z11*Z21/2./m1 * (exp(-m1*t) + exp(-m1*(T-t)));
-			result += Z12*Z22/2./m2 * (exp(-m2*t) + exp(-m2*(T-t)));
-			result += Ar * (exp(-mr*t) + exp(-mr*(T-t)));
-			return result;
+			// Coupling constants of mass 1
+			Zl1 = popt[2];
+			Zr1 = popt[2];
+			// Coupling constants of mass 2
+			Zl2 = popt[3];
+			Zr2 = popt[3];
+			// Residual coupling constant
+			Ar = popt[6];
+			//Residual mass
+			mr = popt[9];
 		}
 
+		if ((i == 0 && j == 1) || (i == 1 && j == 0))
+		{
+			// Coupling constants of mass 1
+			Zl1 = popt[2];
+			Zr1 = popt[4];
+			// Coupling constants of mass 2
+			Zl2 = popt[3];
+			Zr2 = popt[5];
+			// Residual coupling constant
+			Ar = popt[7];
+			//Residual mass
+			mr = popt[10];	
+		}
+
+		if (i == 1 && j == 1)
+		{
+			// Coupling constants of mass 1
+			Zl1 = popt[4];
+			Zr1 = popt[4];
+			// Coupling constants of mass 2
+			Zl2 = popt[5];
+			Zr2 = popt[5];
+			// Residual coupling constant
+			Ar = popt[8];
+			//Residual mass
+			mr = popt[11];	
+		}
+
+		// result
+		result += Zl1*Zr1/2./m1 * (exp(-m1*t) + exp(-m1*(T-t)));
+		result += Zl2*Zr2/2./m2 * (exp(-m2*t) + exp(-m2*(T-t)));
+		result += Ar * (exp(-mr*t) + exp(-mr*(T-t)));
 		return result;
 	}
+
 	number_type C_exp(size_type t_index, size_type i, size_type j)
 	{
 		number_type result = 0;
@@ -162,6 +201,22 @@ private:
 			result = Pl_Pl_[t_index];
 			return result;
 		}
+		if (i == 0 && j == 1)
+		{
+			result = Pl_Ps_[t_index];
+			return result;
+		}
+		if (i == 1 && j == 0)
+		{
+			result = Ps_Pl_[t_index];
+			return result;
+		}
+		if (i == 1 && j == 1)
+		{
+			result = Ps_Ps_[t_index];
+			return result;
+		}
+
 		return result;
 	}
 
@@ -173,6 +228,23 @@ private:
 			result = d_Pl_Pl_[t_index];
 			return result;
 		}
+		if (i == 0 && j == 1)
+		{
+			result = d_Pl_Ps_[t_index];
+			return result;
+		}
+		if (i == 1 && j == 0)
+		{
+			result = d_Ps_Pl_[t_index];
+			return result;
+		}
+		if (i == 1 && j == 1)
+		{
+			result = d_Ps_Ps_[t_index];
+			return result;
+		}
+
+
 		return result;
 	}
 
@@ -217,9 +289,9 @@ public:
 		number_type chi2 = 0;
 		for (size_type k = 0; k<t_.size(); ++k)
 		{
-			for (size_type i = 0; i < 1; ++i)
+			for (size_type i = 0; i < 2; ++i)
 			{
-				for (size_type j = 0; j < 1; ++j)
+				for (size_type j = 0; j < 2; ++j)
 				{
 					chi2 += pow(C(t_[k], i, j, q) - C_exp(k, i, j), 2)/pow(d_C_exp(k, i, j), 2);
 				}
@@ -247,17 +319,17 @@ public:
 			return respected;
 		}
 
-		if (q[5] < q[1]) // residual mass has to be the biggest mass
+		if ((q[9] < q[1]) || (q[10] < q[1]) || (q[11] < q[1])) // residual masses have to be bigger than m1 and m2
 		{
 			respected = false; 
 			return respected;
 		}
 
-		/* coupling constants */
-		if (q[2] * q[3] < 0) // diagonal coupling constants are positive
-		{
-			respected = false;
-		}
+		// /* coupling constants */
+		// if (q[2] * q[3] < 0) // diagonal coupling constants are positive
+		// {
+		// 	respected = false;
+		// }
 
 		return respected;
 	}

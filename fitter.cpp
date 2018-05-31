@@ -104,23 +104,35 @@ int main ()
 	//correlators.print_content();
 
 	// Vector for fitting parameters
-	Vector<double> popt(6);
+	Vector<double> popt(12);
 
 	// Estimated search region
 	Vector<double> range_min(popt.size());
 	Vector<double> range_max(popt.size());
-	range_min[0] = 0.9844;
-	range_max[0] = 0.9866;
-	range_min[1] = 1.34;
-	range_max[1] = 1.40;
-	range_min[2] = 0.263;
-	range_max[2] = 0.271;
-	range_min[3] = 0.5;
-	range_max[3] = 0.6;
-	range_min[4] = 0.534;
-	range_max[4] = 0.55;
-	range_min[5] = 2.16;
-	range_max[5] = 2.26;
+	range_min[0] = 0.98451;
+	range_max[0] = 0.98455;
+	range_min[1] = 1.3515;
+	range_max[1] = 1.3527;
+	range_min[2] = 0.26405;
+	range_max[2] = 0.26417;
+	range_min[3] = 0.5230;
+	range_max[3] = 0.5245;
+	range_min[4] = 0.06444;
+	range_max[4] = 0.06447;
+	range_min[5] = 0.0435;
+	range_max[5] = 0.0445;
+	range_min[6] = 0.5461;
+	range_max[6] = 0.5464;
+	range_min[7] = -0.0053;
+	range_max[7] = -0.0051;
+	range_min[8] = -0.00017;
+	range_max[8] = -0.00013;
+	range_min[9] = 2.188;
+	range_max[9] = 2.190;
+	range_min[10] = 1.55;
+	range_max[10] = 1.56;
+	range_min[11] = 1.37;
+	range_max[11] = 1.39;
 	
 	
 
@@ -133,35 +145,43 @@ int main ()
 
 
 	//initialize HMC opbject
-	HMC<double> sampler(correlators, range_min, range_max, c_lengths, 9e-4, 60, 110, 1e-2);
+	HMC<double> sampler(correlators, range_min, range_max, c_lengths, 3e-3, 30, 70, 1e-5);
 	sampler.bounds_fixed(false);
 	sampler.do_analysis(true);
-	 
+	
 
 	/* PRELIMINARY RUN TOOLS */
 	// draws positions and returns acceptance rates in a file (to adjust leapfrog step size)
-	//sampler.get_acceptance_rates(range_min, range_max, 200, 50, "preliminary_tools/acceptrates.txt");
+	//sampler.get_acceptance_rates(range_min, range_max, 100, 50, "preliminary_tools/acceptrates.txt");
 	
 	// returns autocorrelation lengths for random starting points (to adjust number of leapfrog steps)
-	//sampler.get_optimal_number_of_steps(range_min, range_max, 300, 1400, "preliminary_tools/correlation_times.txt");
+	//sampler.get_optimal_number_of_steps(range_min, range_max, 300, 700, "preliminary_tools/correlation_times.txt");
 
+	/*
+	For the estimation of the lower and upper bounds of the parameters, values with a potential above
+	the value below are discarded
+	*/
+	sampler.discard_from(0.36);
+	fill_from_region(popt, range_min, range_max);
+	//sampler.walk(2e3, 40, 60*30, popt, 10);
 
 	/* ACTUAL RUN */
 
 	// initial guess for fitting variables : random pick from region above
 	// commented to avoid burn-in time (to be uncommented !!)
 	
-	fill_from_region(popt, range_min, range_max);
+	
+
+
 
 	Vector<double> perr(popt.size());
 
 	//sampler.intrinsic_err(popt, perr);
 
-	//sampler.walk(1e4, 10, 60*30, popt, 10);
-	sampler.walk(1e4, 60*30, popt, 10);
+	
+	sampler.walk(5e4, 60*30, popt, 10);
 
-	/* ANALYSIS */
-	sampler.discard_from(1);
+	
 
 	
 
