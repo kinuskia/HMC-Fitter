@@ -80,19 +80,19 @@ public:
 	, d_Ps_Ps_(d_Ps_Ps)
 	{}
 
-	// /* print content of three vectors to console */
-	// void print_content() const
-	// {
-	// 	Vector<number_type> x = Ps_Ps_;
-	// 	Vector<number_type> dx = d_Ps_Ps_;
-	// 	assert(t_.size() == x.size());
-	// 	assert(x.size() == dx.size());
-	// 	for (size_type i = 0; i < t_.size(); ++i)
-	// 	{
-	// 		std::cout << t_[i] << "\t" << x[i] << " +/- " << dx[i] <<"\n"; 
-	// 	}
+	/* print content of three vectors to console */
+	void print_content() const
+	{
+		Vector<number_type> x = Ps_Ps_;
+		Vector<number_type> dx = d_Ps_Ps_;
+		assert(t_.size() == x.size());
+		assert(x.size() == dx.size());
+		for (size_type i = 0; i < t_.size(); ++i)
+		{
+			std::cout << t_[i] << "\t" << x[i] << " +/- " << dx[i] <<"\n"; 
+		}
 
-	// }
+	}
 
 	/* number of fitting parameters */
 	size_type n_parameters() const

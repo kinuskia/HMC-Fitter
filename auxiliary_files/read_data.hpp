@@ -16,7 +16,7 @@ void insert(double number, std::size_t counter, Vector<double> &x_data, Vector<d
 		dy_data.push_back(number);
 }
 
-void read_data(std::string filename, Vector<double> &x_data, Vector<double> &y_data, Vector<double> &dy_data)
+void read_data(std::string filename, Vector<double> &x_data, Vector<double> &y_data, Vector<double> &dy_data, std::size_t skip_rows = 0)
 {
 	x_data.clear();
 	y_data.clear();
@@ -25,6 +25,7 @@ void read_data(std::string filename, Vector<double> &x_data, Vector<double> &y_d
 	std::string line;
 
 	std::size_t counter_numbers = 0;
+	std::size_t counter_lines = 0;
 	while (infile)
 	{
 		std::getline(infile, line); // Read in current line
@@ -32,6 +33,13 @@ void read_data(std::string filename, Vector<double> &x_data, Vector<double> &y_d
 		{
 			continue;  // ignore empty lines
 		}
+
+		if (counter_lines < skip_rows) // skip first rows if one wished so
+		{
+			counter_lines++;
+			continue;
+		}
+
 		bool end_of_number = true;
 		std::string numberstring = "";
 		for (int i = 0; i < line.length(); ++i)
@@ -61,6 +69,7 @@ void read_data(std::string filename, Vector<double> &x_data, Vector<double> &y_d
 		insert(number, counter_numbers, x_data, y_data, dy_data);
 		counter_numbers++;
 		numberstring = "";
+		counter_lines++;
 	}
 
 }

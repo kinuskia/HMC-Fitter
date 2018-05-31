@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 n, a0, a1, a2, a3, a4, a5, U, accept = np.loadtxt("data.txt", unpack = True)
 
-keep = (U < 50)
+keep = (U < 10)
 
 parameters = [a0, a1, a2, a3, a4, a5]
 
