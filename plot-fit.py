@@ -1,11 +1,11 @@
 import numpy as np 
 import matplotlib.pyplot as plt 
 
-n, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, U, accept = np.loadtxt("data.txt", unpack = True)
+n, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, U, accept = np.loadtxt("data.txt", unpack = True)
 
-keep = (U < 3.61e-1)
+keep = (U < 14)
 
-parameters = [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11]
+parameters = [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19]
 
 plt.figure(1)
 plt.hist(U[keep], 300)

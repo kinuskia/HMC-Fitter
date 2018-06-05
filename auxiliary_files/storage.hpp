@@ -69,7 +69,7 @@ public:
 	 e.g min_max_percentile(minimals, 20, 0.05) returns the value below which 5 % of the values with chi2red < 20
 	 are found and above which 5 % are found.
 	*/
-	void min_max_percentile(Vector<number_type> & minimals, Vector<number_type> & maximals, number_type potential_max, number_type percentile ) const
+	void min_max_percentile(Vector<number_type> & minimals, Vector<number_type> & maximals, number_type potential_max, bool potential_max_set, number_type percentile ) const
 	{
 		assert(minimals.size() == n_popt_);
 		assert(maximals.size() == n_popt_);
@@ -83,7 +83,7 @@ public:
 			{
 				continue;
 			}
-			// Save values to a given chi2 in a vector and add it to cutoff vector if chi2 < potential_max
+			// Save values to a given chi2 in a vector and add it to cutoff vector if chi2 < potential_max of if no maximal limit has been set
 			if (i%n_variables_ < n_popt_)
 			{
 				current_values[i%n_variables_] = data_[i];
@@ -91,7 +91,7 @@ public:
 			}
 			if (i%n_variables_ == n_popt_)
 			{
-				if (data_[i] < potential_max)
+				if ((data_[i] < potential_max) || !potential_max_set )
 				{
 					for (size_type j = 0; j < values_cutoff.size(); ++j)
 					{
@@ -103,12 +103,21 @@ public:
 		}
 
 		size_type entries_per_variable = values_cutoff[0].size();
+
 		// Find the lower and upper percentile for each parameter
+		if (entries_per_variable == 0)
+		{
+
+		}
 		for (size_type i = 0; i < values_cutoff.size(); ++i)
 		{
 			std::sort(values_cutoff[i].begin(), values_cutoff[i].end());
 			size_type minimal_index = entries_per_variable * percentile; // type conversion wanted !
 			size_type maximal_index = entries_per_variable -1 - minimal_index;
+			if (entries_per_variable == 0)
+			{
+				maximal_index = 0;
+			}
 			minimals[i] = values_cutoff[i][minimal_index];
 			maximals[i] = values_cutoff[i][maximal_index];
 		}

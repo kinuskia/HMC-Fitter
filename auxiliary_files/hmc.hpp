@@ -23,7 +23,7 @@ public:
 	, range_max_(range_max) 
 	, bounds_fixed_(false)
 	, do_analysis_(true)
-	//, discard_data_(false)
+	, chi2redmax_set_(false)
 	, chi2redmax_(1e2)
 	, c_lengths_(c_lengths)
 	, stepsize_(stepsize)
@@ -59,6 +59,7 @@ public:
 	/* Setter for maximal chi2red value */
 	void discard_from(number_type value)
 	{
+		chi2redmax_set_ = true;
 		chi2redmax_ = value;
 		//discard_data_ = true;
 	}
@@ -805,8 +806,12 @@ public:
 		//report lower and upper bounds for parameters
 		Vector<number_type> lower_bound(initial.size());
 		Vector<number_type> upper_bound(initial.size());
-		data.min_max_percentile(lower_bound, upper_bound, chi2redmax_, 0.0015);
+		data.min_max_percentile(lower_bound, upper_bound, chi2redmax_, chi2redmax_set_, 0.0015);
 		std::cout << "Lower and upper bounds for the parameters: \n";
+		if (chi2redmax_set_)
+		{
+			std::cout << "with a reduced chi2 of " << chi2redmax_ << "\n";
+		}
 		for (size_type i = 0; i < lower_bound.size(); ++i)
 		{
 			std::cout << "Parameter " << i << " : " << lower_bound[i] << " -> " << upper_bound[i] << "\n";
@@ -916,7 +921,7 @@ private:
 	Vector<number_type> range_max_;
 	bool bounds_fixed_;
 	bool do_analysis_;
-	//bool discard_data_;
+	bool chi2redmax_set_;
 	number_type chi2redmax_;
 
 	/* parameters for the leapfrog integrator */

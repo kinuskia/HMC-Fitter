@@ -104,35 +104,53 @@ int main ()
 	//correlators.print_content();
 
 	// Vector for fitting parameters
-	Vector<double> popt(12);
+	Vector<double> popt(20);
 
 	// Estimated search region
 	Vector<double> range_min(popt.size());
 	Vector<double> range_max(popt.size());
-	range_min[0] = 0.98451;
-	range_max[0] = 0.98455;
-	range_min[1] = 1.3515;
-	range_max[1] = 1.3527;
-	range_min[2] = 0.26405;
-	range_max[2] = 0.26417;
-	range_min[3] = 0.5230;
-	range_max[3] = 0.5245;
-	range_min[4] = 0.06444;
-	range_max[4] = 0.06447;
-	range_min[5] = 0.0435;
-	range_max[5] = 0.0445;
-	range_min[6] = 0.5461;
-	range_max[6] = 0.5464;
-	range_min[7] = -0.0053;
-	range_max[7] = -0.0051;
-	range_min[8] = -0.00017;
-	range_max[8] = -0.00013;
-	range_min[9] = 2.188;
-	range_max[9] = 2.190;
-	range_min[10] = 1.55;
-	range_max[10] = 1.56;
-	range_min[11] = 1.37;
-	range_max[11] = 1.39;
+	range_min[0] = 0.986;
+	range_max[0] = 0.9935;
+	range_min[1] = 1.40;
+	range_max[1] = 1.535;
+	range_min[2] = -0.29;
+	range_max[2] = 0.29;
+	range_min[3] = 0.50;
+	range_max[3] = 0.85;
+	range_min[4] = -0.071;
+	range_max[4] = 0.072;
+	range_min[5] = 0.09;
+	range_max[5] = 0.0185;
+	range_min[6] = -0.20;
+	range_max[6] = 0.20;
+	range_min[7] = 0.67;
+	range_max[7] = 1.1;
+	range_min[8] = 0.46;
+	range_max[8] = 0.9;
+	range_min[9] = -0.85;
+	range_max[9] = 0.8;
+	range_min[10] = 0.72;
+	range_max[10] = 0.88;
+	range_min[11] = -0.74;
+	range_max[11] = 0.94;
+	range_min[12] = -0.95;
+	range_max[12] = 1.34;
+	range_min[13] = 1.13;
+	range_max[13] = 1.38;
+	range_min[14] = 2.0;
+	range_max[14] = 3.15;
+	range_min[15] = 6.3;
+	range_max[15] = 17.8;
+	range_min[16] = 2.05;
+	range_max[16] = 2.6;
+	range_min[17] = 6;
+	range_max[17] = 26.5;
+	range_min[18] = 5.8;
+	range_max[18] = 17;
+	range_min[19] = 2.07;
+	range_max[19] = 2.43;
+
+
 	
 	
 
@@ -145,14 +163,14 @@ int main ()
 
 
 	//initialize HMC opbject
-	HMC<double> sampler(correlators, range_min, range_max, c_lengths, 3e-3, 30, 70, 1e-5);
+	HMC<double> sampler(correlators, range_min, range_max, c_lengths, 5e-6, 40, 50, 1e-2);
 	sampler.bounds_fixed(false);
 	sampler.do_analysis(true);
 	
 
 	/* PRELIMINARY RUN TOOLS */
 	// draws positions and returns acceptance rates in a file (to adjust leapfrog step size)
-	//sampler.get_acceptance_rates(range_min, range_max, 100, 50, "preliminary_tools/acceptrates.txt");
+	//sampler.get_acceptance_rates(range_min, range_max, 50, 50, "preliminary_tools/acceptrates.txt");
 	
 	// returns autocorrelation lengths for random starting points (to adjust number of leapfrog steps)
 	//sampler.get_optimal_number_of_steps(range_min, range_max, 300, 700, "preliminary_tools/correlation_times.txt");
@@ -161,9 +179,9 @@ int main ()
 	For the estimation of the lower and upper bounds of the parameters, values with a potential above
 	the value below are discarded
 	*/
-	sampler.discard_from(0.36);
+	sampler.discard_from(150.);
 	fill_from_region(popt, range_min, range_max);
-	//sampler.walk(2e3, 40, 60*30, popt, 10);
+	sampler.walk(3e4, 4, 60*55, popt, 10);
 
 	/* ACTUAL RUN */
 
@@ -179,7 +197,7 @@ int main ()
 	//sampler.intrinsic_err(popt, perr);
 
 	
-	sampler.walk(5e4, 60*30, popt, 10);
+	//sampler.walk(5e4, 60*30, popt, 10);
 
 	
 
