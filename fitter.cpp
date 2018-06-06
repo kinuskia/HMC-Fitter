@@ -109,46 +109,46 @@ int main ()
 	// Estimated search region
 	Vector<double> range_min(popt.size());
 	Vector<double> range_max(popt.size());
-	range_min[0] = 0.986;
-	range_max[0] = 0.9935;
-	range_min[1] = 1.40;
-	range_max[1] = 1.535;
-	range_min[2] = -0.29;
-	range_max[2] = 0.29;
-	range_min[3] = 0.50;
-	range_max[3] = 0.85;
-	range_min[4] = -0.071;
-	range_max[4] = 0.072;
-	range_min[5] = 0.09;
-	range_max[5] = 0.0185;
-	range_min[6] = -0.20;
-	range_max[6] = 0.20;
-	range_min[7] = 0.67;
-	range_max[7] = 1.1;
-	range_min[8] = 0.46;
-	range_max[8] = 0.9;
-	range_min[9] = -0.85;
-	range_max[9] = 0.8;
-	range_min[10] = 0.72;
-	range_max[10] = 0.88;
-	range_min[11] = -0.74;
-	range_max[11] = 0.94;
-	range_min[12] = -0.95;
-	range_max[12] = 1.34;
-	range_min[13] = 1.13;
-	range_max[13] = 1.38;
-	range_min[14] = 2.0;
-	range_max[14] = 3.15;
-	range_min[15] = 6.3;
-	range_max[15] = 17.8;
-	range_min[16] = 2.05;
-	range_max[16] = 2.6;
-	range_min[17] = 6;
-	range_max[17] = 26.5;
-	range_min[18] = 5.8;
-	range_max[18] = 17;
-	range_min[19] = 2.07;
-	range_max[19] = 2.43;
+	range_min[0] = 0.981644;
+	range_max[0] = 0.994899;
+	range_min[1] = 1.24214;
+	range_max[1] = 1.67238;
+	range_min[2] = -0.290866;
+	range_max[2] = 0.291909;
+	range_min[3] = 0.368444;
+	range_max[3] = 1.08222;
+	range_min[4] = -0.0704209;
+	range_max[4] = 0.0704742;
+	range_min[5] = 0.0077663;
+	range_max[5] = 0.0280702;
+	range_min[6] = -0.201429;
+	range_max[6] = 0.202556;
+	range_min[7] = 0.391631;
+	range_max[7] = 1.45834;
+	range_min[8] = 0.40843;
+	range_max[8] = 2.18364;
+	range_min[9] = -11.6915;
+	range_max[9] = 8.77749;
+	range_min[10] = 0.644657;
+	range_max[10] = 0.876352;
+	range_min[11] = -8.29216;
+	range_max[11] = 7.30805;
+	range_min[12] = -12.5464;
+	range_max[12] = 9.72157;
+	range_min[13] = 0.996292;
+	range_max[13] = 1.40714;
+	range_min[14] = 1.99583;
+	range_max[14] = 4.57368;
+	range_min[15] = 5.97847;
+	range_max[15] = 110.062;
+	range_min[16] = 2.00568;
+	range_max[16] = 3.17356;
+	range_min[17] = 6.79197;
+	range_max[17] = 154.174;
+	range_min[18] = 5.63385;
+	range_max[18] = 191.832;
+	range_min[19] = 1.98952;
+	range_max[19] = 2.82087;
 
 
 	
@@ -163,9 +163,9 @@ int main ()
 
 
 	//initialize HMC opbject
-	HMC<double> sampler(correlators, range_min, range_max, c_lengths, 5e-6, 40, 50, 1e-2);
-	sampler.bounds_fixed(false);
-	sampler.do_analysis(true);
+	HMC<double> sampler(correlators, range_min, range_max, c_lengths, 5e-6, 40, 50, 1e1);
+	//sampler.bounds_fixed(false);
+	//sampler.do_analysis(true);
 	
 
 	/* PRELIMINARY RUN TOOLS */
@@ -179,9 +179,10 @@ int main ()
 	For the estimation of the lower and upper bounds of the parameters, values with a potential above
 	the value below are discarded
 	*/
-	sampler.discard_from(150.);
-	fill_from_region(popt, range_min, range_max);
-	sampler.walk(3e4, 4, 60*55, popt, 10);
+	//sampler.discard_from(150.);
+	//fill_from_region(popt, range_min, range_max);
+	//sampler.walk(3e4, 4, 60*55, popt, 10);
+	sampler.walk_automatic();
 
 	/* ACTUAL RUN */
 

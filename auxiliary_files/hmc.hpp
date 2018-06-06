@@ -10,6 +10,7 @@
 #include "../model.hpp"
 #include <algorithm>
 #include <fstream>
+#include <string>
 
 template<typename REAL>
 class HMC
@@ -21,9 +22,8 @@ public:
 	HMC(Model<number_type> model, Vector<number_type> range_min, Vector<number_type> range_max, Vector<number_type> c_lengths, number_type stepsize, size_type n_steps_min, size_type n_steps_max, number_type temperature)
 	: range_min_(range_min)
 	, range_max_(range_max) 
-	, bounds_fixed_(false)
-	, do_analysis_(true)
-	, chi2redmax_set_(false)
+	, bounds_fixed_(false) // OBSOLETE
+	, do_analysis_(true) // OBSOLETE
 	, chi2redmax_(1e2)
 	, c_lengths_(c_lengths)
 	, stepsize_(stepsize)
@@ -59,7 +59,6 @@ public:
 	/* Setter for maximal chi2red value */
 	void discard_from(number_type value)
 	{
-		chi2redmax_set_ = true;
 		chi2redmax_ = value;
 		//discard_data_ = true;
 	}
@@ -806,12 +805,9 @@ public:
 		//report lower and upper bounds for parameters
 		Vector<number_type> lower_bound(initial.size());
 		Vector<number_type> upper_bound(initial.size());
-		data.min_max_percentile(lower_bound, upper_bound, chi2redmax_, chi2redmax_set_, 0.0015);
+		data.min_max_percentile(lower_bound, upper_bound, chi2redmax_, 0.0015);
 		std::cout << "Lower and upper bounds for the parameters: \n";
-		if (chi2redmax_set_)
-		{
-			std::cout << "with a reduced chi2 of " << chi2redmax_ << "\n";
-		}
+
 		for (size_type i = 0; i < lower_bound.size(); ++i)
 		{
 			std::cout << "Parameter " << i << " : " << lower_bound[i] << " -> " << upper_bound[i] << "\n";
@@ -819,7 +815,297 @@ public:
 		
 	}
 
+	/* partially automatic walk to find to global minimum region */
+	void walk_automatic()
+	{
+		std::string user_input = "";
+		std::string quit = "quit";
+		std::string next = "next";
+		std::string back = "back";
+		std::string next_chain = "continue";
+		std::string repeat = "repeat";
+		std::string yes = "yes";
+		std::string no = "no";
+		size_type next_step;
+		while(true)
+		{
+			// Set up storage vector
+			Storage<number_type> data(model_.n_parameters(), 2); // records values of fitting vector and two additional things
+			next_step = 1;
+			// Step 1: Set step size
+			std::cout << "Set a step size (currently: ";
+			std::cout << stepsize_ << "): ";
+			std::cin >> stepsize_;
+			while(next_step == 1)
+			{
+				n_steps_min_ = 4;
+				n_steps_max_ = 5;
+				get_acceptance_rates(range_min_, range_max_, 50, 50, "preliminary_tools/acceptrates.txt");
+				std::cout << "Set new step size or go to next step (\"next\"): ";
+				std::cin >> user_input;
+				if (user_input != next)
+				{
+					stepsize_ = std::stod(user_input);
+				}
+				else
+				{
+					next_step = 2;
+				}
+			}
 	
+			// Step 2: Check step size for L leapfrog steps
+			while (next_step == 2)
+			{
+				std::cout << "Enter number of leapfrog steps: ";
+				size_type length;
+				std::cin >> length;
+				get_optimal_number_of_steps(range_min_, range_max_, 300, length, "preliminary_tools/correlation_times.txt");
+				std::cout << "Set minimal number of leapfrog steps: ";
+				std::cin >> n_steps_min_;
+				std::cout << "Set maximal number of leapfrog steps: ";
+				std::cin >> n_steps_max_;
+				std::cout << "Set number of chains: ";
+				size_type n_chains;
+				std::cin >> n_chains;
+				get_acceptance_rates(range_min_, range_max_, n_chains, 50, "preliminary_tools/acceptrates.txt");
+				std::cout << "Enter \"next\" if you want to go the next step, or \"back\" to get to the previous step: ";
+				std::cin >> user_input;
+				if (user_input == next)
+				{
+					next_step = 3;
+				}
+				else if (user_input == back)
+				{
+					next_step = 1;
+				}
+			}
+			
+			// Step 3: Generate Markov chains
+			while (next_step == 3)
+			{
+				// Set timer
+				std::time_t start = std::time(nullptr);
+				number_type expected_duration;
+				bool estimate_given = false;
+
+				size_type nb_initials = 1;
+				size_type nb_steps = 1e2;
+
+				bool data_saved = false;
+
+				for (size_type i = 1; i <= nb_initials; ++i)
+				{
+					bool bad_starting_point = false;
+					// reinitialize internal counters
+					counter_ = 0;
+					counter_accepted_ = 0;
+					if (i == 1)
+					{
+						std::cout << "Generating the first Markov chain... \n";
+					}
+					// choose random starting point that respects constraints
+					Vector<number_type> initial(model_.n_parameters());
+					bool permitted_initial_found = false;
+					number_type counter_constraints = 0;
+					while (!permitted_initial_found)
+					{
+						fill_from_region(initial, range_min_, range_max_);
+						if (model_.constraints_respected(initial))
+						{
+							permitted_initial_found = true;
+						}
+						counter_constraints++;	
+						assert(counter_constraints < 20);
+					}
+			
+			
+					// Start walking
+					size_type counter = 0;
+					while (counter < nb_steps)
+					{
+						if (counter == 100 && acceptance_rate() < 0.01) // break if a bad initial condition was chosen
+						{
+							--i;
+							std::cout << "Bad starting point. Recalculating current chain...\n";
+							bad_starting_point = true;
+							break;
+						}
+						step_forward(initial);
+
+						// save updated data to storage
+						data.read_in(initial); // save fitting parameters
+						data.read_in(potential(initial)*temperature_); // save chi2_red
+						data.read_in(acceptance_rate()); // save acceptance rate
+
+						// Calculate time
+						std::time_t end = std::time(nullptr);
+						number_type diff = end - start;
+
+						// Save data after each five minutes
+						if ((size_type(diff) % (5*60)) == 0 && !data_saved && diff > 1)
+						{
+							// write data to output file
+							data.write("data.txt");
+							data_saved = true;
+							std::cout << "Data saved to file.\n";
+						}
+						// after data has been written, no data can be rewritten for a minute
+						if ((size_type(diff) % (5*60)) == 1) 
+						{
+							data_saved = false;
+						}
+
+						// // After 10s: Estimate duration of the walk
+						// if ( (diff > 10) && !estimate_given)
+						// {
+						// 	expected_duration = nb_steps * nb_initials * diff / counter_ / 60;
+						// 	std::cout << "Computation time in min: " << expected_duration << "\n";
+						// 	estimate_given = true;
+						// }
+
+						// // Cancel calculation if time exceeds max_duration
+						// if (diff > max_duration) 
+						// {
+						// 	std::cout << "Computation aborted as time ran out. " << "\n";
+						// 	break;
+						// }
+
+						// // Print progress
+						// for (size_type i = 1; i < progress_steps; ++i)
+						// {
+						// 	if (counter_ == size_type(i*nb_steps*nb_initials/progress_steps))
+						// 	{
+						// 		std::cout << "Progress: " << size_type(i*100./progress_steps) << "%" << "\n";
+						// 	}
+						// }
+						counter++;
+
+						if (counter == nb_steps && i == 1) // set length of chain and number of chain
+						{
+							data.write("data.txt");
+							std::cout << "End of the first chain reached after " << diff/60 << "min. \n";
+							std::cout << "Set chain length to a specific value or continue with the other chains (\"continue\").\n";
+							std::cout << "If chain is supposed to be recalculated, enter \"repeat\".\n";
+							std::cin >> user_input;
+							if (user_input != next_chain && user_input != repeat)
+							{
+								nb_steps = size_type(std::stod(user_input));
+							}
+							if (user_input == repeat)
+							{
+								i = 0;
+								start = std::time(nullptr);
+								break;
+							}
+
+							if (user_input == next_chain)
+							{
+								std::cout << "How many chains are supposed to be generated? ";
+								std::cin >> nb_initials;
+							}
+						}
+					}
+					if (!bad_starting_point)
+					{
+						std::cout << "Chain " << i << " / " << nb_initials << " generated.\n";
+					}
+
+					if (i == nb_initials)
+					{
+						data.write("data.txt");
+						std::cout << "Requested chains have been generated. Increase number of chains or go to next step: ";
+						std::cin >> user_input;
+						if (user_input != next)
+						{
+							nb_initials = size_type(std::stod(user_input));
+							std::cout << "Change to chain length to: ";
+							std::cin >> nb_steps;
+						}
+						else
+						{
+							next_step = 4;
+						}
+					}
+					
+				}
+			
+			}
+
+			// Step 4: determine new parameter range
+
+			if (next_step == 4)
+			{
+				std::cout << "Data with up to which chi2red are supposed to be taken into account? ";
+				std::cin >> chi2redmax_;
+				data.min_max_percentile(range_min_, range_max_, chi2redmax_, 0.0015);
+				c_lengths_ = range_max_ - range_min_;
+
+				std::cout << "Lower and upper bounds for the parameters: \n";
+				for (size_type i = 0; i < range_min_.size(); ++i)
+				{
+					std::cout << "Parameter " << i << " : " << range_min_[i] << " -> " << range_max_[i] << "\n";
+				}
+
+				next_step = 5;
+
+				std::cout << "Do you want to proceed with in-depth walk with analysis? (yes/no) ";
+				std::cin >> user_input;
+				if (user_input == yes)
+				{
+					next_step = 6;
+					break;
+				}
+			}
+
+
+
+			// Step 5: Set new temperature
+			if (next_step == 5)
+			{
+				std::cout << "Set the temperature of the system (currently ";
+				std::cout << temperature_ << "): ";
+				std::cin >> temperature_;
+			}
+
+		
+		}
+
+		// Final part: In-depth walk with analysis:
+
+		// find range of optimal number of leapfrog steps
+		std::cout << "Determination of the optimal number of leapfrog steps.\n";
+		while (next_step == 6)
+		{
+			std::cout << "Enter number of leapfrog steps: ";
+			size_type length;
+			std::cin >> length;
+			get_optimal_number_of_steps(range_min_, range_max_, 300, length, "preliminary_tools/correlation_times.txt");
+			std::cout << "Do you wish to proceed to the next step (yes/no)";
+			std::cin >> user_input;
+			if (user_input == yes)
+			{
+				next_step = 7;
+				std::cout << "Set minimal number of leapfrog steps: ";
+				std::cin >> n_steps_min_;
+				std::cout << "Set maximal number of leapfrog steps: ";
+				std::cin >> n_steps_max_;
+			}
+
+		}
+
+		// do the walk
+		std::cout << "Enter chain length: ";
+		size_type length;
+		std::cin >> length;
+		std::cout << "Enter maximal computation time in min: ";
+		number_type minutes;
+		std::cin >> minutes;
+		Vector<number_type> popt(model_.n_parameters());
+		fill_from_region(popt, range_min_, range_max_);
+		walk(length, minutes*60, popt, 10);
+			
+	}
+
 
 	number_type acceptance_rate()
 	{
@@ -921,7 +1207,6 @@ private:
 	Vector<number_type> range_max_;
 	bool bounds_fixed_;
 	bool do_analysis_;
-	bool chi2redmax_set_;
 	number_type chi2redmax_;
 
 	/* parameters for the leapfrog integrator */

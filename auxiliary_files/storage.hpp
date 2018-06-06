@@ -21,6 +21,16 @@ public:
 	{
 	}
 
+	Storage (size_type n_popt, size_type n_of_extra = 0)
+	: n_popt_(n_popt)
+	, n_extra_(n_of_extra) 
+	, n_variables_(n_popt + n_of_extra)
+	, data_()
+	, thermalization_(0)
+	, entries_per_variable_(0)
+	{
+	}
+
 	/* Getter methods */
 	size_type n_variables() const
 	{
@@ -69,7 +79,7 @@ public:
 	 e.g min_max_percentile(minimals, 20, 0.05) returns the value below which 5 % of the values with chi2red < 20
 	 are found and above which 5 % are found.
 	*/
-	void min_max_percentile(Vector<number_type> & minimals, Vector<number_type> & maximals, number_type potential_max, bool potential_max_set, number_type percentile ) const
+	void min_max_percentile(Vector<number_type> & minimals, Vector<number_type> & maximals, number_type potential_max, number_type percentile ) const
 	{
 		assert(minimals.size() == n_popt_);
 		assert(maximals.size() == n_popt_);
@@ -91,7 +101,7 @@ public:
 			}
 			if (i%n_variables_ == n_popt_)
 			{
-				if ((data_[i] < potential_max) || !potential_max_set )
+				if ((data_[i] < potential_max))
 				{
 					for (size_type j = 0; j < values_cutoff.size(); ++j)
 					{
