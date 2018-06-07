@@ -12,39 +12,40 @@
 
 int main ()
 {
-	Vector<double> t(0);
-	Vector<double> A0l_A0l(0);
-	Vector<double> A0l_A0s(0);
-	Vector<double> A0l_Pl(0);
-	Vector<double> A0l_Ps(0);
-	Vector<double> A0s_A0l(0);
-	Vector<double> A0s_A0s(0);
-	Vector<double> A0s_Pl(0);
-	Vector<double> A0s_Ps(0);
-	Vector<double> Pl_A0l(0);
-	Vector<double> Pl_A0s(0);
-	Vector<double> Pl_Pl(0);
-	Vector<double> Pl_Ps(0);
-	Vector<double> Ps_A0l(0);
-	Vector<double> Ps_A0s(0);
-	Vector<double> Ps_Pl(0);
-	Vector<double> Ps_Ps(0);
-	Vector<double> d_A0l_A0l(0);
-	Vector<double> d_A0l_A0s(0);
-	Vector<double> d_A0l_Pl(0);
-	Vector<double> d_A0l_Ps(0);
-	Vector<double> d_A0s_A0l(0);
-	Vector<double> d_A0s_A0s(0);
-	Vector<double> d_A0s_Pl(0);
-	Vector<double> d_A0s_Ps(0);
-	Vector<double> d_Pl_A0l(0);
-	Vector<double> d_Pl_A0s(0);
-	Vector<double> d_Pl_Pl(0);
-	Vector<double> d_Pl_Ps(0);
-	Vector<double> d_Ps_A0l(0);
-	Vector<double> d_Ps_A0s(0);
-	Vector<double> d_Ps_Pl(0);
-	Vector<double> d_Ps_Ps(0);
+	typedef double number_type;
+	Vector<number_type> t(0);
+	Vector<number_type> A0l_A0l(0);
+	Vector<number_type> A0l_A0s(0);
+	Vector<number_type> A0l_Pl(0);
+	Vector<number_type> A0l_Ps(0);
+	Vector<number_type> A0s_A0l(0);
+	Vector<number_type> A0s_A0s(0);
+	Vector<number_type> A0s_Pl(0);
+	Vector<number_type> A0s_Ps(0);
+	Vector<number_type> Pl_A0l(0);
+	Vector<number_type> Pl_A0s(0);
+	Vector<number_type> Pl_Pl(0);
+	Vector<number_type> Pl_Ps(0);
+	Vector<number_type> Ps_A0l(0);
+	Vector<number_type> Ps_A0s(0);
+	Vector<number_type> Ps_Pl(0);
+	Vector<number_type> Ps_Ps(0);
+	Vector<number_type> d_A0l_A0l(0);
+	Vector<number_type> d_A0l_A0s(0);
+	Vector<number_type> d_A0l_Pl(0);
+	Vector<number_type> d_A0l_Ps(0);
+	Vector<number_type> d_A0s_A0l(0);
+	Vector<number_type> d_A0s_A0s(0);
+	Vector<number_type> d_A0s_Pl(0);
+	Vector<number_type> d_A0s_Ps(0);
+	Vector<number_type> d_Pl_A0l(0);
+	Vector<number_type> d_Pl_A0s(0);
+	Vector<number_type> d_Pl_Pl(0);
+	Vector<number_type> d_Pl_Ps(0);
+	Vector<number_type> d_Ps_A0l(0);
+	Vector<number_type> d_Ps_A0s(0);
+	Vector<number_type> d_Ps_Pl(0);
+	Vector<number_type> d_Ps_Ps(0);
 
 	// Read in measured data
 	read_data("correlators/correlator_A0l-A0l", t, A0l_A0l, d_A0l_A0l, 1);
@@ -65,7 +66,7 @@ int main ()
 	read_data("correlators/correlator_Ps-Ps", t, Ps_Ps, d_Ps_Ps, 1);
 
 	// Set up fitting model
-	Model<double> correlators(
+	Model<number_type> correlators(
 	t,
 	A0l_A0l,
 	A0l_A0s,
@@ -104,58 +105,58 @@ int main ()
 	//correlators.print_content();
 
 	// Vector for fitting parameters
-	Vector<double> popt(20);
+	Vector<number_type> popt(20);
 
 	// Estimated search region
-	Vector<double> range_min(popt.size());
-	Vector<double> range_max(popt.size());
-	range_min[0] = 0.981644;
-	range_max[0] = 0.994899;
-	range_min[1] = 1.24214;
-	range_max[1] = 1.67238;
-	range_min[2] = -0.290866;
-	range_max[2] = 0.291909;
-	range_min[3] = 0.368444;
-	range_max[3] = 1.08222;
-	range_min[4] = -0.0704209;
-	range_max[4] = 0.0704742;
-	range_min[5] = 0.0077663;
-	range_max[5] = 0.0280702;
-	range_min[6] = -0.201429;
-	range_max[6] = 0.202556;
-	range_min[7] = 0.391631;
-	range_max[7] = 1.45834;
-	range_min[8] = 0.40843;
-	range_max[8] = 2.18364;
-	range_min[9] = -11.6915;
-	range_max[9] = 8.77749;
-	range_min[10] = 0.644657;
-	range_max[10] = 0.876352;
-	range_min[11] = -8.29216;
-	range_max[11] = 7.30805;
-	range_min[12] = -12.5464;
-	range_max[12] = 9.72157;
-	range_min[13] = 0.996292;
-	range_max[13] = 1.40714;
-	range_min[14] = 1.99583;
-	range_max[14] = 4.57368;
-	range_min[15] = 5.97847;
-	range_max[15] = 110.062;
-	range_min[16] = 2.00568;
-	range_max[16] = 3.17356;
-	range_min[17] = 6.79197;
-	range_max[17] = 154.174;
-	range_min[18] = 5.63385;
-	range_max[18] = 191.832;
-	range_min[19] = 1.98952;
-	range_max[19] = 2.82087;
+	Vector<number_type> range_min(popt.size());
+	Vector<number_type> range_max(popt.size());
+	range_min[0] = 0.986645;
+	range_max[0] = 0.986659;
+	range_min[1] = 1.33967;
+	range_max[1] = 1.34001;
+	range_min[2] = 0.268649;
+	range_max[2] = 0.268691;
+	range_min[3] = 0.489942;
+	range_max[3] = 0.490405;
+	range_min[4] = 0.0664262;
+	range_max[4] = 0.0664341;
+	range_min[5] = 0.0201979;
+	range_max[5] = 0.0202198;
+	range_min[6] = 0.18109;
+	range_max[6] = 0.181124;
+	range_min[7] = 0.550113;
+	range_max[7] = 0.550723;
+	range_min[8] = 0.547123;
+	range_max[8] = 0.547303;
+	range_min[9] = -1.19765e14;
+	range_max[9] = 2.67993e14;
+	range_min[10] = 0.806717;
+	range_max[10] = 0.806859;
+	range_min[11] = -1.90436e14;
+	range_max[11] = 1.19686e14;
+	range_min[12] = 3.40916e14;
+	range_max[12] = 1.24168e15;
+	range_min[13] = 1.28929;
+	range_max[13] = 1.28952;
+	range_min[14] = 2.15294;
+	range_max[14] = 2.15352;
+	range_min[15] = 8.57078e13;
+	range_max[15] = 5.01905e14;
+	range_min[16] = 2.10435;
+	range_max[16] = 2.10471;
+	range_min[17] = 3.01202e13;
+	range_max[17] = 1.31891e14;
+	range_min[18] = 4.40002e13;
+	range_max[18] = 2.9e14;
+	range_min[19] = 2.08619;
+	range_max[19] = 2.08651;
 
 
 	
 	
 
 	// Characteristic length scales for the parameters // default 1
-	Vector<double> c_lengths(popt.size(), 1);
+	Vector<number_type> c_lengths(popt.size(), 1);
 	c_lengths = range_max-range_min;
 
 
@@ -163,7 +164,7 @@ int main ()
 
 
 	//initialize HMC opbject
-	HMC<double> sampler(correlators, range_min, range_max, c_lengths, 5e-6, 40, 50, 1e1);
+	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 9e-4, 40, 50, 1e0);
 	//sampler.bounds_fixed(false);
 	//sampler.do_analysis(true);
 	
@@ -193,7 +194,7 @@ int main ()
 
 
 
-	Vector<double> perr(popt.size());
+	Vector<number_type> perr(popt.size());
 
 	//sampler.intrinsic_err(popt, perr);
 

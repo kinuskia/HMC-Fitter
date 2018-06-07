@@ -4,6 +4,7 @@
 #include "vector.hpp"
 #include <string>
 #include <fstream>
+#include <iomanip>
 
 template<typename REAL>
 class Storage
@@ -390,7 +391,7 @@ public:
 				outfile << " ";
 			}
 
-			outfile << data_[i];
+			outfile << std::setprecision(14) << data_[i];
 			
 			if((i%n_variables_) == (n_variables_ - 1)) // new line
 			{

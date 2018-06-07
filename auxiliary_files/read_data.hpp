@@ -6,7 +6,8 @@
 
 /* free functions to read in a data file and save it in a vector */
 
-void insert(double number, std::size_t counter, Vector<double> &x_data, Vector<double> &y_data, Vector<double> &dy_data)
+template<typename number_type>
+void insert(number_type number, std::size_t counter, Vector<number_type> &x_data, Vector<number_type> &y_data, Vector<number_type> &dy_data)
 {
 	if (counter%3 == 0)
 		x_data.push_back(number);
@@ -16,7 +17,8 @@ void insert(double number, std::size_t counter, Vector<double> &x_data, Vector<d
 		dy_data.push_back(number);
 }
 
-void read_data(std::string filename, Vector<double> &x_data, Vector<double> &y_data, Vector<double> &dy_data, std::size_t skip_rows = 0)
+template<typename number_type>
+void read_data(std::string filename, Vector<number_type> &x_data, Vector<number_type> &y_data, Vector<number_type> &dy_data, std::size_t skip_rows = 0)
 {
 	x_data.clear();
 	y_data.clear();
@@ -55,7 +57,7 @@ void read_data(std::string filename, Vector<double> &x_data, Vector<double> &y_d
 			else if (!end_of_number)
 			{
 				end_of_number = true;
-				double number = std::stod(numberstring);
+				number_type number = std::stod(numberstring);
 				insert(number, counter_numbers, x_data, y_data, dy_data); // save number in the correct vector
 				counter_numbers++;
 				numberstring = "";
@@ -65,7 +67,7 @@ void read_data(std::string filename, Vector<double> &x_data, Vector<double> &y_d
 				continue; // ignore second, third ... space in a series of spaces
 			}
 		}
-		double number = std::stod(numberstring); // end of line finishes number
+		number_type number = std::stod(numberstring); // end of line finishes number
 		insert(number, counter_numbers, x_data, y_data, dy_data);
 		counter_numbers++;
 		numberstring = "";

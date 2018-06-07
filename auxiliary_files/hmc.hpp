@@ -859,24 +859,29 @@ public:
 				std::cout << "Enter number of leapfrog steps: ";
 				size_type length;
 				std::cin >> length;
-				get_optimal_number_of_steps(range_min_, range_max_, 300, length, "preliminary_tools/correlation_times.txt");
-				std::cout << "Set minimal number of leapfrog steps: ";
-				std::cin >> n_steps_min_;
-				std::cout << "Set maximal number of leapfrog steps: ";
-				std::cin >> n_steps_max_;
-				std::cout << "Set number of chains: ";
-				size_type n_chains;
-				std::cin >> n_chains;
-				get_acceptance_rates(range_min_, range_max_, n_chains, 50, "preliminary_tools/acceptrates.txt");
-				std::cout << "Enter \"next\" if you want to go the next step, or \"back\" to get to the previous step: ";
+				get_optimal_number_of_steps(range_min_, range_max_, 50, length, "preliminary_tools/correlation_times.txt");
+				std::cout << "Do you wish to change the number of leapfrog steps (yes/no)? ";
 				std::cin >> user_input;
-				if (user_input == next)
+				if (user_input == no)
 				{
-					next_step = 3;
-				}
-				else if (user_input == back)
-				{
-					next_step = 1;
+					std::cout << "Set minimal number of leapfrog steps: ";
+					std::cin >> n_steps_min_;
+					std::cout << "Set maximal number of leapfrog steps: ";
+					std::cin >> n_steps_max_;
+					std::cout << "Set number of chains: ";
+					size_type n_chains;
+					std::cin >> n_chains;
+					get_acceptance_rates(range_min_, range_max_, n_chains, 50, "preliminary_tools/acceptrates.txt");
+					std::cout << "Enter \"next\" if you want to go the next step, or \"back\" to get to the previous step: ";
+					std::cin >> user_input;
+					if (user_input == next)
+					{
+						next_step = 3;
+					}
+					else if (user_input == back)
+					{
+						next_step = 1;
+					}
 				}
 			}
 			
@@ -923,7 +928,7 @@ public:
 					size_type counter = 0;
 					while (counter < nb_steps)
 					{
-						if (counter == 100 && acceptance_rate() < 0.01) // break if a bad initial condition was chosen
+						if (counter == 10 && acceptance_rate() < 0.01) // break if a bad initial condition was chosen
 						{
 							--i;
 							std::cout << "Bad starting point. Recalculating current chain...\n";
@@ -1018,8 +1023,15 @@ public:
 						if (user_input != next)
 						{
 							nb_initials = size_type(std::stod(user_input));
-							std::cout << "Change to chain length to: ";
+							std::cout << "Change chain length to (currently ";
+							std::cout << nb_steps << "): ";
 							std::cin >> nb_steps;
+							std::cout << "Change minimal number of leapfrog steps to (currently ";
+							std::cout << n_steps_min_ << "): ";
+							std::cin >> n_steps_min_;
+							std::cout << "Change maximal number of leapfrog steps to (currently ";
+							std::cout << n_steps_max_ << "): ";
+							std::cin >> n_steps_max_;
 						}
 						else
 						{
@@ -1037,7 +1049,7 @@ public:
 			{
 				std::cout << "Data with up to which chi2red are supposed to be taken into account? ";
 				std::cin >> chi2redmax_;
-				data.min_max_percentile(range_min_, range_max_, chi2redmax_, 0.0015);
+				data.min_max_percentile(range_min_, range_max_, chi2redmax_, 0.16);
 				c_lengths_ = range_max_ - range_min_;
 
 				std::cout << "Lower and upper bounds for the parameters: \n";
