@@ -6,7 +6,6 @@
 #include "auxiliary_files/read_data.hpp"
 #include "auxiliary_files/hmc.hpp"
 #include "model.hpp"
-#include "model.hpp"
 #include <fstream>
 
 
@@ -105,51 +104,44 @@ int main ()
 	//correlators.print_content();
 
 	// Vector for fitting parameters
-	Vector<number_type> popt(20);
+	Vector<number_type> popt(12);
+
+	// Boolean vector for whether a fitting parameter is likely to be degenerate in terms of (+) <-> (-)
+	Vector<bool> degenerate(popt.size());
+	degenerate = false;
+	// degenerate[2] = true;
+	// degenerate[3] = true;
+	// degenerate[4] = true;
+	// degenerate[5] = true;
 
 	// Estimated search region
 	Vector<number_type> range_min(popt.size());
 	Vector<number_type> range_max(popt.size());
-	range_min[0] = 0.986645;
-	range_max[0] = 0.986659;
-	range_min[1] = 1.33967;
-	range_max[1] = 1.34001;
-	range_min[2] = 0.268649;
-	range_max[2] = 0.268691;
-	range_min[3] = 0.489942;
-	range_max[3] = 0.490405;
-	range_min[4] = 0.0664262;
-	range_max[4] = 0.0664341;
-	range_min[5] = 0.0201979;
-	range_max[5] = 0.0202198;
-	range_min[6] = 0.18109;
-	range_max[6] = 0.181124;
-	range_min[7] = 0.550113;
-	range_max[7] = 0.550723;
-	range_min[8] = 0.547123;
-	range_max[8] = 0.547303;
-	range_min[9] = -1.19765e14;
-	range_max[9] = 2.67993e14;
-	range_min[10] = 0.806717;
-	range_max[10] = 0.806859;
-	range_min[11] = -1.90436e14;
-	range_max[11] = 1.19686e14;
-	range_min[12] = 3.40916e14;
-	range_max[12] = 1.24168e15;
-	range_min[13] = 1.28929;
-	range_max[13] = 1.28952;
-	range_min[14] = 2.15294;
-	range_max[14] = 2.15352;
-	range_min[15] = 8.57078e13;
-	range_max[15] = 5.01905e14;
-	range_min[16] = 2.10435;
-	range_max[16] = 2.10471;
-	range_min[17] = 3.01202e13;
-	range_max[17] = 1.31891e14;
-	range_min[18] = 4.40002e13;
-	range_max[18] = 2.9e14;
-	range_min[19] = 2.08619;
-	range_max[19] = 2.08651;
+	range_min[0] = 0.8;
+	range_max[0] = 1.0;
+	range_min[1] = 1.2;
+	range_max[1] = 1.4;
+	range_min[2] = 0;
+	range_max[2] = 1;
+	range_min[3] = -1;
+	range_max[3] = 1;
+	range_min[4] = 0;
+	range_max[4] = 1;
+	range_min[5] = -1;
+	range_max[5] = 1;
+	range_min[6] = -1;
+	range_max[6] = 1;
+	range_min[7] = -1;
+	range_max[7] = 1;
+	range_min[8] = -1;
+	range_max[8] = 1;
+	range_min[9] = 1.4;
+	range_max[9] = 5;
+	range_min[10] = 1.4;
+	range_max[10] = 5;
+	range_min[11] = 1.4;
+	range_max[11] = 5;
+	
 
 
 	
@@ -164,7 +156,7 @@ int main ()
 
 
 	//initialize HMC opbject
-	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 9e-4, 40, 50, 1e0);
+	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 8e-6, 40, 50, 1e1);
 	//sampler.bounds_fixed(false);
 	//sampler.do_analysis(true);
 	
@@ -182,14 +174,14 @@ int main ()
 	*/
 	//sampler.discard_from(150.);
 	//fill_from_region(popt, range_min, range_max);
-	//sampler.walk(3e4, 4, 60*55, popt, 10);
+	//sampler.walk(1e2, 10, 60*55, popt, 10);
+	
 	sampler.walk_automatic();
 
 	/* ACTUAL RUN */
 
 	// initial guess for fitting variables : random pick from region above
 	// commented to avoid burn-in time (to be uncommented !!)
-	
 	
 
 

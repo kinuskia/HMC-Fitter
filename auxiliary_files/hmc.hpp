@@ -7,7 +7,7 @@
 #include <random>
 #include <ctime>
 #include "storage.hpp"
-#include "../model.hpp"
+//#include "../model.hpp"
 #include <algorithm>
 #include <fstream>
 #include <string>
@@ -128,32 +128,15 @@ public:
 				}
 			}
 		}
-		size_type d_of_freedom = model_.d_of_freedom();;
+		size_type d_of_freedom = model_.d_of_freedom();
 		Hessian *=  d_of_freedom * temperature_;
 		
-		for (size_type i = 0; i < Hessian.rowsize(); ++i)
-		{
-			for (size_type j = 0; j < Hessian.colsize(); ++j)
-			{
-				if (i == j)
-					std::cout << Hessian(i, j) << " ";
-			}
-			std::cout << "\n";
-		}
-		std::cout << "\n";
+	
 		Hessian /= 2.0;
 
 		Matrix<number_type> pcov(Hessian.rowsize(), Hessian.colsize());
 		MatrixInverse(Hessian, pcov);
-		for (size_type i = 0; i < Hessian.rowsize(); ++i)
-		{
-			for (size_type j = 0; j < Hessian.colsize(); ++j)
-			{
-				if (i == j)
-					std::cout << pcov(i, j) << " ";
-			}
-			std::cout << "\n";
-		}
+		
 
 		for (size_type i = 0; i < errors.size(); ++i)
 		{
@@ -826,12 +809,11 @@ public:
 		std::string repeat = "repeat";
 		std::string yes = "yes";
 		std::string no = "no";
-		size_type next_step;
+		size_type next_step = 1;
 		while(true)
 		{
 			// Set up storage vector
 			Storage<number_type> data(model_.n_parameters(), 2); // records values of fitting vector and two additional things
-			next_step = 1;
 			// Step 1: Set step size
 			std::cout << "Set a step size (currently: ";
 			std::cout << stepsize_ << "): ";
@@ -841,15 +823,19 @@ public:
 				n_steps_min_ = 4;
 				n_steps_max_ = 5;
 				get_acceptance_rates(range_min_, range_max_, 50, 50, "preliminary_tools/acceptrates.txt");
-				std::cout << "Set new step size or go to next step (\"next\"): ";
+				std::cout << "Set new step size or go to next step (\"next\"), or back (\"back\"): ";
 				std::cin >> user_input;
-				if (user_input != next)
+				if (user_input == next)
 				{
-					stepsize_ = std::stod(user_input);
+					next_step = 2;
+				}
+				else if (user_input == back)
+				{
+					next_step = 5;
 				}
 				else
 				{
-					next_step = 2;
+					stepsize_ = std::stod(user_input);
 				}
 			}
 	
@@ -872,7 +858,7 @@ public:
 					size_type n_chains;
 					std::cin >> n_chains;
 					get_acceptance_rates(range_min_, range_max_, n_chains, 50, "preliminary_tools/acceptrates.txt");
-					std::cout << "Enter \"next\" if you want to go the next step, or \"back\" to get to the previous step: ";
+					std::cout << "Enter \"next\" if you want to go the next step, or \"back\" to get to the previous step, or \"continue\" to proceed with in-depth analysis: ";
 					std::cin >> user_input;
 					if (user_input == next)
 					{
@@ -882,8 +868,14 @@ public:
 					{
 						next_step = 1;
 					}
+					else if (user_input == next_chain)
+					{
+						next_step = 6;
+					}
 				}
 			}
+
+
 			
 			// Step 3: Generate Markov chains
 			while (next_step == 3)
@@ -1049,8 +1041,18 @@ public:
 			{
 				std::cout << "Data with up to which chi2red are supposed to be taken into account? ";
 				std::cin >> chi2redmax_;
-				data.min_max_percentile(range_min_, range_max_, chi2redmax_, 0.16);
-				c_lengths_ = range_max_ - range_min_;
+				data.min_max_percentile(range_min_, range_max_, chi2redmax_, 0.0015);
+				std::cout << "Do you want to add characteristic length scales to your parameters? (yes/no) ";
+				std::cin >> user_input;
+				if (user_input == yes)
+				{
+					c_lengths_ = range_max_ - range_min_;	
+				}
+				else
+				{
+					c_lengths_ = 1;
+				}
+
 
 				std::cout << "Lower and upper bounds for the parameters: \n";
 				for (size_type i = 0; i < range_min_.size(); ++i)
@@ -1059,14 +1061,6 @@ public:
 				}
 
 				next_step = 5;
-
-				std::cout << "Do you want to proceed with in-depth walk with analysis? (yes/no) ";
-				std::cin >> user_input;
-				if (user_input == yes)
-				{
-					next_step = 6;
-					break;
-				}
 			}
 
 
@@ -1077,44 +1071,30 @@ public:
 				std::cout << "Set the temperature of the system (currently ";
 				std::cout << temperature_ << "): ";
 				std::cin >> temperature_;
+				next_step = 1;
 			}
 
 		
-		}
+		
 
-		// Final part: In-depth walk with analysis:
-
-		// find range of optimal number of leapfrog steps
-		std::cout << "Determination of the optimal number of leapfrog steps.\n";
-		while (next_step == 6)
-		{
-			std::cout << "Enter number of leapfrog steps: ";
-			size_type length;
-			std::cin >> length;
-			get_optimal_number_of_steps(range_min_, range_max_, 300, length, "preliminary_tools/correlation_times.txt");
-			std::cout << "Do you wish to proceed to the next step (yes/no)";
-			std::cin >> user_input;
-			if (user_input == yes)
+			// Final part: In-depth walk with analysis:
+			if (next_step == 6)
 			{
-				next_step = 7;
-				std::cout << "Set minimal number of leapfrog steps: ";
-				std::cin >> n_steps_min_;
-				std::cout << "Set maximal number of leapfrog steps: ";
-				std::cin >> n_steps_max_;
+				std::cout << "Enter chain length: ";
+				std::cin >> user_input;
+				size_type length = std::stod(user_input);
+				std::cout << "chain length: " << length << "\n";
+				std::cout << "Enter maximal computation time in min: ";
+				std::cin >> user_input;
+				number_type minutes = std::stod(user_input);
+				std::cout << "computation time: " << minutes << "\n";
+				Vector<number_type> popt(model_.n_parameters());
+				fill_from_region(popt, range_min_, range_max_);
+				walk(length, minutes*60, popt, 10);
 			}
+			
 
 		}
-
-		// do the walk
-		std::cout << "Enter chain length: ";
-		size_type length;
-		std::cin >> length;
-		std::cout << "Enter maximal computation time in min: ";
-		number_type minutes;
-		std::cin >> minutes;
-		Vector<number_type> popt(model_.n_parameters());
-		fill_from_region(popt, range_min_, range_max_);
-		walk(length, minutes*60, popt, 10);
 			
 	}
 

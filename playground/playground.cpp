@@ -1,92 +1,80 @@
 #include <iostream>
 #include <cmath>
 #include "../auxiliary_files/vector.hpp"
+#include "../auxiliary_files/read_data.hpp"
 #include "../auxiliary_files/matrix.hpp"
+
 #include <random>
 #include <assert.h>
 #include <fstream>
 
+template <typename REAL>
+class Model
+{
+public:
+	typedef std::size_t size_type;
+	typedef REAL number_type;
+	Model(size_type n_parameters)
+	: n_parameters_(n_parameters)
+	{}
+
+	size_type n_parameters() const
+	{
+		return n_parameters_;
+	}
+
+	size_type d_of_freedom() const
+	{
+		return 1;
+	}
+
+	number_type potential(const Vector<number_type> & q)
+	{
+		number_type sum = 0;
+		for (size_type i = 0; i < q.size(); ++i)
+		{
+			sum += (q[i] - number_type(i))*(q[i] - number_type(i))/(number_type(i)+1)/(number_type(i)+1)/2.;
+		}
+		return sum;
+	}
+	bool constraints_respected(const Vector<number_type> &q)
+	{
+		return true;
+	}
+private:
+	size_type n_parameters_;
+
+
+
+};
+
 typedef double number_type;
 typedef std::size_t size_type;
 
-
-/* free functions to read in a data file and save it in a vector */
-
-
-void insert(double number, std::size_t counter, Vector<double> &x_data, Vector<double> &y_data, Vector<double> &dy_data)
-{
-	if (counter%3 == 0)
-		x_data.push_back(number);
-	if (counter%3 == 1)
-		y_data.push_back(number);
-	if (counter%3 == 2)
-		dy_data.push_back(number);
-}
-
-void read_data(std::string filename, Vector<double> &x_data, Vector<double> &y_data, Vector<double> &dy_data)
-{
-	std::ifstream infile(filename);
-	std::string line;
-
-	std::size_t counter_numbers = 0;
-	while (infile)
-	{
-		std::getline(infile, line); // Read in current line
-		if (line == "")
-		{
-			continue;  // ignore empty lines
-		}
-		bool end_of_number = true;
-		std::string numberstring = "";
-		for (int i = 0; i < line.length(); ++i)
-		{
-			// Detect beginning of a number
-			bool is_number = std::isalnum(line[i]) || (line[i] == '.') || (line[i] == '-');
-			bool is_seperator = (line[i] == ' ' && line[i] == '\t');
-			if (is_number) // Detect beginning of a number
-			{
-				end_of_number = false;
-				numberstring += line[i];
-			}
-			else if (!end_of_number)
-			{
-				end_of_number = true;
-				double number = std::stod(numberstring);
-				insert(number, counter_numbers, x_data, y_data, dy_data); // save number in the correct vector
-				counter_numbers++;
-				numberstring = "";
-			}
-			else
-			{
-				continue; // ignore second, third ... space in a series of spaces
-			}
-		}
-		double number = std::stod(numberstring); // end of line finishes number
-		insert(number, counter_numbers, x_data, y_data, dy_data);
-		counter_numbers++;
-		numberstring = "";
-	}
-
-}
-
-
-
+#include "../auxiliary_files/hmc.hpp"
 
 
 
 
 int main ()
 {
-	Vector<double> t(0);
-	Vector<double> Pl_Pl(0);
-	Vector<double> d_Pl_Pl(0);
+	size_type n_param = 12;
+	// Estimated search region
+	Vector<number_type> range_min(n_param);
+	Vector<number_type> range_max(n_param);
+	range_min = -1.;
+	range_max = 1.+ n_param;
 
-	read_data("../correlators/correlator_Pl-Pl", t, Pl_Pl, d_Pl_Pl);
+	// Characteristic length scales
+	Vector<number_type> c_lengths(n_param, 1);
+	c_lengths = range_max - range_min;
 
-	for (size_type i = 0; i < t.size(); ++i)
-	{
-		std::cout << t[i] << " " << Pl_Pl[i] << " " << d_Pl_Pl[i] << "\n";
-	}
+	// Setting up model and sampler
+	Model<number_type> gaussian(n_param);
+	HMC<number_type> sampler(gaussian, range_min, range_max, c_lengths, 5e-3, 40, 50, 1e-1);
+
+	// find minimum
+	sampler.walk_automatic();
 	
 
 	return 0;

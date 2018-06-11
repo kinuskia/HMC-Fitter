@@ -97,7 +97,7 @@ public:
 	/* number of fitting parameters */
 	size_type n_parameters() const
 	{
-		return 20;
+		return 12;
 	}
 public: // needs to become private once I focus on intrinsic errors
 	/* degrees of freedom */
@@ -110,10 +110,13 @@ private:
 	/*
 	nomenclature for correlators
 	index	correlator
-	0		Pl
-	1		Ps
-	2		A0l
-	3		A0s
+	//0		Pl
+	//1		Ps
+	//2		A0l
+	//3		A0s
+	0		A0l
+	1		A0s
+
 
 	nomenclature for fitting parameters
 	index	parameter
@@ -123,20 +126,13 @@ private:
 	3		Z0 of m2
 	4		Z1 of m1
 	5		Z1 of m2
-	6		Z2 of m1
-	7		Z2 of m2
-	8		A_00
-	9		A_01
-	10		A_02
-	11		A_11
-	12		A_12
-	13		A_22
-	14		m_00
-	15		m_01
-	16		m_02
-	17		m_11
-	18		m_12
-	19		m_22
+	6		A_00
+	7		A_01
+	8		A_11
+	9		m_00
+	10		m_01
+	11		m_11
+
 
 	*/
 	number_type C(number_type t, size_type i, size_type j, const Vector<number_type> & popt)
@@ -161,13 +157,13 @@ private:
 			Zl2 = popt[3];
 			Zr2 = popt[3];
 			// Residual coupling constant
-			Ar = popt[8];
+			Ar = popt[6];
 			//Residual mass
-			mr = popt[14];
+			mr = popt[9];
 			// result
-			result += Zl1*Zr1/2./m1 * (exp(-m1*t) + exp(-m1*(T-t)));
-			result += Zl2*Zr2/2./m2 * (exp(-m2*t) + exp(-m2*(T-t)));
-			result += Ar * (exp(-mr*t) + exp(-mr*(T-t)));
+			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * cosh(m1*(T/2.-t));
+			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * cosh(m2*(T/2.-t));
+			result += 2.*Ar * exp(-mr*T/2.) * cosh(mr*(T/2.-t));
 			return result;
 		}
 
@@ -180,34 +176,34 @@ private:
 			Zl2 = popt[3];
 			Zr2 = popt[5];
 			// Residual coupling constant
-			Ar = popt[9];
+			Ar = popt[7];
 			//Residual mass
-			mr = popt[15];
+			mr = popt[10];
 			// result
-			result += Zl1*Zr1/2./m1 * (exp(-m1*t) + exp(-m1*(T-t)));
-			result += Zl2*Zr2/2./m2 * (exp(-m2*t) + exp(-m2*(T-t)));
-			result += Ar * (exp(-mr*t) + exp(-mr*(T-t)));
+			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * cosh(m1*(T/2.-t));
+			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * cosh(m2*(T/2.-t));
+			result += 2.*Ar * exp(-mr*T/2.) * cosh(mr*(T/2.-t));
 			return result;	
 		}
 
-		if ((i == 0 && j == 2) || (i == 2 && j == 0))
-		{
-			// Coupling constants of mass 1
-			Zl1 = popt[2];
-			Zr1 = popt[6];
-			// Coupling constants of mass 2
-			Zl2 = popt[3];
-			Zr2 = popt[7];
-			// Residual coupling constant
-			Ar = popt[10];
-			//Residual mass
-			mr = popt[16];
-			// result
-			result += Zl1*Zr1/2./m1 * (exp(-m1*t) - exp(-m1*(T-t)));
-			result += Zl2*Zr2/2./m2 * (exp(-m2*t) - exp(-m2*(T-t)));
-			result += Ar * (exp(-mr*t) - exp(-mr*(T-t)));
-			return result;	
-		}
+		// if ((i == 0 && j == 2) || (i == 2 && j == 0))
+		// {
+		// 	// Coupling constants of mass 1
+		// 	Zl1 = popt[2];
+		// 	Zr1 = popt[6];
+		// 	// Coupling constants of mass 2
+		// 	Zl2 = popt[3];
+		// 	Zr2 = popt[7];
+		// 	// Residual coupling constant
+		// 	Ar = popt[10];
+		// 	//Residual mass
+		// 	mr = popt[16];
+		// 	// result
+		// 	result += Zl1*Zr1/2./m1 * (exp(-m1*t) - exp(-m1*(T-t)));
+		// 	result += Zl2*Zr2/2./m2 * (exp(-m2*t) - exp(-m2*(T-t)));
+		// 	result += Ar * (exp(-mr*t) - exp(-mr*(T-t)));
+		// 	return result;	
+		// }
 
 		if (i == 1 && j == 1)
 		{
@@ -218,53 +214,53 @@ private:
 			Zl2 = popt[5];
 			Zr2 = popt[5];
 			// Residual coupling constant
-			Ar = popt[11];
+			Ar = popt[8];
 			//Residual mass
-			mr = popt[17];	
+			mr = popt[11];	
 			// result
-			result += Zl1*Zr1/2./m1 * (exp(-m1*t) + exp(-m1*(T-t)));
-			result += Zl2*Zr2/2./m2 * (exp(-m2*t) + exp(-m2*(T-t)));
-			result += Ar * (exp(-mr*t) + exp(-mr*(T-t)));
+			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * cosh(m1*(T/2.-t));
+			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * cosh(m2*(T/2.-t));
+			result += 2.*Ar * exp(-mr*T/2.) * cosh(mr*(T/2.-t));
 			return result;
 		}
 
-		if ((i == 1 && j == 2) || (i == 2 && j == 1))
-		{
-			// Coupling constants of mass 1
-			Zl1 = popt[4];
-			Zr1 = popt[6];
-			// Coupling constants of mass 2
-			Zl2 = popt[5];
-			Zr2 = popt[7];
-			// Residual coupling constant
-			Ar = popt[12];
-			//Residual mass
-			mr = popt[18];
-			// result
-			result += Zl1*Zr1/2./m1 * (exp(-m1*t) - exp(-m1*(T-t)));
-			result += Zl2*Zr2/2./m2 * (exp(-m2*t) - exp(-m2*(T-t)));
-			result += Ar * (exp(-mr*t) - exp(-mr*(T-t)));
-			return result;	
-		}
+		// if ((i == 1 && j == 2) || (i == 2 && j == 1))
+		// {
+		// 	// Coupling constants of mass 1
+		// 	Zl1 = popt[4];
+		// 	Zr1 = popt[6];
+		// 	// Coupling constants of mass 2
+		// 	Zl2 = popt[5];
+		// 	Zr2 = popt[7];
+		// 	// Residual coupling constant
+		// 	Ar = popt[12];
+		// 	//Residual mass
+		// 	mr = popt[18];
+		// 	// result
+		// 	result += Zl1*Zr1/2./m1 * (exp(-m1*t) - exp(-m1*(T-t)));
+		// 	result += Zl2*Zr2/2./m2 * (exp(-m2*t) - exp(-m2*(T-t)));
+		// 	result += Ar * (exp(-mr*t) - exp(-mr*(T-t)));
+		// 	return result;	
+		// }
 
-		if ((i == 2 && j == 2))
-		{
-			// Coupling constants of mass 1
-			Zl1 = popt[6];
-			Zr1 = popt[6];
-			// Coupling constants of mass 2
-			Zl2 = popt[7];
-			Zr2 = popt[7];
-			// Residual coupling constant
-			Ar = popt[13];
-			//Residual mass
-			mr = popt[19];
-			// result
-			result += Zl1*Zr1/2./m1 * (exp(-m1*t) + exp(-m1*(T-t)));
-			result += Zl2*Zr2/2./m2 * (exp(-m2*t) + exp(-m2*(T-t)));
-			result += Ar * (exp(-mr*t) + exp(-mr*(T-t)));
-			return result;	
-		}
+		// if ((i == 2 && j == 2))
+		// {
+		// 	// Coupling constants of mass 1
+		// 	Zl1 = popt[6];
+		// 	Zr1 = popt[6];
+		// 	// Coupling constants of mass 2
+		// 	Zl2 = popt[7];
+		// 	Zr2 = popt[7];
+		// 	// Residual coupling constant
+		// 	Ar = popt[13];
+		// 	//Residual mass
+		// 	mr = popt[19];
+		// 	// result
+		// 	result += Zl1*Zr1/2./m1 * (exp(-m1*t) + exp(-m1*(T-t)));
+		// 	result += Zl2*Zr2/2./m2 * (exp(-m2*t) + exp(-m2*(T-t)));
+		// 	result += Ar * (exp(-mr*t) + exp(-mr*(T-t)));
+		// 	return result;	
+		// }
 
 		return result;
 	}
@@ -282,11 +278,11 @@ private:
 			result = Pl_Ps_[t_index];
 			return result;
 		}
-		if (i == 0 && j == 2)
-		{
-			result = Pl_A0l_[t_index];
-			return result;
-		}
+		// if (i == 0 && j == 2)
+		// {
+		// 	result = Pl_A0l_[t_index];
+		// 	return result;
+		// }
 		if (i == 1 && j == 0)
 		{
 			result = Ps_Pl_[t_index];
@@ -297,26 +293,26 @@ private:
 			result = Ps_Ps_[t_index];
 			return result;
 		}
-		if (i == 1 && j == 2)
-		{
-			result = Ps_A0l_[t_index];
-			return result;
-		}
-		if (i == 2 && j == 0)
-		{
-			result = A0l_Pl_[t_index];
-			return result;
-		}
-		if (i == 2 && j == 1)
-		{
-			result = A0l_Ps_[t_index];
-			return result;
-		}
-		if (i == 2 && j == 2)
-		{
-			result = A0l_A0l_[t_index];
-			return result;
-		}
+		// if (i == 1 && j == 2)
+		// {
+		// 	result = Ps_A0l_[t_index];
+		// 	return result;
+		// }
+		// if (i == 2 && j == 0)
+		// {
+		// 	result = A0l_Pl_[t_index];
+		// 	return result;
+		// }
+		// if (i == 2 && j == 1)
+		// {
+		// 	result = A0l_Ps_[t_index];
+		// 	return result;
+		// }
+		// if (i == 2 && j == 2)
+		// {
+		// 	result = A0l_A0l_[t_index];
+		// 	return result;
+		// }
 
 		return result;
 	}
@@ -334,11 +330,11 @@ private:
 			result = d_Pl_Ps_[t_index];
 			return result;
 		}
-		if (i == 0 && j == 2)
-		{
-			result = d_Pl_A0l_[t_index];
-			return result;
-		}
+		// if (i == 0 && j == 2)
+		// {
+		// 	result = d_Pl_A0l_[t_index];
+		// 	return result;
+		// }
 		if (i == 1 && j == 0)
 		{
 			result = d_Ps_Pl_[t_index];
@@ -349,26 +345,26 @@ private:
 			result = d_Ps_Ps_[t_index];
 			return result;
 		}
-		if (i == 1 && j == 2)
-		{
-			result = d_Ps_A0l_[t_index];
-			return result;
-		}
-		if (i == 2 && j == 0)
-		{
-			result = d_A0l_Pl_[t_index];
-			return result;
-		}
-		if (i == 2 && j == 1)
-		{
-			result = d_A0l_Ps_[t_index];
-			return result;
-		}
-		if (i == 2 && j == 2)
-		{
-			result = d_A0l_A0l_[t_index];
-			return result;
-		}
+		// if (i == 1 && j == 2)
+		// {
+		// 	result = d_Ps_A0l_[t_index];
+		// 	return result;
+		// }
+		// if (i == 2 && j == 0)
+		// {
+		// 	result = d_A0l_Pl_[t_index];
+		// 	return result;
+		// }
+		// if (i == 2 && j == 1)
+		// {
+		// 	result = d_A0l_Ps_[t_index];
+		// 	return result;
+		// }
+		// if (i == 2 && j == 2)
+		// {
+		// 	result = d_A0l_A0l_[t_index];
+		// 	return result;
+		// }
 
 
 		return result;
@@ -415,9 +411,9 @@ public:
 		number_type chi2 = 0;
 		for (size_type k = 0; k<t_.size(); ++k)
 		{
-			for (size_type i = 0; i < 3; ++i)
+			for (size_type i = 0; i < 2; ++i)
 			{
-				for (size_type j = 0; j < 3; ++j)
+				for (size_type j = 0; j < 2; ++j)
 				{
 					chi2 += pow(C(t_[k], i, j, q) - C_exp(k, i, j), 2)/pow(d_C_exp(k, i, j), 2);
 				}
@@ -445,9 +441,16 @@ public:
 			return respected;
 		}
 
-		if ((q[14] < q[1]) || (q[15] < q[1]) || (q[16] < q[1]) || (q[17] < q[1]) || (q[18] < q[1]) || (q[19] < q[1])) // residual masses have to be bigger than m1 and m2
+		if ((q[9] < q[1]) || (q[10] < q[1]) || (q[11] < q[1]) ) // residual masses have to be bigger than m1 and m2
 		{
 			respected = false; 
+			return respected;
+		}
+
+		// restrictions to coupling constants that one can demand without loss of generality
+		if (q[2] < 0 || q[4] < 0)
+		{
+			respected = false;
 			return respected;
 		}
 
