@@ -52,29 +52,66 @@ typedef double number_type;
 typedef std::size_t size_type;
 
 #include "../auxiliary_files/hmc.hpp"
+#include <vector>
+#include <ctime>
+#include <omp.h>
 
+std::size_t fibonacci(int n)
+{
+	std::size_t result = 0;
+	if (n == 1 || n == 2)
+	{
+		result = n;
+	}
+	else
+	{
+		result = fibonacci(n-1) + fibonacci(n-2);
+	}
+	return result;
+}
 
 
 
 int main ()
 {
-	size_type n_param = 12;
-	// Estimated search region
-	Vector<number_type> range_min(n_param);
-	Vector<number_type> range_max(n_param);
-	range_min = -1.;
-	range_max = 1.+ n_param;
+	// size_type n_param = 12;
+	// // Estimated search region
+	// Vector<number_type> range_min(n_param);
+	// Vector<number_type> range_max(n_param);
+	// range_min = -1.;
+	// range_max = 1.+ n_param;
 
-	// Characteristic length scales
-	Vector<number_type> c_lengths(n_param, 1);
-	c_lengths = range_max - range_min;
+	// // Characteristic length scales
+	// Vector<number_type> c_lengths(n_param, 1);
+	// c_lengths = range_max - range_min;
 
-	// Setting up model and sampler
-	Model<number_type> gaussian(n_param);
-	HMC<number_type> sampler(gaussian, range_min, range_max, c_lengths, 5e-3, 40, 50, 1e-1);
+	// // Setting up model and sampler
+	// Model<number_type> gaussian(n_param);
+	// HMC<number_type> sampler(gaussian, range_min, range_max, c_lengths, 5e-3, 40, 50, 1e-1);
 
-	// find minimum
-	sampler.walk_automatic();
+	// // find minimum
+	// sampler.walk_automatic();
+
+	std::vector<std::size_t> result;
+	std::time_t start = std::time(nullptr);
+
+	#pragma omp parallel for
+	for (int i = 0; i < 5; ++i)
+	{
+		result.push_back(fibonacci(45));
+	}
+
+	std::time_t end = std::time(nullptr);
+
+	double diff = end - start;
+
+	for (int i = 0; i < result.size(); ++i)
+	{
+		std::cout << result[i] <<  "\n";
+	}
+	
+	std::cout << "time: " << diff << "\n";
+
 	
 
 	return 0;

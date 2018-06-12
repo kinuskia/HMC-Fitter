@@ -2,16 +2,16 @@
 #include <cmath>
 #include <vector>
 #include <string>
+#include "model.hpp"
 #include "auxiliary_files/vector.hpp"
 #include "auxiliary_files/read_data.hpp"
 #include "auxiliary_files/hmc.hpp"
-#include "model.hpp"
 #include <fstream>
 
 
 int main ()
 {
-	typedef double number_type;
+	typedef float number_type;
 	Vector<number_type> t(0);
 	Vector<number_type> A0l_A0l(0);
 	Vector<number_type> A0l_A0s(0);
@@ -46,7 +46,7 @@ int main ()
 	Vector<number_type> d_Ps_Pl(0);
 	Vector<number_type> d_Ps_Ps(0);
 
-	// Read in measured data
+	// Read in measured data, skip first row
 	read_data("correlators/correlator_A0l-A0l", t, A0l_A0l, d_A0l_A0l, 1);
 	read_data("correlators/correlator_A0l-A0s", t, A0l_A0s, d_A0l_A0s, 1);
 	read_data("correlators/correlator_A0l-Pl", t, A0l_Pl, d_A0l_Pl, 1);
@@ -156,7 +156,7 @@ int main ()
 
 
 	//initialize HMC opbject
-	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 8e-6, 40, 50, 1e1);
+	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 1e-5, 40, 50, 1e0);
 	//sampler.bounds_fixed(false);
 	//sampler.do_analysis(true);
 	
@@ -183,6 +183,23 @@ int main ()
 	// initial guess for fitting variables : random pick from region above
 	// commented to avoid burn-in time (to be uncommented !!)
 	
+	// popt = 0;
+	// popt[0] = 0.984527;
+	// popt[1] = 1.35209;
+	// popt[2] = 0.264117;
+	// popt[3] = 0.523776;
+	// popt[4] = 0.0644572;
+	// popt[5] = 0.0440069;
+	// popt[6] = 0.546241;
+	// popt[7] = -0.00521682;
+	// popt[8] = -0.000152412;
+	// popt[9] = 2.18909;
+	// popt[10] = 1.55419;
+	// popt[11] = 1.38124;
+
+
+	
+
 
 
 

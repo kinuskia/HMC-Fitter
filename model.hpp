@@ -116,6 +116,7 @@ private:
 	//3		A0s
 	0		A0l
 	1		A0s
+	
 
 
 	nomenclature for fitting parameters
@@ -161,9 +162,9 @@ private:
 			//Residual mass
 			mr = popt[9];
 			// result
-			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * cosh(m1*(T/2.-t));
-			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * cosh(m2*(T/2.-t));
-			result += 2.*Ar * exp(-mr*T/2.) * cosh(mr*(T/2.-t));
+			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * sinh(m1*(T/2.-t));
+			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * sinh(m2*(T/2.-t));
+			result += 2.*Ar * exp(-mr*T/2.) * sinh(mr*(T/2.-t));
 			return result;
 		}
 
@@ -180,9 +181,9 @@ private:
 			//Residual mass
 			mr = popt[10];
 			// result
-			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * cosh(m1*(T/2.-t));
-			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * cosh(m2*(T/2.-t));
-			result += 2.*Ar * exp(-mr*T/2.) * cosh(mr*(T/2.-t));
+			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * sinh(m1*(T/2.-t));
+			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * sinh(m2*(T/2.-t));
+			result += 2.*Ar * exp(-mr*T/2.) * sinh(mr*(T/2.-t));
 			return result;	
 		}
 
@@ -218,9 +219,9 @@ private:
 			//Residual mass
 			mr = popt[11];	
 			// result
-			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * cosh(m1*(T/2.-t));
-			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * cosh(m2*(T/2.-t));
-			result += 2.*Ar * exp(-mr*T/2.) * cosh(mr*(T/2.-t));
+			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * sinh(m1*(T/2.-t));
+			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * sinh(m2*(T/2.-t));
+			result += 2.*Ar * exp(-mr*T/2.) * sinh(mr*(T/2.-t));
 			return result;
 		}
 
@@ -270,12 +271,12 @@ private:
 		number_type result = 0;
 		if (i == 0 && j == 0)
 		{
-			result = Pl_Pl_[t_index];
+			result = A0l_A0l_[t_index];
 			return result;
 		}
 		if (i == 0 && j == 1)
 		{
-			result = Pl_Ps_[t_index];
+			result = A0l_A0s_[t_index];
 			return result;
 		}
 		// if (i == 0 && j == 2)
@@ -285,12 +286,12 @@ private:
 		// }
 		if (i == 1 && j == 0)
 		{
-			result = Ps_Pl_[t_index];
+			result = A0s_A0l_[t_index];
 			return result;
 		}
 		if (i == 1 && j == 1)
 		{
-			result = Ps_Ps_[t_index];
+			result = A0s_A0s_[t_index];
 			return result;
 		}
 		// if (i == 1 && j == 2)
@@ -322,12 +323,12 @@ private:
 		number_type result = 0;
 		if (i == 0 && j == 0)
 		{
-			result = d_Pl_Pl_[t_index];
+			result = d_A0l_A0l_[t_index];
 			return result;
 		}
 		if (i == 0 && j == 1)
 		{
-			result = d_Pl_Ps_[t_index];
+			result = d_A0l_A0s_[t_index];
 			return result;
 		}
 		// if (i == 0 && j == 2)
@@ -337,12 +338,12 @@ private:
 		// }
 		if (i == 1 && j == 0)
 		{
-			result = d_Ps_Pl_[t_index];
+			result = d_A0s_A0l_[t_index];
 			return result;
 		}
 		if (i == 1 && j == 1)
 		{
-			result = d_Ps_Ps_[t_index];
+			result = d_A0s_A0s_[t_index];
 			return result;
 		}
 		// if (i == 1 && j == 2)

@@ -338,6 +338,54 @@ public:
 		p -= stepsizes * grad_U / 2;
 	}
 
+	/* fourth order integrator */
+	void forest_ruth(Vector<number_type> & q, Vector<number_type> & p)
+	{
+		// Introducing a step size vector: We scale the vector of characteristic length scales with the stepsize_ scalar
+		Vector<number_type> stepsizes = stepsize_ * c_lengths_;
+		Vector<number_type> grad_U(q.size());
+		grad_potential(grad_U, q);
+
+		//coefficients d1 and d2 of the algorithm
+		number_type d1 = 1.3512071919596576341;
+		number_type d2 = -1.7024143839193152682;
+
+		// Do momentum half step at the beginning
+		p -= stepsizes * d1/2 * grad_U;
+		
+		
+		// Draw random number of forest-ruth steps
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_int_distribution<> dis_unif(n_steps_min_, n_steps_max_);
+		size_type n_steps = dis_unif(gen);
+
+		// do the steps
+		for (size_type i = 0; i < n_steps; ++i)
+		{
+			//p -= stepsizes * d1/2 * grad_U; 
+			q += stepsizes * d1 * p;
+
+			grad_potential(grad_U, q);
+			p -= stepsizes * (d1+d2)/2 * grad_U;
+			q += stepsizes * d2 * p;
+
+			grad_potential(grad_U, q);
+			p -= stepsizes * (d1+d2)/2 * grad_U;
+			q += stepsizes * d1 * p;
+			//std::cout << i  << "\t" << q[0] << "\n";
+
+			grad_potential(grad_U, q);
+			if (i != n_steps - 1) // Full steps because d4 = 0, and c1=c4. Special treatment for end of trajectory
+			{
+				p -= stepsizes * d1 * grad_U; 
+			}
+		}
+
+		p -= stepsizes * d1/2 * grad_U; // momentum half step at the end of the trajectory
+	
+	}
+
 
 	/* 
 	Leapfrog integrator with a tempering parameter alpha:
@@ -447,6 +495,51 @@ public:
 
 	// }
 
+	/* fourth order integrator copying position to external vector after each step
+		and offering adjustable number of iterations */
+	void forest_ruth(Vector<number_type> & q, Vector<number_type> & p, Storage<number_type> & q_copy, size_type nb_iterations)
+	{
+		// Introducing a step size vector: We scale the vector of characteristic length scales with the stepsize_ scalar
+		Vector<number_type> stepsizes = stepsize_ * c_lengths_;
+		Vector<number_type> grad_U(q.size());
+		grad_potential(grad_U, q);
+
+		//coefficients d1 and d2 of the algorithm
+		number_type d1 = 1.3512071919596576341;
+		number_type d2 = -1.7024143839193152682;
+
+		// Do momentum half step at the beginning
+		p -= stepsizes * d1/2 * grad_U;
+		
+
+		// do the steps
+		for (size_type i = 0; i < nb_iterations; ++i)
+		{
+			//p -= stepsizes * d1/2 * grad_U; 
+			q += stepsizes * d1 * p;
+
+			grad_potential(grad_U, q);
+			p -= stepsizes * (d1+d2)/2 * grad_U;
+			q += stepsizes * d2 * p;
+
+			grad_potential(grad_U, q);
+			p -= stepsizes * (d1+d2)/2 * grad_U;
+			q += stepsizes * d1 * p;
+
+			// Read values of q into the storage vector
+			q_copy.read_in(q);
+
+			grad_potential(grad_U, q);
+			if (i != nb_iterations - 1) // Full steps because d4 = 0, and c1=c4. Special treatment for end of trajectory
+			{
+				p -= stepsizes * d1 * grad_U; 
+			}
+		}
+
+		p -= stepsizes * d1/2 * grad_U; // momentum half step at the end of the trajectory
+	
+	}
+
 
 	/* 
 		Leapfrog integrator copying position to external vector after each step
@@ -500,6 +593,9 @@ public:
 
 		// Compute trajectory using the Leapfrog method
 		leapfrog(q, p);
+		// Compute trajectory using the Forest Ruth method
+		//forest_ruth(q, p);
+
 		//leapfrog(q, p, temperature_);
 
 		/* Negate momentum at the end of the trajectory to make the proposal symmetric
@@ -1169,6 +1265,7 @@ public:
 			Vector<number_type> p(popt.size());
 			fill_random(p, dis_norm);
 			leapfrog(popt, p, q_values, nb_iterations);
+			//forest_ruth(popt, p, q_values, nb_iterations);
 
 			// calculate period of each position component using autocorrelation
 			Vector<size_type> period_vector(popt.size());
