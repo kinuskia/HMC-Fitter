@@ -11,7 +11,7 @@
 
 int main ()
 {
-	typedef float number_type;
+	typedef double number_type;
 	Vector<number_type> t(0);
 	Vector<number_type> A0l_A0l(0);
 	Vector<number_type> A0l_A0s(0);
@@ -156,12 +156,20 @@ int main ()
 
 
 	//initialize HMC opbject
-	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 1e-5, 40, 50, 1e0);
+	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 5e-7, 40, 50, 1e7);
 	//sampler.bounds_fixed(false);
 	//sampler.do_analysis(true);
 	
 
 	/* PRELIMINARY RUN TOOLS */
+	// draws positions and returns the discretization error of H in a file (to adjust leapfrog step size)
+	// sampler.get_H_errors(1e3, "preliminary_tools/H_errors.txt");
+	// number_type mean;
+	// number_type dev;
+	// sampler.get_H(1e3, mean, dev);
+	// std::cout << mean << " +/- " << dev <<"\n";
+
+
 	// draws positions and returns acceptance rates in a file (to adjust leapfrog step size)
 	//sampler.get_acceptance_rates(range_min, range_max, 50, 50, "preliminary_tools/acceptrates.txt");
 	

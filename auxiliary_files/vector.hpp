@@ -141,6 +141,19 @@ public:
 		return mean;
 	}
 
+	/* (Unbiased) standard deviation of the entries */
+	REAL std() const
+	{
+		REAL result = 0;
+		REAL mean = this->mean();
+		for (size_type i = 0; i< this->size(); ++i)
+		{
+			result += ((*this)[i] - mean)*((*this)[i] - mean);
+		}
+		result /= (this->size()-1.);
+		return sqrt(result);
+	}
+
 	// Save vector entries in text file
 	void save_as (std::string filename) const
 	{

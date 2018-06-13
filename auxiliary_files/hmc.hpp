@@ -88,16 +88,33 @@ public:
 	void grad_potential (Vector<number_type> & output, const Vector<number_type> & position)
 	{
 		assert(output.size() == position.size());
+		// second order formula
 		for (size_type i = 0; i < output.size(); ++i)
 		{
 			// estimation of partial derivative with respect to q_i
-			number_type h = 0.1*stepsize_*c_lengths_[i];
+			number_type h = stepsize_*c_lengths_[i];
 			Vector<number_type> position_forward = position;
 			position_forward[i] += h;
 			Vector<number_type> position_backward = position;
 			position_backward[i] -= h;
 			output[i] = (potential(position_forward)-potential(position_backward))/2.0/h;
 		}
+
+		// // fourth order formula
+		// for (size_type i = 0; i < output.size(); ++i)
+		// {
+		// 	// estimation of partial derivative with respect to q_i
+		// 	number_type h = stepsize_*c_lengths_[i];
+		// 	Vector<number_type> position_ff = position;
+		// 	position_ff[i] += 2.*h;
+		// 	Vector<number_type> position_f = position;
+		// 	position_f[i] += h;
+		// 	Vector<number_type> position_bb = position;
+		// 	position_bb[i] -= 2.*h;
+		// 	Vector<number_type> position_b = position;
+		// 	position_b[i] -= h;
+		// 	output[i] = (-potential(position_ff)+8.*potential(position_f)-8.*potential(position_b)+potential(position_bb))/12.0/h;
+		// }
 
 	}
 
@@ -305,7 +322,7 @@ public:
 	}
 
 	/* Leapfrog integrator */
-	void leapfrog(Vector<number_type> & q, Vector<number_type> & p)
+	void leapfrog(Vector<number_type> & q, Vector<number_type> & p, size_type n_steps)
 	{
 		// Introducing a step size vector: We scale the vector of characteristic length scales with the stepsize_ scalar
 		Vector<number_type> stepsizes = stepsize_ * c_lengths_;
@@ -313,19 +330,13 @@ public:
 		Vector<number_type> grad_U(q.size());
 		grad_potential(grad_U, q);
 		p -= stepsizes * grad_U / 2;
-
-		// Draw random number of leapfrog steps
-		std::random_device rd;
-		std::mt19937 gen(rd());
-		std::uniform_int_distribution<> dis_unif(n_steps_min_, n_steps_max_);
-		size_type n_steps = dis_unif(gen);
+		//std::cout << "p[0] = " << p[0]<<"\n";
 
 		// Alternate full steps for position and momentum
 		for (size_type i = 0; i < n_steps; ++i)
 		{
 			// Make a full step for the position, update gradient of potential
 			q += stepsizes * p;
-			//std::cout << i  << "\t" << q[0] << "\n";
 			
 			grad_potential(grad_U, q);
 			// Make a full step for the momentum, except at the end of the trajectory
@@ -339,7 +350,7 @@ public:
 	}
 
 	/* fourth order integrator */
-	void forest_ruth(Vector<number_type> & q, Vector<number_type> & p)
+	void forest_ruth(Vector<number_type> & q, Vector<number_type> & p, size_type n_steps)
 	{
 		// Introducing a step size vector: We scale the vector of characteristic length scales with the stepsize_ scalar
 		Vector<number_type> stepsizes = stepsize_ * c_lengths_;
@@ -353,12 +364,6 @@ public:
 		// Do momentum half step at the beginning
 		p -= stepsizes * d1/2 * grad_U;
 		
-		
-		// Draw random number of forest-ruth steps
-		std::random_device rd;
-		std::mt19937 gen(rd());
-		std::uniform_int_distribution<> dis_unif(n_steps_min_, n_steps_max_);
-		size_type n_steps = dis_unif(gen);
 
 		// do the steps
 		for (size_type i = 0; i < n_steps; ++i)
@@ -579,6 +584,8 @@ public:
 
 
 
+
+
 	/* do one Metropolis step */
 	void step_forward(Vector<number_type> & current_q)
 	{
@@ -591,8 +598,13 @@ public:
 		fill_random(p, dis_norm);
 		Vector<number_type> current_p = p;
 
+		// Draw random number of leapfrog steps
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_int_distribution<> dis_unif_int(n_steps_min_, n_steps_max_);
+		size_type n_steps = dis_unif_int(gen);
 		// Compute trajectory using the Leapfrog method
-		leapfrog(q, p);
+		leapfrog(q, p, n_steps);
 		// Compute trajectory using the Forest Ruth method
 		//forest_ruth(q, p);
 
@@ -615,8 +627,6 @@ public:
 		the position at the end of the trajectory or the initial position
 		*/
 
-		std::random_device rd;
-		std::mt19937 gen(rd());
 		std::uniform_real_distribution<> dis_unif(0, 1);
 		bool accepted = dis_unif(gen) < exp(current_U+current_K-proposed_U-proposed_K);
 		if (bounds_fixed_)
@@ -632,8 +642,36 @@ public:
 		}
 		// otherwise q is refused.
 
+	}
 
+		/* returns the change of H (H_old - H_new) after one leapfrog step */
+	number_type H_error_per_step(Vector<number_type> & current_q)
+	{
+		Vector<number_type> q = current_q;
 
+		// generate momenta from gaussian distribution
+		std::normal_distribution<> dis_norm(0, 1); // mean 0, std deviation 1
+		Vector<number_type> p(q.size());
+		fill_random(p, dis_norm);
+		Vector<number_type> current_p = p;
+
+		// Compute new state after one Leapfrog method
+		leapfrog(q, p, 1);
+		//forest_ruth(q, p, 1);
+		// for (size_type i = 0; i < q.size(); ++i)
+		// {
+		// 	std::cout << current_q[i] << " " << q[i] << "\n";
+		// }
+
+		// Evaluate potential (U) and kinetic (K) energies at start and end of trajectory
+		number_type current_U = potential(current_q);
+		number_type current_K = kinetic(current_p);
+		number_type proposed_U = potential(q);
+		number_type proposed_K = kinetic(p);
+
+	
+
+		return current_U+current_K-proposed_U-proposed_K;
 	}
 
 	/* do n steps */
@@ -828,7 +866,7 @@ public:
 					permitted_initial_found = true;
 				}
 				counter_constraints++;	
-				assert(counter_constraints < 20);
+				assert(counter_constraints < 40);
 			}
 			
 			
@@ -910,71 +948,112 @@ public:
 		{
 			// Set up storage vector
 			Storage<number_type> data(model_.n_parameters(), 2); // records values of fitting vector and two additional things
-			// Step 1: Set step size
-			std::cout << "Set a step size (currently: ";
-			std::cout << stepsize_ << "): ";
-			std::cin >> stepsize_;
-			while(next_step == 1)
+			
+			// Step 1: Set new temperature
+			if (next_step == 1)
 			{
-				n_steps_min_ = 4;
-				n_steps_max_ = 5;
-				get_acceptance_rates(range_min_, range_max_, 50, 50, "preliminary_tools/acceptrates.txt");
-				std::cout << "Set new step size or go to next step (\"next\"), or back (\"back\"): ";
+				number_type mean;
+				number_type dev;
+				get_H(1e3, mean, dev);
+				std::cout << "Mean of the potential: " << mean << " +/- " << dev << "\n";
+				std::cout << "Set the temperature of the system (currently ";
+				std::cout << temperature_ << "): ";
+				std::cin >> temperature_;
+				std::cout << "Set a step size (currently: ";
+				std::cout << stepsize_ << "): ";
+				std::cin >> stepsize_;
+				next_step = 2;
+			}
+
+			// Step 2: Set step size while keeping h*L = 1/3
+			while (next_step == 2)
+			{
+				n_steps_min_ = round(0.8/stepsize_/3);
+				n_steps_max_ = round(1.2/stepsize_/3);
+				get_acceptance_rates(range_min_, range_max_, 40, 50, "preliminary_tools/acceptrates.txt");
+				std::cout << "Enter new step size, or \"next\" if you want to go the next step, or \"continue\" to proceed with in-depth analysis: ";
 				std::cin >> user_input;
 				if (user_input == next)
 				{
-					next_step = 2;
+					next_step = 4;
 				}
-				else if (user_input == back)
+				else if (user_input == next_chain)
 				{
-					next_step = 5;
+					next_step = 6;
 				}
-				else
+				else 
 				{
 					stepsize_ = std::stod(user_input);
 				}
+
 			}
+
+
+			// // Step 2: Set step size
+			// std::cout << "Set a step size (currently: ";
+			// std::cout << stepsize_ << "): ";
+			// std::cin >> stepsize_;
+			// while(next_step == 2)
+			// {
+			// 	n_steps_min_ = 4;
+			// 	n_steps_max_ = 5;
+			// 	get_acceptance_rates(range_min_, range_max_, 50, 50, "preliminary_tools/acceptrates.txt");
+			// 	std::cout << "Set new step size or go to next step (\"next\"), or back (\"back\"): ";
+			// 	std::cin >> user_input;
+			// 	if (user_input == next)
+			// 	{
+			// 		next_step = 3;
+			// 	}
+			// 	else if (user_input == back)
+			// 	{
+			// 		next_step = 2;
+			// 	}
+			// 	else
+			// 	{
+			// 		stepsize_ = std::stod(user_input);
+			// 	}
+			// }
 	
-			// Step 2: Check step size for L leapfrog steps
-			while (next_step == 2)
-			{
-				std::cout << "Enter number of leapfrog steps: ";
-				size_type length;
-				std::cin >> length;
-				get_optimal_number_of_steps(range_min_, range_max_, 50, length, "preliminary_tools/correlation_times.txt");
-				std::cout << "Do you wish to change the number of leapfrog steps (yes/no)? ";
-				std::cin >> user_input;
-				if (user_input == no)
-				{
-					std::cout << "Set minimal number of leapfrog steps: ";
-					std::cin >> n_steps_min_;
-					std::cout << "Set maximal number of leapfrog steps: ";
-					std::cin >> n_steps_max_;
-					std::cout << "Set number of chains: ";
-					size_type n_chains;
-					std::cin >> n_chains;
-					get_acceptance_rates(range_min_, range_max_, n_chains, 50, "preliminary_tools/acceptrates.txt");
-					std::cout << "Enter \"next\" if you want to go the next step, or \"back\" to get to the previous step, or \"continue\" to proceed with in-depth analysis: ";
-					std::cin >> user_input;
-					if (user_input == next)
-					{
-						next_step = 3;
-					}
-					else if (user_input == back)
-					{
-						next_step = 1;
-					}
-					else if (user_input == next_chain)
-					{
-						next_step = 6;
-					}
-				}
-			}
+			// // Step 3: Check step size for L leapfrog steps
+			// while (next_step == 3)
+			// {
+			// 	std::cout << "Enter number of leapfrog steps: ";
+			// 	size_type length;
+			// 	std::cin >> length;
+			// 	get_optimal_number_of_steps(range_min_, range_max_, 50, length, "preliminary_tools/correlation_times.txt");
+			// 	std::cout << "Do you wish to change the number of leapfrog steps (yes/no)? ";
+			// 	std::cin >> user_input;
+			// 	if (user_input == no)
+			// 	{
+			// 		std::cout << "Set minimal number of leapfrog steps: ";
+			// 		std::cin >> n_steps_min_;
+			// 		std::cout << "Set maximal number of leapfrog steps: ";
+			// 		std::cin >> n_steps_max_;
+			// 		std::cout << "Set number of chains: ";
+			// 		size_type n_chains;
+			// 		std::cin >> n_chains;
+			// 		get_acceptance_rates(range_min_, range_max_, n_chains, 50, "preliminary_tools/acceptrates.txt");
+			// 		std::cout << "Enter \"next\" if you want to go the next step, or \"back\" to get to the previous step, or \"continue\" to proceed with in-depth analysis: ";
+			// 		std::cin >> user_input;
+			// 		if (user_input == next)
+			// 		{
+			// 			next_step = 4;
+			// 		}
+			// 		else if (user_input == back)
+			// 		{
+			// 			next_step = 2;
+			// 		}
+			// 		else if (user_input == next_chain)
+			// 		{
+			// 			next_step = 6;
+			// 		}
+			// 	}
+			// }
 
 
 			
-			// Step 3: Generate Markov chains
-			while (next_step == 3)
+			// Step 4: Generate Markov chains
+			while (next_step == 4)
 			{
 				// Set timer
 				std::time_t start = std::time(nullptr);
@@ -1008,7 +1087,7 @@ public:
 							permitted_initial_found = true;
 						}
 						counter_constraints++;	
-						assert(counter_constraints < 20);
+						assert(counter_constraints < 40);
 					}
 			
 			
@@ -1123,7 +1202,7 @@ public:
 						}
 						else
 						{
-							next_step = 4;
+							next_step = 5;
 						}
 					}
 					
@@ -1131,9 +1210,9 @@ public:
 			
 			}
 
-			// Step 4: determine new parameter range
+			// Step 5: determine new parameter range
 
-			if (next_step == 4)
+			if (next_step == 5)
 			{
 				std::cout << "Data with up to which chi2red are supposed to be taken into account? ";
 				std::cin >> chi2redmax_;
@@ -1156,19 +1235,12 @@ public:
 					std::cout << "Parameter " << i << " : " << range_min_[i] << " -> " << range_max_[i] << "\n";
 				}
 
-				next_step = 5;
-			}
-
-
-
-			// Step 5: Set new temperature
-			if (next_step == 5)
-			{
-				std::cout << "Set the temperature of the system (currently ";
-				std::cout << temperature_ << "): ";
-				std::cin >> temperature_;
 				next_step = 1;
 			}
+
+
+
+			
 
 		
 		
@@ -1200,6 +1272,78 @@ public:
 		return 1.0 * counter_accepted_ / counter_;
 	}
 
+
+	/* preliminary run that returns the change of H after one leapfrog step */
+	void get_H_errors(size_type nb_positions, std::string filename)
+	{
+		Vector<number_type> H_errors(0);
+		Vector<number_type> H_values(0);
+		size_type counter_nan = 0;
+
+		for (size_type i = 0; i<nb_positions; ++i)
+		{
+			// Draw random but permitted position from the search region
+			Vector<number_type> popt(range_min_.size());
+			bool permitted_initial_found = false;
+			number_type counter_constraints = 0;
+			while (!permitted_initial_found)
+			{
+				fill_from_region(popt, range_min_, range_max_);
+				if (model_.constraints_respected(popt))
+				{
+					permitted_initial_found = true;
+				}
+				counter_constraints++;	
+				assert(counter_constraints < 40);
+			}
+		
+
+			// Get change of H for that position
+			number_type error = H_error_per_step(popt);
+			if (!isnan(error))
+			{
+				H_errors.push_back(error);
+				H_values.push_back(model_.potential(popt));
+			}
+			else
+			{
+				counter_nan++;
+			}
+		}
+	}
+
+		/* preliminary run that returns the mean and standard deviation of the order of the potential in the search region
+			=> potential ~ 10 to the power of order
+		*/
+	void get_H(size_type nb_positions, number_type & pot_mean, number_type & pot_std)
+	{
+		Vector<number_type> H_values(0);
+		
+		for (size_type i = 0; i<nb_positions; ++i)
+		{
+			// Draw random but permitted position from the search region
+			Vector<number_type> popt(range_min_.size());
+			bool permitted_initial_found = false;
+			number_type counter_constraints = 0;
+			while (!permitted_initial_found)
+			{
+				fill_from_region(popt, range_min_, range_max_);
+				if (model_.constraints_respected(popt))
+				{
+					permitted_initial_found = true;
+				}
+				counter_constraints++;	
+				assert(counter_constraints < 40);
+			}
+
+			// Save H for that position
+			H_values.push_back(log(model_.potential(popt))/log(10.));	
+		}
+
+		pot_mean = H_values.mean();
+		pot_std = H_values.std();
+
+	}
 	
 
 	/* preliminary run to estimate correct step size */
@@ -1221,7 +1365,7 @@ public:
 					permitted_initial_found = true;
 				}
 				counter_constraints++;	
-				assert(counter_constraints < 20);
+				assert(counter_constraints < 40);
 			}
 			
 			// do some leapfrog steps and save acceptance rate
