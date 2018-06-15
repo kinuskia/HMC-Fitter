@@ -54,22 +54,6 @@ typedef std::size_t size_type;
 #include "../auxiliary_files/hmc.hpp"
 #include <vector>
 #include <ctime>
-#include <omp.h>
-
-std::size_t fibonacci(int n)
-{
-	std::size_t result = 0;
-	if (n == 1 || n == 2)
-	{
-		result = n;
-	}
-	else
-	{
-		result = fibonacci(n-1) + fibonacci(n-2);
-	}
-	return result;
-}
-
 
 
 int main ()
@@ -92,25 +76,6 @@ int main ()
 	// // find minimum
 	// sampler.walk_automatic();
 
-	std::vector<std::size_t> result;
-	std::time_t start = std::time(nullptr);
-
-	#pragma omp parallel for
-	for (int i = 0; i < 5; ++i)
-	{
-		result.push_back(fibonacci(45));
-	}
-
-	std::time_t end = std::time(nullptr);
-
-	double diff = end - start;
-
-	for (int i = 0; i < result.size(); ++i)
-	{
-		std::cout << result[i] <<  "\n";
-	}
-	
-	std::cout << "time: " << diff << "\n";
 
 	
 

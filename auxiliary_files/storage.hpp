@@ -129,6 +129,16 @@ public:
 			{
 				maximal_index = 0;
 			}
+			// // Change parameter range if they constrain the parameter region
+			// number_type minimal_current = minimals[i];
+			// number_type maximal_current = maximals[i];
+			// number_type minimal_new = values_cutoff[i][minimal_index];
+			// number_type maximal_new = values_cutoff[i][maximal_index];
+			// if (minimal_new > minimal_current && maximal_new < maximal_current)
+			// {
+			// 	minimals[i] = values_cutoff[i][minimal_index];
+			// 	maximals[i] = values_cutoff[i][maximal_index];
+			// }
 			minimals[i] = values_cutoff[i][minimal_index];
 			maximals[i] = values_cutoff[i][maximal_index];
 		}

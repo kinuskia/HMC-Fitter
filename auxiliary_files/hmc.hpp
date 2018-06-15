@@ -582,7 +582,21 @@ public:
 		p -= stepsizes * grad_U / 2;
 	}
 
-
+	/* Set periodic boundary constraints if demanded */
+	void periodic_boundaries(Vector<number_type> & q)
+	{
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		for (size_type i = 0; i < q.size(); ++i)
+		{
+			// Draw random number of q[i] if it is out of bounds
+			if (q[i] < range_min_[i] || q[i] > range_max_[i])
+			{
+				std::uniform_real_distribution<> dis_unif_real(range_min_[i], range_max_[i]);
+				q[i] = dis_unif_real(gen);
+			}
+		}
+	}
 
 
 
@@ -605,6 +619,12 @@ public:
 		size_type n_steps = dis_unif_int(gen);
 		// Compute trajectory using the Leapfrog method
 		leapfrog(q, p, n_steps);
+
+		if (bounds_fixed_)
+		{
+			periodic_boundaries(q);
+		}
+
 		// Compute trajectory using the Forest Ruth method
 		//forest_ruth(q, p);
 
@@ -626,13 +646,13 @@ public:
 		Accept or reject the state at end of trajectory, returning either
 		the position at the end of the trajectory or the initial position
 		*/
-
+		number_type H_change = -current_U-current_K+proposed_U+proposed_K;
 		std::uniform_real_distribution<> dis_unif(0, 1);
-		bool accepted = dis_unif(gen) < exp(current_U+current_K-proposed_U-proposed_K);
-		if (bounds_fixed_)
-		{
-			accepted = accepted && is_in_range(q) ; // automatical rejection if proposition is out of bounds
-		}
+		bool accepted = dis_unif(gen) < exp(-H_change);
+		// if (bounds_fixed_)
+		// {
+		// 	accepted = accepted && is_in_range(q) ; // automatical rejection if proposition is out of bounds
+		// }
 		
 		accepted = accepted && model_.constraints_respected(q); // automatical rejection if contraints not respected
 		if (accepted)
@@ -866,7 +886,7 @@ public:
 					permitted_initial_found = true;
 				}
 				counter_constraints++;	
-				assert(counter_constraints < 40);
+				assert(counter_constraints < 80);
 			}
 			
 			
@@ -935,6 +955,7 @@ public:
 	/* partially automatic walk to find to global minimum region */
 	void walk_automatic()
 	{
+		bounds_fixed_ = true;
 		std::string user_input = "";
 		std::string quit = "quit";
 		std::string next = "next";
@@ -959,96 +980,129 @@ public:
 				std::cout << "Set the temperature of the system (currently ";
 				std::cout << temperature_ << "): ";
 				std::cin >> temperature_;
-				std::cout << "Set a step size (currently: ";
-				std::cout << stepsize_ << "): ";
-				std::cin >> stepsize_;
+				std::cout << "Are bounds supposed to be fixed? \n";
+				std::cin >> user_input;
+				if (user_input == yes)
+				{
+					bounds_fixed_ = true;
+				}
+				else if (user_input == no)
+				{
+					bounds_fixed_ = false;
+				}
+				// std::cout << "Set a step size (currently: ";
+				// std::cout << stepsize_ << "): ";
+				// std::cin >> stepsize_;
 				next_step = 2;
 			}
 
-			// Step 2: Set step size while keeping h*L = 1/3
-			while (next_step == 2)
-			{
-				n_steps_min_ = round(0.8/stepsize_/3);
-				n_steps_max_ = round(1.2/stepsize_/3);
-				get_acceptance_rates(range_min_, range_max_, 40, 50, "preliminary_tools/acceptrates.txt");
-				std::cout << "Enter new step size, or \"next\" if you want to go the next step, or \"continue\" to proceed with in-depth analysis: ";
-				std::cin >> user_input;
-				if (user_input == next)
-				{
-					next_step = 4;
-				}
-				else if (user_input == next_chain)
-				{
-					next_step = 6;
-				}
-				else 
-				{
-					stepsize_ = std::stod(user_input);
-				}
-
-			}
-
-
-			// // Step 2: Set step size
-			// std::cout << "Set a step size (currently: ";
-			// std::cout << stepsize_ << "): ";
-			// std::cin >> stepsize_;
-			// while(next_step == 2)
+			// // Step 2: Reset temperature to get high acceptance rate
+			// while (next_step == 2)
 			// {
-			// 	n_steps_min_ = 4;
-			// 	n_steps_max_ = 5;
-			// 	get_acceptance_rates(range_min_, range_max_, 50, 50, "preliminary_tools/acceptrates.txt");
-			// 	std::cout << "Set new step size or go to next step (\"next\"), or back (\"back\"): ";
+			// 	stepsize_ = 3e-2;
+			// 	n_steps_min_ = round(0.8/stepsize_);
+			// 	n_steps_max_ = round(1.2/stepsize_);
+			// 	get_acceptance_rates(range_min_, range_max_, 40, 30, "preliminary_tools/acceptrates.txt");
+			// 	std::cout << "Enter new temperature, or \"next\" if you want to go the next step, or \"continue\" to proceed with in-depth analysis: ";
 			// 	std::cin >> user_input;
 			// 	if (user_input == next)
 			// 	{
-			// 		next_step = 3;
+			// 		next_step = 4;
 			// 	}
-			// 	else if (user_input == back)
+			// 	else if (user_input == next_chain)
 			// 	{
-			// 		next_step = 2;
+			// 		next_step = 6;
 			// 	}
-			// 	else
+			// 	else 
+			// 	{
+			// 		temperature_ = std::stod(user_input);
+			// 	}
+			// }
+
+			// // Step 2: Set step size while keeping h*L = 1/3
+			// while (next_step == 2)
+			// {
+			// 	n_steps_min_ = round(0.8/stepsize_/3);
+			// 	n_steps_max_ = round(1.2/stepsize_/3);
+			// 	get_acceptance_rates(range_min_, range_max_, 40, 30, "preliminary_tools/acceptrates.txt");
+			// 	std::cout << "Enter new step size, or \"next\" if you want to go the next step, or \"continue\" to proceed with in-depth analysis: ";
+			// 	std::cin >> user_input;
+			// 	if (user_input == next)
+			// 	{
+			// 		next_step = 4;
+			// 	}
+			// 	else if (user_input == next_chain)
+			// 	{
+			// 		next_step = 6;
+			// 	}
+			// 	else 
 			// 	{
 			// 		stepsize_ = std::stod(user_input);
 			// 	}
+
 			// }
+
+
+			// Step 2: Set step size
+			std::cout << "Set a step size (currently: ";
+			std::cout << stepsize_ << "): ";
+			std::cin >> stepsize_;
+			while(next_step == 2)
+			{
+				n_steps_min_ = 4;
+				n_steps_max_ = 5;
+				get_acceptance_rates(range_min_, range_max_, 50, 50, "preliminary_tools/acceptrates.txt");
+				std::cout << "Set new step size or go to next step (\"next\"), or back (\"back\"): \n";
+				std::cin >> user_input;
+				if (user_input == next)
+				{
+					next_step = 3;
+				}
+				else if (user_input == back)
+				{
+					next_step = 2;
+				}
+				else
+				{
+					stepsize_ = std::stod(user_input);
+				}
+			}
 	
-			// // Step 3: Check step size for L leapfrog steps
-			// while (next_step == 3)
-			// {
-			// 	std::cout << "Enter number of leapfrog steps: ";
-			// 	size_type length;
-			// 	std::cin >> length;
-			// 	get_optimal_number_of_steps(range_min_, range_max_, 50, length, "preliminary_tools/correlation_times.txt");
-			// 	std::cout << "Do you wish to change the number of leapfrog steps (yes/no)? ";
-			// 	std::cin >> user_input;
-			// 	if (user_input == no)
-			// 	{
-			// 		std::cout << "Set minimal number of leapfrog steps: ";
-			// 		std::cin >> n_steps_min_;
-			// 		std::cout << "Set maximal number of leapfrog steps: ";
-			// 		std::cin >> n_steps_max_;
-			// 		std::cout << "Set number of chains: ";
-			// 		size_type n_chains;
-			// 		std::cin >> n_chains;
-			// 		get_acceptance_rates(range_min_, range_max_, n_chains, 50, "preliminary_tools/acceptrates.txt");
-			// 		std::cout << "Enter \"next\" if you want to go the next step, or \"back\" to get to the previous step, or \"continue\" to proceed with in-depth analysis: ";
-			// 		std::cin >> user_input;
-			// 		if (user_input == next)
-			// 		{
-			// 			next_step = 4;
-			// 		}
-			// 		else if (user_input == back)
-			// 		{
-			// 			next_step = 2;
-			// 		}
-			// 		else if (user_input == next_chain)
-			// 		{
-			// 			next_step = 6;
-			// 		}
-			// 	}
-			// }
+			// Step 3: Check step size for L leapfrog steps
+			while (next_step == 3)
+			{
+				std::cout << "Enter number of leapfrog steps: ";
+				size_type length;
+				std::cin >> length;
+				get_optimal_number_of_steps(range_min_, range_max_, 50, length, "preliminary_tools/correlation_times.txt");
+				std::cout << "Do you wish to change the number of leapfrog steps (yes/no)? ";
+				std::cin >> user_input;
+				if (user_input == no)
+				{
+					std::cout << "Set minimal number of leapfrog steps: ";
+					std::cin >> n_steps_min_;
+					std::cout << "Set maximal number of leapfrog steps: ";
+					std::cin >> n_steps_max_;
+					std::cout << "Set number of chains: ";
+					size_type n_chains;
+					std::cin >> n_chains;
+					get_acceptance_rates(range_min_, range_max_, n_chains, 50, "preliminary_tools/acceptrates.txt");
+					std::cout << "Enter \"next\" if you want to go the next step, or \"back\" to get to the previous step, or \"continue\" to proceed with in-depth analysis: ";
+					std::cin >> user_input;
+					if (user_input == next)
+					{
+						next_step = 4;
+					}
+					else if (user_input == back)
+					{
+						next_step = 2;
+					}
+					else if (user_input == next_chain)
+					{
+						next_step = 6;
+					}
+				}
+			}
 
 
 			
@@ -1087,7 +1141,7 @@ public:
 							permitted_initial_found = true;
 						}
 						counter_constraints++;	
-						assert(counter_constraints < 40);
+						assert(counter_constraints < 80);
 					}
 			
 			
@@ -1162,6 +1216,9 @@ public:
 							if (user_input != next_chain && user_input != repeat)
 							{
 								nb_steps = size_type(std::stod(user_input));
+								std::cout << "Change temperature to (currently ";
+								std::cout << temperature_ << "): ";
+								std::cin >> temperature_;
 							}
 							if (user_input == repeat)
 							{
@@ -1294,7 +1351,7 @@ public:
 					permitted_initial_found = true;
 				}
 				counter_constraints++;	
-				assert(counter_constraints < 40);
+				assert(counter_constraints < 80);
 			}
 		
 
@@ -1333,7 +1390,7 @@ public:
 					permitted_initial_found = true;
 				}
 				counter_constraints++;	
-				assert(counter_constraints < 40);
+				assert(counter_constraints < 80);
 			}
 
 			// Save H for that position
@@ -1347,7 +1404,7 @@ public:
 	
 
 	/* preliminary run to estimate correct step size */
-	void get_acceptance_rates(const Vector<number_type> & range_min, const Vector<number_type> & range_max, size_type nb_positions, size_type nb_leapfrog_steps, std::string filename)
+	void get_acceptance_rates(const Vector<number_type> & range_min, const Vector<number_type> & range_max, size_type nb_positions, size_type nb_steps_forward, std::string filename)
 	{
 		std::vector<number_type> acceptance_rates(0);
 
@@ -1365,18 +1422,19 @@ public:
 					permitted_initial_found = true;
 				}
 				counter_constraints++;	
-				assert(counter_constraints < 40);
+				assert(counter_constraints < 80);
 			}
 			
-			// do some leapfrog steps and save acceptance rate
+			// do some HMC steps and save acceptance rate
 			counter_ = 0;
 			counter_accepted_ = 0;
 		
-
-			for (size_type j = 0; j < nb_leapfrog_steps; ++j)
-			{
+			for (size_type j = 0; j < nb_steps_forward; ++j)
+			{			
 				step_forward(popt);
 			}
+			
+			
 			acceptance_rates.push_back(acceptance_rate());
 		}
 
