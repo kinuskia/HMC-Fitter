@@ -32,6 +32,14 @@ public:
 	{
 	}
 
+	/* Clear storage but keep number of popt, extras etc */
+	void clear ()
+	{
+		data_.clear();
+		thermalization_ = 0;
+		entries_per_variable_ = 0;
+	}
+
 	/* Getter methods */
 	size_type n_variables() const
 	{
@@ -389,13 +397,13 @@ public:
 	}
 
 	/* Write data in an output file */
-	void write(std::string filename)
+	void write(std::string filename, bool add_counter = true)
 	{
 		std::ofstream outfile(filename);
 		size_type N = data_.size();
 		for (size_type i = 0; i < N; ++i)
 		{
-			if ((i%n_variables_) == 0) // add counter at beginning of line
+			if ((i%n_variables_) == 0 && add_counter) // add counter at beginning of line
 			{
 				outfile << i/n_variables_ + 1;
 				outfile << " ";

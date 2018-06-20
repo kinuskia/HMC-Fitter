@@ -1,8 +1,9 @@
 #include <iostream>
 #include <cmath>
 #include "../auxiliary_files/vector.hpp"
-#include "../auxiliary_files/read_data.hpp"
-#include "../auxiliary_files/matrix.hpp"
+#include "../auxiliary_files/storage.hpp"
+//#include "../auxiliary_files/read_data.hpp"
+//#include "../auxiliary_files/matrix.hpp"
 
 #include <random>
 #include <assert.h>
@@ -51,30 +52,29 @@ private:
 typedef double number_type;
 typedef std::size_t size_type;
 
-#include "../auxiliary_files/hmc.hpp"
+//#include "../auxiliary_files/hmc.hpp"
+
 #include <vector>
 #include <ctime>
 
 
 int main ()
 {
-	// size_type n_param = 12;
-	// // Estimated search region
-	// Vector<number_type> range_min(n_param);
-	// Vector<number_type> range_max(n_param);
-	// range_min = -1.;
-	// range_max = 1.+ n_param;
+	size_type N = 1e5;
+	Vector<number_type> popt(3);
+	Storage<number_type> data(popt);
 
-	// // Characteristic length scales
-	// Vector<number_type> c_lengths(n_param, 1);
-	// c_lengths = range_max - range_min;
+	size_type counter = 0;
+	for (size_type i = 0; i < N; ++i)
+	{
+		for (size_type j = 0; j < popt.size(); ++j)
+		{
+			data.read_in(counter);
+			counter++;
+		}
+	}
 
-	// // Setting up model and sampler
-	// Model<number_type> gaussian(n_param);
-	// HMC<number_type> sampler(gaussian, range_min, range_max, c_lengths, 5e-3, 40, 50, 1e-1);
-
-	// // find minimum
-	// sampler.walk_automatic();
+	data.write("output.txt");
 
 
 	

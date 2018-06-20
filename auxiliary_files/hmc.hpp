@@ -876,19 +876,7 @@ public:
 		for (size_type i = 0; i < nb_initials; ++i)
 		{
 			// choose random starting point that respects constraints
-			bool permitted_initial_found = false;
-			number_type counter_constraints = 0;
-			while (!permitted_initial_found)
-			{
-				fill_from_region(initial, range_min_, range_max_);
-				if (model_.constraints_respected(initial))
-				{
-					permitted_initial_found = true;
-				}
-				counter_constraints++;	
-				assert(counter_constraints < 80);
-			}
-			
+			find_start(initial);
 			
 			// Start walking
 			size_type counter = 0;
@@ -950,6 +938,72 @@ public:
 			std::cout << "Parameter " << i << " : " << lower_bound[i] << " -> " << upper_bound[i] << "\n";
 		}
 		
+	}
+
+	/* Find a starting point that respects contraints */
+	void find_start(Vector<number_type> & initial)
+	{
+		assert(initial.size() == model_.n_parameters());
+		bool permitted_initial_found = false;
+		number_type counter_constraints = 0;
+		while (!permitted_initial_found)
+		{
+			fill_from_region(initial, range_min_, range_max_);
+			if (model_.constraints_respected(initial))
+			{
+				permitted_initial_found = true;
+			}
+			counter_constraints++;	
+			assert(counter_constraints < 80);
+		}
+
+	}
+
+	/* Create a Markov chain without analysis and without output to console */
+	void walk_silently(size_type nb_steps, std::string filename)
+	{
+		// Set up storage vector
+		Storage<number_type> data(model_.n_parameters(), 2); // records values of fitting vector and two additional things
+		
+		// reinitialize internal counters
+		counter_ = 0;
+		counter_accepted_ = 0;
+					
+		// choose random starting point that respects constraints
+		Vector<number_type> initial(model_.n_parameters());
+		find_start(initial);
+			
+			
+		// Start walking
+		size_type counter = 0;
+		while (counter < nb_steps)
+		{
+				
+			step_forward(initial);
+
+			// save updated data to storage
+			data.read_in(initial); // save fitting parameters
+			data.read_in(potential(initial)*temperature_); // save chi2_red
+			data.read_in(acceptance_rate()); // save acceptance rate
+						
+			counter++;
+
+			// start over if a bad initial condition was chosen
+			if (counter == 10 && acceptance_rate() < 0.01) 
+			{
+				std::cout << "Bad starting point. Recalculating current chain...\n";
+				find_start(initial);
+				counter = 0;
+				counter_ = 0;
+				counter_accepted_ = 0;
+				data.clear();
+			}				
+		}
+
+		// Save to data file without counter in the first column
+		data.write(filename, false);
+
+				
 	}
 
 	/* partially automatic walk to find to global minimum region */
@@ -1131,18 +1185,7 @@ public:
 					}
 					// choose random starting point that respects constraints
 					Vector<number_type> initial(model_.n_parameters());
-					bool permitted_initial_found = false;
-					number_type counter_constraints = 0;
-					while (!permitted_initial_found)
-					{
-						fill_from_region(initial, range_min_, range_max_);
-						if (model_.constraints_respected(initial))
-						{
-							permitted_initial_found = true;
-						}
-						counter_constraints++;	
-						assert(counter_constraints < 80);
-					}
+					find_start(initial);
 			
 			
 					// Start walking
@@ -1341,18 +1384,7 @@ public:
 		{
 			// Draw random but permitted position from the search region
 			Vector<number_type> popt(range_min_.size());
-			bool permitted_initial_found = false;
-			number_type counter_constraints = 0;
-			while (!permitted_initial_found)
-			{
-				fill_from_region(popt, range_min_, range_max_);
-				if (model_.constraints_respected(popt))
-				{
-					permitted_initial_found = true;
-				}
-				counter_constraints++;	
-				assert(counter_constraints < 80);
-			}
+			find_start(popt);
 		
 
 			// Get change of H for that position
@@ -1380,18 +1412,7 @@ public:
 		{
 			// Draw random but permitted position from the search region
 			Vector<number_type> popt(range_min_.size());
-			bool permitted_initial_found = false;
-			number_type counter_constraints = 0;
-			while (!permitted_initial_found)
-			{
-				fill_from_region(popt, range_min_, range_max_);
-				if (model_.constraints_respected(popt))
-				{
-					permitted_initial_found = true;
-				}
-				counter_constraints++;	
-				assert(counter_constraints < 80);
-			}
+			find_start(popt);
 
 			// Save H for that position
 			H_values.push_back(log(model_.potential(popt))/log(10.));	
@@ -1412,18 +1433,7 @@ public:
 		{
 			// Draw random but permitted position from the search region
 			Vector<number_type> popt(range_min.size());
-			bool permitted_initial_found = false;
-			number_type counter_constraints = 0;
-			while (!permitted_initial_found)
-			{
-				fill_from_region(popt, range_min_, range_max_);
-				if (model_.constraints_respected(popt))
-				{
-					permitted_initial_found = true;
-				}
-				counter_constraints++;	
-				assert(counter_constraints < 80);
-			}
+			find_start(popt);
 			
 			// do some HMC steps and save acceptance rate
 			counter_ = 0;

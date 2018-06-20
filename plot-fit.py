@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 
 n, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, U, accept = np.loadtxt("data.txt", unpack = True)
 
-keep = (U <2e5)
+keep = (U <1000)
 
 parameters = [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29]
 
-T = 1.0e4
+T = 1.5e1
 p = 30.
 
 plt.figure(1)
@@ -55,20 +55,6 @@ chi2redmin = np.min(U[keep])
 diff_theo = p*T/2
 print((mean-chi2redmin)/diff_theo )
 
-U_keep = U[keep]
-means = np.zeros(len(U_keep))
-i = 1
-means[0] = U_keep[0]
-while i < len(U[keep]):
-	means[i] = (means[i-1]*i+U_keep[i])/(i+1)
-	i += 1
-
-x = np.arange(0, len(U_keep), 1)
-
-plt.figure(counter_fig)
-plt.ylim(65e3, 85e3)
-plt.plot(x[0:-1:100], means[0:-1:100])
-plt.savefig("mean.pdf", format = "pdf", bbox_inches = "tight")
 
 
 
