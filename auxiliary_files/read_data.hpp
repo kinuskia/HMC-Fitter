@@ -4,10 +4,11 @@
 #include <fstream>
 #include "vector.hpp"
 
+typedef std::size_t size_type;
 /* free functions to read in a data file and save it in a vector */
 
 template<typename number_type>
-void insert(number_type number, std::size_t counter, Vector<number_type> &x_data, Vector<number_type> &y_data, Vector<number_type> &dy_data)
+void insert(number_type number, size_type counter, Vector<number_type> &x_data, Vector<number_type> &y_data, Vector<number_type> &dy_data)
 {
 	if (counter%3 == 0)
 		x_data.push_back(number);
@@ -18,7 +19,7 @@ void insert(number_type number, std::size_t counter, Vector<number_type> &x_data
 }
 
 template<typename number_type>
-void read_data(std::string filename, Vector<number_type> &x_data, Vector<number_type> &y_data, Vector<number_type> &dy_data, std::size_t skip_rows = 0)
+void read_data(std::string filename, Vector<number_type> &x_data, Vector<number_type> &y_data, Vector<number_type> &dy_data, size_type skip_rows = 0)
 {
 	x_data.clear();
 	y_data.clear();
@@ -26,8 +27,8 @@ void read_data(std::string filename, Vector<number_type> &x_data, Vector<number_
 	std::ifstream infile(filename);
 	std::string line;
 
-	std::size_t counter_numbers = 0;
-	std::size_t counter_lines = 0;
+	size_type counter_numbers = 0;
+	size_type counter_lines = 0;
 	while (infile)
 	{
 		std::getline(infile, line); // Read in current line

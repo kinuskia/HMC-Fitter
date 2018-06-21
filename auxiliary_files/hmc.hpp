@@ -960,7 +960,7 @@ public:
 	}
 
 	/* Create a Markov chain without analysis and without output to console */
-	void walk_silently(size_type nb_steps, std::string filename)
+	void walk_silently(size_type nb_steps, std::string filename, std::string filenumber)
 	{
 		// Set up storage vector
 		Storage<number_type> data(model_.n_parameters(), 2); // records values of fitting vector and two additional things
@@ -991,7 +991,6 @@ public:
 			// start over if a bad initial condition was chosen
 			if (counter == 10 && acceptance_rate() < 0.01) 
 			{
-				std::cout << "Bad starting point. Recalculating current chain...\n";
 				find_start(initial);
 				counter = 0;
 				counter_ = 0;
@@ -1001,6 +1000,8 @@ public:
 		}
 
 		// Save to data file without counter in the first column
+		filename += filenumber;
+		filename += ".txt";
 		data.write(filename, false);
 
 				

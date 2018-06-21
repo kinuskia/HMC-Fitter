@@ -5,6 +5,7 @@
 #include <string>
 #include <fstream>
 #include <iomanip>
+#include <algorithm>
 
 template<typename REAL>
 class Storage

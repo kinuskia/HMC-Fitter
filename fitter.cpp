@@ -5,13 +5,15 @@
 #include "model.hpp"
 #include "auxiliary_files/vector.hpp"
 #include "auxiliary_files/read_data.hpp"
+#include "auxiliary_files/write_scripts.hpp"
 #include "auxiliary_files/hmc.hpp"
 #include <fstream>
 
 
-int main ()
+int main (int argc, char* argv[])
 {
 	typedef double number_type;
+	typedef std::size_t size_type;
 	Vector<number_type> t(0);
 	Vector<number_type> A0l_A0l(0);
 	Vector<number_type> A0l_A0s(0);
@@ -117,46 +119,46 @@ int main ()
 	// Estimated search region
 	Vector<number_type> range_min(popt.size());
 	Vector<number_type> range_max(popt.size());
-	range_min[0] = 0.995;
-	range_max[0] = 1.009;
-	range_min[1] = 1.76;
-	range_max[1] = 1.925;
-	range_min[2] = 0.29;
-	range_max[2] = 0.33;
-	range_min[3] = 1.28;
-	range_max[3] = 1.46;
-	range_min[4] = 0.068;
-	range_max[4] = 0.076;
-	range_min[5] = -0.005;
-	range_max[5] = 0.015;
-	range_min[6] = 0.2;
-	range_max[6] = 0.238;
-	range_min[7] = 1.8;
-	range_max[7] = 2.25;
-	range_min[8] = 0.025;
-	range_max[8] = 0.029;
-	range_min[9] = 0.008;
-	range_max[9] = 0.030;
-	range_min[10] = -2;
-	range_max[10] = 3;
+	range_min[0] = 0.99;
+	range_max[0] = 1.02;
+	range_min[1] = 1.7;
+	range_max[1] = 2.0;
+	range_min[2] = 0.27;
+	range_max[2] = 0.35;
+	range_min[3] = 1.2;
+	range_max[3] = 1.6;
+	range_min[4] = 0.064;
+	range_max[4] = 0.083;
+	range_min[5] = -0.02;
+	range_max[5] = 0.035;
+	range_min[6] = 0.19;
+	range_max[6] = 0.26;
+	range_min[7] = 1.75;
+	range_max[7] = 2.4;
+	range_min[8] = 0.024;
+	range_max[8] = 0.031;
+	range_min[9] = 0.004;
+	range_max[9] = 0.038;
+	range_min[10] = -1;
+	range_max[10] = 1;
 	range_min[11] = -1;
 	range_max[11] = 1;
-	range_min[12] = -5;
-	range_max[12] = 5;
-	range_min[13] = -2;
+	range_min[12] = -1;
+	range_max[12] = 1;
+	range_min[13] = -1;
 	range_max[13] = 1;
-	range_min[14] = -1.25;
-	range_max[14] = 1.25;
+	range_min[14] = -1;
+	range_max[14] = 1;
 	range_min[15] = -1;
 	range_max[15] = 1;
-	range_min[16] = -0.1;
-	range_max[16] = 0.25;
+	range_min[16] = -1;
+	range_max[16] = 1;
 	range_min[17] = -1;
-	range_max[17] = 4;
-	range_min[18] = -2;
-	range_max[18] = 0.1;
-	range_min[19] = -0.15;
-	range_max[19] = 0.5;
+	range_max[17] = 1;
+	range_min[18] = -1;
+	range_max[18] = 1;
+	range_min[19] = -1;
+	range_max[19] = 1;
 	range_min[20] = 1.3;
 	range_max[20] = 10;
 	range_min[21] = 1.3;
@@ -188,12 +190,21 @@ int main ()
 	Vector<number_type> c_lengths(popt.size(), 1);
 	c_lengths = range_max-range_min;
 
+	// for the residual couplings constants and masses artificially decrease length scale
+	for (size_type j = 10; j < c_lengths.size(); ++j)
+	{
+		c_lengths[j] /= 1.3e1;
+	}
+	
+
+	
+
 
 	
 
 
 	//initialize HMC opbject
-	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 5e-4, 130, 150, 15);
+	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 2e-3, 90, 130, 50);
 	//sampler.bounds_fixed(false);
 	//sampler.do_analysis(true);
 	
@@ -222,8 +233,9 @@ int main ()
 	//sampler.walk(1e2, 10, 60*55, popt, 10);
 	
 	//sampler.walk_automatic();
-
-	sampler.walk_silently(1e2, "data_chain1.txt");
+	//write_scripts(1, "script");
+	std::string filenumber = argv[1];
+	sampler.walk_silently(1e1, "data", filenumber);
 
 	/* ACTUAL RUN */
 
