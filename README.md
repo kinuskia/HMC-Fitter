@@ -8,6 +8,7 @@ initializes a vector with 14 double entries as follows:
 
 The central object is a HMC type which I would like to call "sampler". It provides methods to generate Markov chains following a Boltzmann distribution with the function to be minimized as energy function, divided by a (hypothetical) temperature which can be set manually. The starting point of a Markov chain is drawn randomly from a range that can be set as well 
 It is initialized as follows:
+	
 	HMC<double> sampler(Model<double> model, Vector<double> range_min, Vector<double> range_max, Vector<double> c_lengths, double stepsize, std::size_t n_steps_min, std::size_t n_steps_max, double temperature);
 
 It takes 8 arguments:
