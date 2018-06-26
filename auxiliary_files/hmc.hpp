@@ -960,7 +960,7 @@ public:
 	}
 
 	/* Create a Markov chain without analysis and without output to console */
-	void walk_silently(size_type nb_steps, std::string filename, std::string filenumber)
+	void walk_silently(size_type nb_steps, std::string filename, std::string filenumber = "")
 	{
 		// Set up storage vector
 		Storage<number_type> data(model_.n_parameters(), 2); // records values of fitting vector and two additional things

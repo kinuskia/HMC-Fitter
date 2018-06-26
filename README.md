@@ -2,7 +2,7 @@
 
 In the following, I would like to explain briefly how the methods of the Hybrid Monte Carlo (HMC) class are used to find the global minimum of a function. They are defined in the folder "auxiliary_files". For this project,
 I wrote some useful classes to deal with Euklidian vectors and matrices. 
-Especially the vector class is broadly used throughout this project. It is inherited from the C++ STL vector class. One
+Especially the vector class is broadly used throughout this project. It is inherited from the C++ STL vector class. For instance, one
 initializes a vector with 14 double entries as follows:
 	Vector<double> q(14);
 
@@ -21,4 +21,19 @@ It takes 8 arguments:
 7. `std::size_t n_steps_max`: Definition of the upper bound for the number of Leapfrog steps
 8. `double temperature`: Set the temperature of the system
 
+Before generating the first Markov chain, one has to tune the parameters of the algorithm, namely the Leapfrog step size and the number of Leapfrog steps. The following method can be used to find the optimal step size. It creates 70 Markov chains of length 50 with random starting points from the search region and saves the final acceptance rate for each chain in a file `acceptrates.txt`:
 
+	sampler.get_acceptance_rates(range_min, range_max, 70, 50, "acceptrates.txt");
+
+The next method is designed to find the optimal number of leapfrog steps. It draws randomly 300 starting points and lets evolve the system over 700 Leapfrog steps. After that, the values are analyzed for periodicities. Half of a period is considered an optimal number of step an is saved to the output file `correlation_times`.
+
+	sampler.get_optimal_number_of_steps(range_min, range_max, 300, 700, "correlation_times.txt")
+
+Once the HMC parameters have been tuned, a Markov chain of length 5e4 is generated as follows:
+
+	sampler.walk(5e4, 60*30, popt, 5);
+
+The starting point is passed by reference.
+The calculation is aborted either after the Markov chain has grown to the set length or once `60*30` seconds have passed. The fitting result and uncertainties are calculated automatically and printed to the console. The last argument constitutes the number of progress steps: In this case there is an output once 20, 40, 60, 80 and 100 percent of the chain have been generated.
+
+	
