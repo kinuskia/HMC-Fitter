@@ -183,14 +183,11 @@ int main (int argc, char* argv[])
 	
 
 
-	
-	
-
 	// Characteristic length scales for the parameters // default 1
 	Vector<number_type> c_lengths(popt.size(), 1);
 	c_lengths = range_max-range_min;
 
-	// for the residual couplings constants and masses artificially decrease length scale
+	// artificially decrease length scale for the residual couplings constants and masses 
 	for (size_type j = 10; j < c_lengths.size(); ++j)
 	{
 		if (j == 10 || j == 11 || j == 12 || j == 13 || j == 15 || j == 17 || j == 18)
@@ -220,10 +217,6 @@ int main (int argc, char* argv[])
 	/* PRELIMINARY RUN TOOLS */
 	// draws positions and returns the discretization error of H in a file (to adjust leapfrog step size)
 	// sampler.get_H_errors(1e3, "preliminary_tools/H_errors.txt");
-	// number_type mean;
-	// number_type dev;
-	// sampler.get_H(1e3, mean, dev);
-	// std::cout << mean << " +/- " << dev <<"\n";
 
 
 	// draws positions and returns acceptance rates in a file (to adjust leapfrog step size)
@@ -240,40 +233,24 @@ int main (int argc, char* argv[])
 	//fill_from_region(popt, range_min, range_max);
 	//sampler.walk(1e2, 10, 60*55, popt, 10);
 	
+	
+
+	//sampler.walk_automatic();
+	//write_scripts(1, "script");
+
+
+	/* 	
+		Routine for the computer cluster: Produce Markov chain of specific length and save to output file
+		of the following format dataX.txt, where X is given in the console when executing, e.g. ./fitter 5
+	*/
 	std::string filenumber;
 	if (argc > 1)
 	{
 		filenumber = argv[1];
 	}
-
-	//sampler.walk_automatic();
-	//write_scripts(1, "script");
-	
 	sampler.walk_silently(1e4, "data", filenumber);
 
 	/* ACTUAL RUN */
-
-	// initial guess for fitting variables : random pick from region above
-	// commented to avoid burn-in time (to be uncommented !!)
-	
-	// popt = 0;
-	// popt[0] = 0.984527;
-	// popt[1] = 1.35209;
-	// popt[2] = 0.264117;
-	// popt[3] = 0.523776;
-	// popt[4] = 0.0644572;
-	// popt[5] = 0.0440069;
-	// popt[6] = 0.546241;
-	// popt[7] = -0.00521682;
-	// popt[8] = -0.000152412;
-	// popt[9] = 2.18909;
-	// popt[10] = 1.55419;
-	// popt[11] = 1.38124;
-
-
-	
-
-
 
 
 	Vector<number_type> perr(popt.size());
