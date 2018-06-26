@@ -12,13 +12,13 @@ It is initialized as follows:
 	HMC<double> sampler(Model<double> model, Vector<double> range_min, Vector<double> range_max, Vector<double> c_lengths, double stepsize, std::size_t n_steps_min, std::size_t n_steps_max, double temperature);
 
 It takes 8 arguments:
-1. Model<double> model: A class which defining the function to be minimized, e.g. "model.hpp". The class has to be called Model<type> and contain at least the following methods: return the number of parameters of the problem (-> size_type n_parameters() const), the function to be minimized (-> number_type potential(const Vector<number_type> &q)) and a method to check if possible constraints on the parameters one has set are respected at position q (-> bool constraints_respected(const Vector<number_type> &q)).
-2. Vector<double> range_min: Lower range for the components of the starting point.
-3. Vector<double> range_max: Upper range for the components of the stating point.
-4. Vector<double> c_lengths: characteristic length scales for each parameter, typically range_max - range_min, but if one has additional information, it can be put to use here.
-5. double stepsize: The step size to be used by the Leapfrog integrator
-6. std::size_t n_steps_min: The number of Leapfrog steps in each iteration is drawn randomly from values, the lower bound of which is defined here
-7. Definition of the upper bound for the number of Leapfrog steps
-8. double temperature: Set the temperature of the system
+1. `Model<double> model`: A class which defining the function to be minimized, e.g. "model.hpp". The class has to be called `Model<type>` and contain at least the following methods: return the number of parameters of the problem (-> `size_type n_parameters() const`), the function to be minimized (-> number_type potential(`const Vector<number_type> &q)`) and a method to check if possible constraints on the parameters one has set are respected at position q (-> `bool constraints_respected(const Vector<number_type> &q)`).
+2. `Vector<double> range_min`: Lower range for the components of the starting point.
+3. `Vector<double> range_max`: Upper range for the components of the stating point.
+4. `Vector<double> c_lengths`: characteristic length scales for each parameter, typically range_max - range_min, but if one has additional information, it can be put to use here.
+5. `double stepsize`: The step size to be used by the Leapfrog integrator
+6. `std::size_t n_steps_min`: The number of Leapfrog steps in each iteration is drawn randomly from values, the lower bound of which is defined here
+7. `std::size_t n_steps_max`: Definition of the upper bound for the number of Leapfrog steps
+8. `double temperature`: Set the temperature of the system
 
 
