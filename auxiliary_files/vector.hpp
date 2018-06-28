@@ -45,6 +45,18 @@ public:
 		return *this;
 	}
 
+	/* Component-wise multiplication with a vector */
+	Vector & operator*= (const Vector & y)
+	{
+		assert(this->size() == y.size());
+		Vector &self = *this;
+		for (size_type i = 0; i < this->size(); ++i)
+		{
+			self[i] *= y[i];
+		}
+		return *this;
+	}
+
 	/* Division by a scalar */
 	Vector & operator/= (const REAL value)
 	{
