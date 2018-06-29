@@ -122,96 +122,96 @@ int main (int argc, char* argv[])
 	// Characteristic length scales for the parameters // default 1
 	Vector<number_type> c_lengths(popt.size(), 1);
 	// characteristic length scales are here relative to range_max-range-min ...
-	range_min[0] = 0.9850;
-	range_max[0] = 0.9857;
-	c_lengths[0] = 1.;
-	range_min[1] = 1.348;
-	range_max[1] = 1.371;
-	c_lengths[1] = 0.5;
-	range_min[2] = 0.2644;
-	range_max[2] = 0.2665;
-	c_lengths[2] = 1.;
-	range_min[3] = 0.516;
-	range_max[3] = 0.549;
-	c_lengths[3] = 0.5;
-	range_min[4] = 0.06497;
-	range_max[4] = 0.0655;
-	c_lengths[4] = 1.0;
-	range_min[5] = 0.0396;
-	range_max[5] = 0.0439;
-	c_lengths[5] = 0.5;
-	range_min[6] = 0.1784;
-	range_max[6] = 0.1801;
-	c_lengths[6] = 1.;
-	range_min[7] = 0.578;
-	range_max[7] = 0.622;
-	c_lengths[7] = 0.5;
-	range_min[8] = 0.02241;
-	range_max[8] = 0.02258;
-	c_lengths[8] = 1.;
-	range_min[9] = 0.0362;
-	range_max[9] = 0.0385;
-	c_lengths[9] = 0.3;
-	range_min[10] = 0.538;//
-	range_max[10] = 0.549;
+	range_min[0] = 0.98524;
+	range_max[0] = 0.98553;
+	c_lengths[0] = 0.5;
+	range_min[1] = 1.357;
+	range_max[1] = 1.3667;
+	c_lengths[1] = 0.4;
+	range_min[2] = 0.2649;
+	range_max[2] = 0.2659;
+	c_lengths[2] = 0.5;
+	range_min[3] = 0.5285;
+	range_max[3] = 0.5425;
+	c_lengths[3] = 0.4;
+	range_min[4] = 0.06508;
+	range_max[4] = 0.06528;
+	c_lengths[4] = 0.5;
+	range_min[5] = 0.0419;
+	range_max[5] = 0.0435;
+	c_lengths[5] = 0.3;
+	range_min[6] = 0.17885;
+	range_max[6] = 0.17962;
+	c_lengths[6] = 0.5;
+	range_min[7] = 0.593;
+	range_max[7] = 0.613;
+	c_lengths[7] = 0.4;
+	range_min[8] = 0.02246;
+	range_max[8] = 0.02253;
+	c_lengths[8] = 0.8;
+	range_min[9] = 0.03670;
+	range_max[9] = 0.03826;
+	c_lengths[9] = 0.25;
+	range_min[10] = 0.5417;//
+	range_max[10] = 0.5454;
 	c_lengths[10] = 1.;
-	range_min[11] = -0.0055;//
-	range_max[11] = -0.00425;
-	c_lengths[11] = 0.5;
-	range_min[12] = 0.799;//
-	range_max[12] = 0.808;
-	c_lengths[12] = 1.;
-	range_min[13] = -0.0039;
-	range_max[13] = -0.0029;//
-	c_lengths[13] = 0.5;
-	range_min[14] = -0.125;
+	range_min[11] = -0.0053;//
+	range_max[11] = -0.0050;
+	c_lengths[11] = 0.9;
+	range_min[12] = 0.802;//
+	range_max[12] = 0.805;
+	c_lengths[12] = 0.8;
+	range_min[13] = -0.00372;
+	range_max[13] = -0.00325;//
+	c_lengths[13] = 0.3;
+	range_min[14] = -1.0;
 	range_max[14] = 0;
-	c_lengths[14] = 0.5;
-	range_min[15] = -0.0074;//
-	range_max[15] = -0.0061;
+	c_lengths[14] = 0.25;
+	range_min[15] = -0.00723;//
+	range_max[15] = -0.00692;
 	c_lengths[15] = 0.5;
 	range_min[16] = -2.;
 	range_max[16] = 0;
-	c_lengths[16] = 1./21.;
-	range_min[17] = 1.284;//
-	range_max[17] = 1.297;
+	c_lengths[16] = 1./14.;
+	range_min[17] = 1.2881;//
+	range_max[17] = 1.2924;
 	c_lengths[17] = 1.0;
-	range_min[18] = -0.0057;//
-	range_max[18] = -0.0046;
-	c_lengths[18] = 0.5;
-	range_min[19] = -0.9;
+	range_min[18] = -0.0055;//
+	range_max[18] = -0.00498;
+	c_lengths[18] = 0.3;
+	range_min[19] = -0.85;
 	range_max[19] = 0.0;
-	c_lengths[19] = 1./7.;
-	range_min[20] = 2.175;
-	range_max[20] = 2.219;//
-	c_lengths[20] = 1.;
-	range_min[21] = 1.515;
-	range_max[21] = 1.592;//
-	c_lengths[21] = 1.;
-	range_min[22] = 2.124;
-	range_max[22] = 2.152;//
-	c_lengths[22] = 0.5;
-	range_min[23] = 1.619;
-	range_max[23] = 1.685;//
-	c_lengths[23] = 1.;
+	c_lengths[19] = 1./12.;
+	range_min[20] = 2.190;
+	range_max[20] = 2.207;//
+	c_lengths[20] = 0.5;
+	range_min[21] = 1.533;
+	range_max[21] = 1.568;//
+	c_lengths[21] = 0.5;
+	range_min[22] = 2.1345;
+	range_max[22] = 2.1460;//
+	c_lengths[22] = 0.4;
+	range_min[23] = 1.64;
+	range_max[23] = 1.67;//
+	c_lengths[23] = 0.5;
 	range_min[24] = 1.3;
-	range_max[24] = 6;
+	range_max[24] = 4;
 	c_lengths[24] = 1./9.;
-	range_min[25] = 1.552;
-	range_max[25] = 1.611;//
-	c_lengths[25] = 1.;
+	range_min[25] = 1.56;
+	range_max[25] = 1.592;//
+	c_lengths[25] = 0.35;
 	range_min[26] = 1.3;
-	range_max[26] = 12.5;
-	c_lengths[26] = 1./12;
-	range_min[27] = 2.10;
-	range_max[27] = 2.1250;//
-	c_lengths[27] = 0.5;
-	range_min[28] = 1.68;
-	range_max[28] = 1.74;//
-	c_lengths[28] = 0.5;
+	range_max[26] = 5.;
+	c_lengths[26] = 1./7;
+	range_min[27] = 2.110;
+	range_max[27] = 2.120;//
+	c_lengths[27] = 0.4;
+	range_min[28] = 1.691;
+	range_max[28] = 1.728;//
+	c_lengths[28] = 0.35;
 	range_min[29] = 1.3;
-	range_max[29] = 12;
-	c_lengths[29] = 1./4;
+	range_max[29] = 4;
+	c_lengths[29] = 1./5.;
 	
 	
 	// ... and are now made absolute
@@ -247,7 +247,7 @@ int main (int argc, char* argv[])
 
 
 	//initialize HMC opbject
-	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 3e-3, 90, 130, 1e-3);
+	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 3e-3, 90, 130, 5e-4);
 	//sampler.bounds_fixed(false);
 	//sampler.do_analysis(true);
 	
@@ -272,8 +272,7 @@ int main (int argc, char* argv[])
 	//sampler.walk(1e2, 10, 60*55, popt, 10);
 	
 	
-
-	//sampler.walk_automatic();
+	sampler.walk_automatic();
 	//write_scripts(1, "script");
 
 
@@ -286,7 +285,7 @@ int main (int argc, char* argv[])
 	{
 		filenumber = argv[1];
 	}
-	sampler.walk_silently(1e4, "data", filenumber);
+	//sampler.walk_silently(1e4, "data", filenumber);
 
 	/* ACTUAL RUN */
 
