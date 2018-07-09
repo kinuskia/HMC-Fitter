@@ -1232,7 +1232,7 @@ public:
 				bool estimate_given = false;
 
 				size_type nb_initials = 1;
-				size_type nb_steps = 1e3;
+				size_type nb_steps = 2e2;
 
 				bool data_saved = false;
 
@@ -1366,6 +1366,7 @@ public:
 								i = 0;
 								start = std::time(nullptr);
 								region_change = false;
+								data.clear();
 								break;
 							}
 

@@ -106,15 +106,8 @@ int main (int argc, char* argv[])
 	//correlators.print_content();
 
 	// Vector for fitting parameters
-	Vector<number_type> popt(30);
+	Vector<number_type> popt(24);
 
-	// Boolean vector for whether a fitting parameter is likely to be degenerate in terms of (+) <-> (-)
-	Vector<bool> degenerate(popt.size());
-	degenerate = false;
-	// degenerate[2] = true;
-	// degenerate[3] = true;
-	// degenerate[4] = true;
-	// degenerate[5] = true;
 
 	// Estimated search region
 	Vector<number_type> range_min(popt.size());
@@ -164,90 +157,45 @@ int main (int argc, char* argv[])
 	range_min[13] = -0.003610;
 	range_max[13] = -0.003525;//
 	c_lengths[13] = 1.0;
-	range_min[14] = -0.0002225;
-	range_max[14] = -0.0002075;//
+	range_min[14] = -0.00720;//
+	range_max[14] = -0.00710;
 	c_lengths[14] = 1.0;
-	range_min[15] = -0.00720;//
-	range_max[15] = -0.00710;
+	range_min[15] = 1.2894;//
+	range_max[15] = 1.2912;
 	c_lengths[15] = 1.0;
-	range_min[16] = -0.1;
-	range_max[16] = 0;
-	c_lengths[16] = 1./3;
-	range_min[17] = 1.2894;//
-	range_max[17] = 1.2912;
-	c_lengths[17] = 1.0;
-	range_min[18] = -0.005400;//
-	range_max[18] = -0.005300;
-	c_lengths[18] = 1.0;
-	range_min[19] = -1.6;
-	range_max[19] = 0.0;
-	c_lengths[19] = 1./8.;
-	range_min[20] = 2.199;
-	range_max[20] = 2.2038;//
+	range_min[16] = -0.005400;//
+	range_max[16] = -0.005300;
+	c_lengths[16] = 1.0;
+	range_min[17] = 2.199;
+	range_max[17] = 2.2038;//
+	c_lengths[17] = 1.;
+	range_min[18] = 1.5350;
+	range_max[18] = 1.5440;//
+	c_lengths[18] = 1.;
+	range_min[19] = 2.1412;
+	range_max[19] = 2.1440;//
+	c_lengths[19] = 1.0;
+	range_min[20] = 1.6575;
+	range_max[20] = 1.6650;//
 	c_lengths[20] = 1.;
-	range_min[21] = 1.5350;
-	range_max[21] = 1.5440;//
-	c_lengths[21] = 1.;
-	range_min[22] = 2.1412;
-	range_max[22] = 2.1440;//
+	range_min[21] = 1.568;
+	range_max[21] = 1.574;//
+	c_lengths[21] = 1.0;
+	range_min[22] = 2.1158;
+	range_max[22] = 2.1182;//
 	c_lengths[22] = 1.0;
-	range_min[23] = 1.6575;
-	range_max[23] = 1.6650;//
-	c_lengths[23] = 1.;
-	range_min[24] = 1.3635;
-	range_max[24] = 1.3760;//
-	c_lengths[24] = 1.;
-	range_min[25] = 1.568;
-	range_max[25] = 1.574;//
-	c_lengths[25] = 1.0;
-	range_min[26] = 5.9;
-	range_max[26] = 9.6;
-	c_lengths[26] = 1./8;
-	range_min[27] = 2.1158;
-	range_max[27] = 2.1182;//
-	c_lengths[27] = 1.0;
-	range_min[28] = 1.7085;
-	range_max[28] = 1.7149;//
-	c_lengths[28] = 1.0;
-	range_min[29] = 7.5;
-	range_max[29] = 12.2;
-	c_lengths[29] = 1./8;
+	range_min[23] = 1.7085;
+	range_max[23] = 1.7149;//
+	c_lengths[23] = 1.0;
+
 	
 	
 	// ... and are now made absolute
 	c_lengths *= (range_max-range_min);
 
-	for (size_type j = 10; j < c_lengths.size(); ++j)
-	{
-		if (j == 16 || j == 19 || j == 26 || j == 29)
-		{
-			c_lengths[j] *= 2.*1e-1;
-		}
-	}
-
-	// artificially decrease length scale for the residual couplings constants and masses 
-	// for (size_type j = 10; j < c_lengths.size(); ++j)
-	// {
-	// 	if (j == 10 || j == 11 || j == 12 || j == 13 || j == 15 || j == 17 || j == 18)
-	// 		continue;
-	// 	if (j == 20 || j == 21 || j == 22 || j == 23 || j == 25 || j == 27 || j == 28)
-	// 		continue;
-	// 	if (j >= 20)
-	// 		c_lengths[j] /= 1.0e0; //4.4e1
-	// 	if (j >= 10 && j < 20)
-	// 		c_lengths[j] /= 1.0e0; //1.3e1
-		
-	// }
-	
-
-	
-
-
-	
-
 
 	//initialize HMC opbject
-	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 1e-4, 110, 140, 1e-5);
+	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 2e-2, 90, 130, 1e-3);
 	//sampler.bounds_fixed(false);
 	//sampler.do_analysis(true);
 	
@@ -273,7 +221,7 @@ int main (int argc, char* argv[])
 	
 	
 
-	sampler.walk_automatic();
+	//sampler.walk_automatic();
 	//write_scripts(1, "script");
 
 
@@ -289,9 +237,8 @@ int main (int argc, char* argv[])
 	//sampler.walk_silently(1e4, "data", filenumber);
 	//sampler.walk_silently_disregarding(1e4, 40.225, "data", filenumber);
 
-
 	
-	//sampler.walk_silently(1e4, "data", filenumber);	
+
 	
 
 

@@ -97,7 +97,7 @@ public:
 	/* number of fitting parameters */
 	size_type n_parameters() const
 	{
-		return 30;
+		return 24;
 	}
 public: // needs to become private once I focus on intrinsic errors
 	/* degrees of freedom */
@@ -134,22 +134,16 @@ private:
 	11		A_01
 	12		A_02
 	13		A_03
-	14		A_11
-	15		A_12
-	16		A_13
-	17		A_22
-	18		A_23
-	19		A_33
-	20		m_00
-	21		m_01
-	22		m_02
-	23		m_03
-	24		m_11
-	25		m_12
-	26		m_13
-	27		m_22
-	28		m_23
-	29		m_33
+	14		A_12
+	15		A_22
+	16		A_23
+	17		m_00
+	18		m_01
+	19		m_02
+	20		m_03
+	21		m_12
+	22		m_22
+	23		m_23
 
 
 	*/
@@ -177,7 +171,7 @@ private:
 			// Residual coupling constant
 			Ar = popt[10];
 			//Residual mass
-			mr = popt[20];
+			mr = popt[17];
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * cosh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * cosh(m2*(T/2.-t));
@@ -196,7 +190,7 @@ private:
 			// Residual coupling constant
 			Ar = popt[11];
 			//Residual mass
-			mr = popt[21];
+			mr = popt[18];
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * cosh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * cosh(m2*(T/2.-t));
@@ -215,7 +209,7 @@ private:
 			// Residual coupling constant
 			Ar = popt[12];
 			//Residual mass
-			mr = popt[22];
+			mr = popt[19];
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * sinh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * sinh(m2*(T/2.-t));
@@ -234,7 +228,7 @@ private:
 			// Residual coupling constant
 			Ar = popt[13];
 			//Residual mass
-			mr = popt[23];
+			mr = popt[20];
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * sinh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * sinh(m2*(T/2.-t));
@@ -252,13 +246,13 @@ private:
 			Zl2 = popt[5];
 			Zr2 = popt[5];
 			// Residual coupling constant
-			Ar = popt[14];
+			//Ar = popt[14];
 			//Residual mass
-			mr = popt[24];	
+			//mr = popt[22];	
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * cosh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * cosh(m2*(T/2.-t));
-			result += 2.*Ar * exp(-mr*T/2.) * cosh(mr*(T/2.-t));
+			//result += 2.*Ar * exp(-mr*T/2.) * cosh(mr*(T/2.-t));
 			return result;
 		}
 
@@ -271,9 +265,9 @@ private:
 			Zl2 = popt[5];
 			Zr2 = popt[7];
 			// Residual coupling constant
-			Ar = popt[15];
+			Ar = popt[14];
 			//Residual mass
-			mr = popt[25];
+			mr = popt[21];
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * sinh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * sinh(m2*(T/2.-t));
@@ -290,13 +284,13 @@ private:
 			Zl2 = popt[5];
 			Zr2 = popt[9];
 			// Residual coupling constant
-			Ar = popt[16];
+			//Ar = popt[16];
 			//Residual mass
-			mr = popt[26];
+			//mr = popt[26];
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * sinh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * sinh(m2*(T/2.-t));
-			result += 2.*Ar * exp(-mr*T/2.) * sinh(mr*(T/2.-t));
+			//result += 2.*Ar * exp(-mr*T/2.) * sinh(mr*(T/2.-t));
 			return result;	
 		}
 
@@ -309,9 +303,9 @@ private:
 			Zl2 = popt[7];
 			Zr2 = popt[7];
 			// Residual coupling constant
-			Ar = popt[17];
+			Ar = popt[15];
 			//Residual mass
-			mr = popt[27];	
+			mr = popt[22];	
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * cosh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * cosh(m2*(T/2.-t));
@@ -328,9 +322,9 @@ private:
 			Zl2 = popt[7];
 			Zr2 = popt[9];
 			// Residual coupling constant
-			Ar = popt[18];
+			Ar = popt[16];
 			//Residual mass
-			mr = popt[28];
+			mr = popt[23];
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * cosh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * cosh(m2*(T/2.-t));
@@ -347,13 +341,13 @@ private:
 			Zl2 = popt[9];
 			Zr2 = popt[9];
 			// Residual coupling constant
-			Ar = popt[19];
+			//Ar = popt[19];
 			//Residual mass
-			mr = popt[29];	
+			//mr = popt[29];	
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * cosh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * cosh(m2*(T/2.-t));
-			result += 2.*Ar * exp(-mr*T/2.) * cosh(mr*(T/2.-t));
+			//result += 2.*Ar * exp(-mr*T/2.) * cosh(mr*(T/2.-t));
 			return result;
 		}
 
@@ -609,7 +603,7 @@ public:
 			return respected;
 		}
 
-		if ((q[20] < q[1]) || (q[21] < q[1]) || (q[22] < q[1]) || (q[23] < q[1]) || (q[24] < q[1]) || (q[25] < q[1]) || (q[26] < q[1]) || (q[27] < q[1]) || (q[28] < q[1]) || (q[29] < q[1]) ) // residual masses have to be bigger than m1 and m2
+		if ((q[17] < q[1]) || (q[18] < q[1]) || (q[19] < q[1]) || (q[20] < q[1]) || (q[21] < q[1]) || (q[22] < q[1]) || (q[23] < q[1])) // residual masses have to be bigger than m1 and m2
 		{
 			respected = false; 
 			return respected;

@@ -1,6 +1,6 @@
 #!/usr/bin/tcsh
 
-foreach i (`seq 1 1 400`)
+foreach i (`seq 1 1 200`)
 	qsub -v j=$i -q run64bit HMC_fitting.sh
 	sleep 1
 end
