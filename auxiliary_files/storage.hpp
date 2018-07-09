@@ -289,8 +289,8 @@ public:
 	/* calculate a integrated autocorrelation time vector (one entry for each fitting parameter) */
 	void autocorr_time(Vector<number_type> & times, Vector<number_type> & times_err)
 	{
-		assert(times.size() == n_variables_); // check for correct dimensions
-		assert(times_err.size() == n_variables_);
+		assert(times.size() == times_err.size()); // check for correct dimensions
+		assert(times_err.size() > 0);
 
 		// // Print cross-correlations
 		// for (size_type i = 0; i < times.size(); ++i)

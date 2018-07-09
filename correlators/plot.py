@@ -18,10 +18,10 @@ from scipy.optimize import curve_fit
 #p0 = [0.99, 1.64, 0.28, 1.03, 0.83, 3.58]
 #plt.errorbar(x, y, yerr = dy, linestyle = "none", capsize = 2, label="Pl-Pl")
 #plt.errorbar(x2, y2, yerr = dy2, linestyle = "none", capsize = 2, label="A0l-A0s")
-#plt.errorbar(x3, y3, yerr = dy3, linestyle = "none", capsize = 2, label="A0s-A0l")
-plt.errorbar(x3, (y3-y2)/y2, yerr = np.sqrt(dy3*dy3+dy2*dy2)/y2, linestyle = "none", capsize = 2, label="difference")
+plt.errorbar(x3, y3, yerr = dy3, linestyle = "none", capsize = 2, label="A0s-A0l")
+#plt.errorbar(x3, (y3-y2)/y2, yerr = np.sqrt(dy3*dy3+dy2*dy2)/y2, linestyle = "none", capsize = 2, label="difference")
 values = np.linspace(0., 29., num = 100)
-#plt.yscale("log")
+plt.yscale("log")
 plt.legend(loc = "best")
 #plt.plot(values, fit(values, *popt))
 

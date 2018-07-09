@@ -1007,6 +1007,68 @@ public:
 				
 	}
 
+	/* Create a Markov chain without analysis and without output to console disregarding data with chi2 over a threshold*/
+	void walk_silently_disregarding(size_type nb_steps, number_type threshold_chi2, std::string filename, std::string filenumber = "")
+	{
+		// Set up storage vector
+		Storage<number_type> data(model_.n_parameters(), 2); // records values of fitting vector and two additional things
+		
+		// reinitialize internal counters
+		counter_ = 0;
+		counter_accepted_ = 0;
+					
+		// choose random starting point that respects constraints
+		Vector<number_type> initial(model_.n_parameters());
+		find_start(initial);
+			
+			
+		// Start walking
+		size_type counter = 0;
+		while (counter < nb_steps)
+		{
+				
+			step_forward(initial);
+
+			// save updated data to storage
+			data.read_in(initial); // save fitting parameters
+			data.read_in(potential(initial)*temperature_); // save chi2_red
+			data.read_in(acceptance_rate()); // save acceptance rate
+						
+			counter++;
+
+			// start over if a bad initial condition was chosen
+			if (counter == 10 && acceptance_rate() < 0.01) 
+			{
+				find_start(initial);
+				counter = 0;
+				counter_ = 0;
+				counter_accepted_ = 0;
+				data.clear();
+				continue;
+			}
+
+			// start over if chi2 is not below threshold after 200 steps
+			
+			if (counter == 100 && potential(initial)*temperature_ > threshold_chi2)
+			{
+				find_start(initial);
+				counter = 0;
+				counter_ = 0;
+				counter_accepted_ = 0;
+				data.clear();
+				continue;
+			}
+							
+		}
+
+		// Save to data file without counter in the first column
+		filename += filenumber;
+		filename += ".txt";
+		data.write(filename, false);
+
+				
+	}
+
 	/* partially automatic walk to find to global minimum region */
 	void walk_automatic()
 	{
@@ -1170,7 +1232,7 @@ public:
 				bool estimate_given = false;
 
 				size_type nb_initials = 1;
-				size_type nb_steps = 1e2;
+				size_type nb_steps = 1e3;
 
 				bool data_saved = false;
 
@@ -1191,6 +1253,7 @@ public:
 			
 					// Start walking
 					size_type counter = 0;
+					bool region_change = false;
 					while (counter < nb_steps)
 					{
 						if (counter == 10 && acceptance_rate() < 0.01) // break if a bad initial condition was chosen
@@ -1198,7 +1261,24 @@ public:
 							--i;
 							std::cout << "Bad starting point. Recalculating current chain...\n";
 							bad_starting_point = true;
+							data.clear();
 							break;
+						}
+						// if (counter == 300 && potential(initial)*temperature_ > 40.225)
+						// {
+						// 	--i;
+						// 	std::cout << "Convergence too slow. Recalculating current chain...\n";
+						// 	bad_starting_point = true;
+						// 	data.clear();
+						// 	break;
+						// }
+						if (acceptance_rate() < 0.95 && !region_change)
+						{
+							region_change = true;
+							// size_type n_steps_mean = (n_steps_max_ + n_steps_min_)/2.;
+							// n_steps_max_ = 1.0*n_steps_mean  + 10;
+							// n_steps_min_ = 1.0*n_steps_mean -10;
+							// stepsize_ *= 0.5;
 						}
 						step_forward(initial);
 
@@ -1253,6 +1333,23 @@ public:
 						if (counter == nb_steps && i == 1) // set length of chain and number of chain
 						{
 							data.write("data.txt");
+
+							// autocorrelation time analysis
+							Vector<number_type> autocorrelation_times(initial.size());
+							Vector<number_type> autocorrelation_times_err(initial.size());
+
+							data.determine_burn_in_length();
+							data.autocorr_time(autocorrelation_times, autocorrelation_times_err);
+
+							std::cout << "Autocorrelation times: \n";
+							for (size_type i = 0; i < autocorrelation_times.size(); ++i)
+							{
+								std::cout << "Parameter " << i << " : " << autocorrelation_times[i] << " +/- " << autocorrelation_times_err[i]  << "\n";
+							}
+
+
+
+
 							std::cout << "End of the first chain reached after " << diff/60 << "min. \n";
 							std::cout << "Set chain length to a specific value or continue with the other chains (\"continue\").\n";
 							std::cout << "If chain is supposed to be recalculated, enter \"repeat\".\n";
@@ -1268,6 +1365,7 @@ public:
 							{
 								i = 0;
 								start = std::time(nullptr);
+								region_change = false;
 								break;
 							}
 
