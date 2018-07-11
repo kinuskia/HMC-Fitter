@@ -1,5 +1,5 @@
 #!/usr/bin/tcsh
-#PBS -l walltime=6:00:00
+#PBS -l walltime=3:00:00
 #PBS -l mem=64mb
 cd /lpt/xrxjktfa/HMC-Fitter
 ./fitter $j

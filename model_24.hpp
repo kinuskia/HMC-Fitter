@@ -97,7 +97,7 @@ public:
 	/* number of fitting parameters */
 	size_type n_parameters() const
 	{
-		return 26;
+		return 24;
 	}
 public: // needs to become private once I focus on intrinsic errors
 	/* degrees of freedom */
@@ -134,16 +134,14 @@ private:
 	13		A_03
 	14		A_12
 	15		A_22
-	16		A'_22
-	17		A_23
-	18		m_00
-	19		m_01
-	20		m_02
-	21		m_03
-	22		m_12
-	23		m_22
-	24		m'_22
-	25		m_23
+	16		A_23
+	17		m_00
+	18		m_01
+	19		m_02
+	20		m_03
+	21		m_12
+	22		m_22
+	23		m_23
 	*/
 	number_type C(number_type t, size_type i, size_type j, const Vector<number_type> & popt)
 	{
@@ -157,8 +155,6 @@ private:
 		number_type Zr2;
 		number_type Ar;
 		number_type mr;
-		number_type Ar2;
-		number_type mr2;
 		number_type result = 0;
 		if (i == 0 && j == 0)
 		{
@@ -171,17 +167,11 @@ private:
 			// Residual coupling constant
 			Ar = popt[10];
 			//Residual mass
-			mr = popt[18];
-			// // Residual coupling constant
-			// Ar2 = popt[11];
-			// //Residual mass
-			// mr2 = popt[21];
-
+			mr = popt[17];
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * cosh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * cosh(m2*(T/2.-t));
 			result += 2.*Ar * exp(-mr*T/2.) * cosh(mr*(T/2.-t));
-			//result += 2.*Ar2 * exp(-mr2*T/2.) * cosh(mr2*(T/2.-t));
 			return result;
 		}
 
@@ -196,7 +186,7 @@ private:
 			// Residual coupling constant
 			Ar = popt[11];
 			//Residual mass
-			mr = popt[19];
+			mr = popt[18];
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * cosh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * cosh(m2*(T/2.-t));
@@ -215,16 +205,11 @@ private:
 			// Residual coupling constant
 			Ar = popt[12];
 			//Residual mass
-			mr = popt[20];
-			// // Residual coupling constant
-			// Ar2 = popt[14];
-			// //Residual mass
-			// mr2 = popt[24];
+			mr = popt[19];
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * sinh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * sinh(m2*(T/2.-t));
 			result += 2.*Ar * exp(-mr*T/2.) * sinh(mr*(T/2.-t));
-			//result += 2.*Ar2 * exp(-mr2*T/2.) * sinh(mr2*(T/2.-t));
 			return result;	
 		}
 
@@ -239,7 +224,7 @@ private:
 			// Residual coupling constant
 			Ar = popt[13];
 			//Residual mass
-			mr = popt[21];
+			mr = popt[20];
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * sinh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * sinh(m2*(T/2.-t));
@@ -278,7 +263,7 @@ private:
 			// Residual coupling constant
 			Ar = popt[14];
 			//Residual mass
-			mr = popt[22];
+			mr = popt[21];
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * sinh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * sinh(m2*(T/2.-t));
@@ -316,16 +301,11 @@ private:
 			// Residual coupling constant
 			Ar = popt[15];
 			//Residual mass
-			mr = popt[23];	
-			// Residual coupling constant
-			Ar2 = popt[16];
-			//Residual mass
-			mr2 = popt[24];	
+			mr = popt[22];	
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * cosh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * cosh(m2*(T/2.-t));
 			result += 2.*Ar * exp(-mr*T/2.) * cosh(mr*(T/2.-t));
-			result += 2.*Ar2 * exp(-mr2*T/2.) * cosh(mr2*(T/2.-t));
 			return result;
 		}
 
@@ -338,9 +318,9 @@ private:
 			Zl2 = popt[7];
 			Zr2 = popt[9];
 			// Residual coupling constant
-			Ar = popt[17];
+			Ar = popt[16];
 			//Residual mass
-			mr = popt[25];
+			mr = popt[23];
 			// result
 			result += Zl1*Zr1/m1 * exp(-m1*T/2.) * cosh(m1*(T/2.-t));
 			result += Zl2*Zr2/m2 * exp(-m2*T/2.) * cosh(m2*(T/2.-t));
@@ -619,15 +599,9 @@ public:
 			return respected;
 		}
 
-		if ((q[18] < q[1]) || (q[19] < q[1]) || (q[20] < q[1]) || (q[21] < q[1]) || (q[22] < q[1]) || (q[23] < q[1]) || (q[24] < q[1]) || (q[25] < q[1]) ) // residual masses have to be bigger than m1 and m2
+		if ((q[17] < q[1]) || (q[18] < q[1]) || (q[19] < q[1]) || (q[20] < q[1]) || (q[21] < q[1]) || (q[22] < q[1]) || (q[23] < q[1])) // residual masses have to be bigger than m1 and m2
 		{
 			respected = false; 
-			return respected;
-		}
-
-		if ( (q[24] < q[23])  )
-		{
-			respected = false;
 			return respected;
 		}
 

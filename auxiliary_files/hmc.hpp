@@ -118,49 +118,7 @@ public:
 
 	}
 
-	// TO DO : Move intrinsic error functions to the model class so that HMC doesn't need d_of_freedom()
-	/* Calculate intrinsic uncertainty of parameter i */
-	number_type intrinsic_err(const Vector<number_type> & position, size_type index)
-	{
-		size_type d_of_freedom = model_.d_of_freedom();
-		number_type sec_deriv_chi2 = sec_deriv_potential(position, index) * d_of_freedom * temperature_;
-		return sqrt(2.0/sec_deriv_chi2);
-	}
-
-	// TO DO : Move intrinsic error functions to the model class so that HMC doesn't need d_of_freedom()
-	/* Calculate intrinsic uncertainty of fitting result */
-	void intrinsic_err(const Vector<number_type> & position, Vector<number_type> & errors)
-	{
-		Matrix<number_type> Hessian(position.size(), position.size());
-		Vector<number_type> jac(position.size());
-		grad_potential(jac, position);
-		for (size_type i = 0; i < Hessian.rowsize(); ++i)
-		{
-			for (size_type j = 0; j <= i; ++j) 
-			{
-				Hessian(i, j) = sec_deriv_potential(position, i, j);
-				if (i != j)
-				{
-					Hessian(j, i) = Hessian(i, j); // Using symmetry of second derivatives
-				}
-			}
-		}
-		size_type d_of_freedom = model_.d_of_freedom();
-		Hessian *=  d_of_freedom * temperature_;
-		
 	
-		Hessian /= 2.0;
-
-		Matrix<number_type> pcov(Hessian.rowsize(), Hessian.colsize());
-		MatrixInverse(Hessian, pcov);
-		
-
-		for (size_type i = 0; i < errors.size(); ++i)
-		{
-			errors[i] = sqrt(pcov[i][i]);
-		}
-	}
-
 	/* second derivative of the potential with respect to parameter i */
 	number_type sec_deriv_potential (const Vector<number_type> & position, size_type i)
 	{
@@ -761,15 +719,18 @@ public:
 		if (do_analysis_)
 		{
 			// Calculate fitting result
-			Vector<number_type> result(data.n_variables());
+			Vector<number_type> result(initial.size());
 			Vector<number_type> result_err(result.size());
-			data.mean(result, result_err);
+			Vector<number_type> result_err_err(result.size());
+			data.mean(result, result_err, result_err_err, model_.d_of_freedom(), temperature_ );
 			Vector<number_type> popt(initial.size());
 			Vector<number_type> perr(initial.size());
+			Vector<number_type> perrerr(initial.size());
 			for (size_type i = 0; i < popt.size(); ++i)
 			{
 				popt[i] = result[i];
 				perr[i] = result_err[i];
+				perrerr[i] = result_err_err[i];
 			}
 
 			// Calculate minimal chi2_red and its error
@@ -823,26 +784,24 @@ public:
 			std::cout << "FITTING RESULT: \n";
 			for (size_type i = 0; i < initial.size(); ++i)
 			{
-				std::cout << "Parameter " << i << " : " << popt[i] << " + - " << perr[i]  << "\n";
+				std::cout << "Parameter " << i << " : " << popt[i] << " + - " << perr[i]  << " + - " << perrerr[i] << "\n";
 			}
 
 			
-			number_type chi2redmean = result[popt.size()];
+			number_type chi2redmean;
+			number_type chi2redmean_err;
+			data.mean(popt.size(), chi2redmean, chi2redmean_err);
 			number_type chi2reddiff = chi2redmean - chi2redmin;
-			number_type chi2reddiff_theo = initial.size() * temperature_ / 2;
+			number_type chi2reddiff_theo = temperature_ * initial.size() / 2.;
 			std::cout << "chi2_red (best fit): " << chi2redmin << " + - " << chi2redmin_err << "\n";
-			std::cout << "chi2_red (mean): " << chi2redmean << " + - " << result_err[popt.size()] << "\n";
+			std::cout << "chi2_red (mean): " << chi2redmean << " + - " << chi2redmean_err << "\n";
 			std::cout << "Ratio of measured difference to theoretical difference: " 
 			<< chi2reddiff/chi2reddiff_theo << "\n";
+
+			number_type variance_measured = data.variance(popt.size());
+			number_type variance_theo = temperature_ * temperature_ * initial.size() / 2.;
+			std::cout << "Ratio of measured chi2red variance to theoretical variance: " << variance_measured/variance_theo << "\n";
 			
-			// report intrinsic uncertainties
-			std::cout << "Intrinsic uncertainties: \n";
-			Vector<number_type> err_intr(popt.size());
-			intrinsic_err(popt, err_intr);
-			for (size_type i = 0; i < err_intr.size(); ++i)
-			{
-				std::cout << "Parameter " << i << " : " << err_intr[i]  << "\n";
-			}
 
 			//report lower and upper bounds for parameters
 			Vector<number_type> lower_bound(initial.size());
@@ -954,7 +913,7 @@ public:
 				permitted_initial_found = true;
 			}
 			counter_constraints++;	
-			assert(counter_constraints < 80);
+			assert(counter_constraints < 160);
 		}
 
 	}

@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <random>
 #include <fstream>
+#include <cmath>
 
 template<typename REAL>
 class Vector : public std::vector<REAL> // inherit from the STL vector
@@ -219,6 +220,16 @@ public:
 			result[i] = x[i]/alpha;
 		}
 		return result;
+	}
+
+/* Component-wise square root */
+	template<typename REAL>
+	void sqrt(Vector<REAL> & x)
+	{
+		for (std::size_t i = 0; i < x.size(); ++i)
+		{
+			x[i] = sqrt(x[i]);
+		}
 	}
 
 /* Fill vector with random entries following a probability distribution */

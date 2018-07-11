@@ -209,6 +209,83 @@ public:
 
 	}
 
+	/* calculate average of variable i as well as its error */
+	void mean(size_type index, number_type & result, number_type & result_err)
+	{
+		// mean
+		assert((index >= 0) && (index < n_variables_)); //check if index within valid bounds
+		result = 0;
+		for (size_type i = index + n_variables_*thermalization_; i < data_.size(); i+=n_variables_)
+		{
+			result += data_[i];
+		}
+		result /= entries_per_variable_;
+
+		// and its error
+		number_type autocorrel_time;
+		number_type autocorrel_time_err;
+		autocorr_time(index, autocorrel_time, autocorrel_time_err);
+		number_type ESS = entries_per_variable_/(2.*autocorrel_time); //effective sample size
+		number_type variance = this->variance(index);
+		result_err = sqrt(variance/ESS);
+	}
+
+	/* calculate mean of each variable at once and calculate its fitting error */
+	void mean(Vector<number_type> & average_vector, Vector<number_type> & err_vector, Vector<number_type> & err_err, size_type d_of_freedom, number_type temperature)
+	{
+		assert(average_vector.size() == err_vector.size());
+		assert(average_vector.size() == err_err.size());
+		assert(average_vector.size() == n_popt_);
+
+		// Determine burn-in length
+		determine_burn_in_length();
+
+
+		// Calculation of the mean vector
+		average_vector = 0;
+		for (size_type i = n_variables_*thermalization_; i < data_.size(); ++i)
+		{
+			average_vector[i%n_variables_] += data_[i];
+			if ((i%n_variables_) >= n_popt_)
+			{
+				continue;
+			}
+		}
+		average_vector = average_vector / entries_per_variable_;
+
+		// Calculation of the fitting error
+		err_vector = 0;
+		for (size_type i = n_variables_*thermalization_; i < data_.size(); ++i)
+		{
+			err_vector[i%n_variables_] += (data_[i]-average_vector[i%n_variables_])*(data_[i]-average_vector[i%n_variables_]); // calculate unbiased variance
+			if ((i%n_variables_) >= n_popt_)
+			{
+				continue;
+			}
+		}
+		err_vector = err_vector / (entries_per_variable_ - 1);
+		sqrt(err_vector); // standard deviation
+		err_vector *= sqrt(2./d_of_freedom/temperature); // fitting vector
+
+
+		// Calculation of its uncertainty
+		Vector<number_type> autocorr_times(average_vector.size());
+		Vector<number_type> autocorr_times_err(err_err.size());
+		autocorr_time(autocorr_times, autocorr_times_err); // calculate integrated autocorrelation times
+		std::cout << "Integrated autocorrelation times: \n";
+		for (size_type i = 0; i < autocorr_times.size(); ++i)
+		{
+			std::cout << "Parameter " << i << " : " << autocorr_times[i] << " + - " << autocorr_times_err[i] << "\n";
+		}
+	
+
+		for (size_type i = 0; i<n_popt_; ++i)
+		{
+			number_type ESS = entries_per_variable_/(2.*autocorr_times[i]); //effective sample size
+			err_err[i] = err_vector[i]*sqrt(2./(4.*ESS-1));
+		}
+	}
+
 	/* calculate mean of each variable at once and save it into a vector */
 	/* as well as uncertitude vector, taking into account autocorrelation */
 	void mean(Vector<number_type> & average_vector, Vector<number_type> & err_vector)
@@ -286,6 +363,7 @@ public:
 		return result;
 	}
 
+
 	/* calculate a integrated autocorrelation time vector (one entry for each fitting parameter) */
 	void autocorr_time(Vector<number_type> & times, Vector<number_type> & times_err)
 	{
@@ -304,38 +382,45 @@ public:
 
 		for (size_type i = 0; i < times.size(); ++i)
 		{
-			std::cout << "Calculating autocorrelation time for parameter " << i+1  << " / " << times.size() << "\n";
-			// Calculate integrated autocorrelation time for parameter i
-			number_type C = abs(this->gamma(i, i, 0));
-			size_type W = 0;
-			number_type gamma_old;
-			number_type gamma_current;
-			for (size_type t = 1; t < entries_per_variable_; ++t)
-			{
-				gamma_current = abs(this->gamma(i, i, t));
-				//if (i == 0)
-					//std::cout << this->gamma(i, i, t-1) << "\n";
-				C+= 2.*gamma_current;
-
-				/* 
-				procedure to find optimal summation window W: 
-				break as soon as module of autocorrelation function increases 
-				*/
-				if (t>1)
-				{
-					if (gamma_old < gamma_current)
-					{
-						W = t;
-						break;
-					}
-				}
-
-				gamma_old = abs(gamma_current);
-			}
-			number_type v = abs(this->gamma(i, i, 0));
-			times[i] = C/2.0/v;
-			times_err[i] = times[i]*sqrt(4./entries_per_variable_*(W+1./2-times[i])) + C*exp(-1.*W/times[i]);
+			autocorr_time(i, times[i], times_err[i]);	
 		}
+	}
+
+	/* autocorrelation time for index i */
+	void autocorr_time(size_type i, number_type & time, number_type & time_error)
+	{
+		//std::cout << "Calculating autocorrelation time for parameter " << i+1  << " / " << times.size() << "\n";
+		// Calculate integrated autocorrelation time for parameter i
+		number_type C = abs(this->gamma(i, i, 0));
+		size_type W = 0;
+		number_type gamma_old;
+		number_type gamma_current;
+		for (size_type t = 1; t < entries_per_variable_; ++t)
+		{
+			gamma_current = abs(this->gamma(i, i, t));
+			//if (i == 0)
+				//std::cout << this->gamma(i, i, t-1) << "\n";
+			C+= 2.*gamma_current;
+
+			/* 
+			procedure to find optimal summation window W: 
+			break as soon as module of autocorrelation function increases 
+			*/
+			if (t>1)
+			{
+				if (gamma_old < gamma_current)
+				{
+					W = t;
+					break;
+				}
+			}
+
+			gamma_old = abs(gamma_current);
+		}
+			number_type v = abs(this->gamma(i, i, 0));
+			time = C/2.0/v;
+			time_error = time*sqrt(4./entries_per_variable_*(W+1./2-time)) + C*exp(-1.*W/time);
+
 	}
 
 	/* calculate (unbiased) variance of variable i */
@@ -351,7 +436,7 @@ public:
 		return result;
 	}
 
-	/* Calculate unbiased standard deviation of variable i */
+	/* Calculate standard deviation of variable i */
 	number_type std_deviation(size_type index)
 	{
 		number_type result = sqrt(variance(index));

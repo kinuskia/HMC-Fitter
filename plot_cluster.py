@@ -27,12 +27,6 @@ a20 = np.empty((0))
 a21 = np.empty((0))
 a22 = np.empty((0))
 a23 = np.empty((0)) 
-a24 = np.empty((0)) 
-a25 = np.empty((0)) 
-a26 = np.empty((0)) 
-a27 = np.empty((0)) 
-a28 = np.empty((0)) 
-a29 = np.empty((0)) 
 U = np.empty((0))
 accept = np.empty((0))
 
@@ -43,7 +37,7 @@ for file in os.listdir("/Users/Kianusch/Documents/Studium/Studiensemester/SoSe18
 	filename = os.fsdecode(file)
 	if filename.endswith(".txt"):
 		counter_files = counter_files + 1
-		b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, b16, b17, b18, b19, b20, b21, b22, b23, b24, b25, b26, b27, b28, b29, bU, baccept = np.loadtxt("LPT-Cluster/" + filename, unpack = True)
+		b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, b16, b17, b18, b19, b20, b21, b22, b23, bU, baccept = np.loadtxt("LPT-Cluster/" + filename, unpack = True)
 		a0 = np.append(a0, b0)
 		a1 = np.append(a1, b1)
 		a2 = np.append(a2, b2)
@@ -68,23 +62,17 @@ for file in os.listdir("/Users/Kianusch/Documents/Studium/Studiensemester/SoSe18
 		a21 = np.append(a21, b21)
 		a22 = np.append(a22, b22)
 		a23 = np.append(a23, b23)
-		a24 = np.append(a24, b24)
-		a25 = np.append(a25, b25)
-		a26 = np.append(a26, b26)
-		a27 = np.append(a27, b27)
-		a28 = np.append(a28, b28)
-		a29 = np.append(a29, b29)
 		U = np.append(U, bU)
 		accept = np.append(accept, baccept)
 n = np.arange(0, len(a0), 1)
 
 
-keep = (U < 40.23)
+keep = (U < 40.85619)
 
-parameters = [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29]
+parameters = [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23]
 
-T = 1e-4
-p = 30.
+T = 1e-6
+p = 24.
 
 plt.figure(1)
 plt.hist(U[keep], 300)
