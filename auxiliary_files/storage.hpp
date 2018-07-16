@@ -230,8 +230,14 @@ public:
 		result_err = sqrt(variance/ESS);
 	}
 
-	/* calculate mean of each variable at once and calculate its fitting error */
-	void mean(Vector<number_type> & average_vector, Vector<number_type> & err_vector, Vector<number_type> & err_err, size_type d_of_freedom, number_type temperature)
+	/* 
+	calculate 
+	- mean of each variable at once
+	- its fitting uncertainty
+	- the statistical uncertainty of the mean
+	- the statistical uncertainty of the fitting uncertainty
+	 */
+	void mean(Vector<number_type> & average_vector, Vector<number_type> & err_vector, Vector<number_type> & average_err, Vector<number_type> & err_err, size_type d_of_freedom, number_type temperature)
 	{
 		assert(average_vector.size() == err_vector.size());
 		assert(average_vector.size() == err_err.size());
@@ -245,11 +251,11 @@ public:
 		average_vector = 0;
 		for (size_type i = n_variables_*thermalization_; i < data_.size(); ++i)
 		{
-			average_vector[i%n_variables_] += data_[i];
 			if ((i%n_variables_) >= n_popt_)
 			{
 				continue;
 			}
+			average_vector[i%n_variables_] += data_[i];
 		}
 		average_vector = average_vector / entries_per_variable_;
 
@@ -257,18 +263,20 @@ public:
 		err_vector = 0;
 		for (size_type i = n_variables_*thermalization_; i < data_.size(); ++i)
 		{
-			err_vector[i%n_variables_] += (data_[i]-average_vector[i%n_variables_])*(data_[i]-average_vector[i%n_variables_]); // calculate unbiased variance
 			if ((i%n_variables_) >= n_popt_)
 			{
 				continue;
 			}
+			err_vector[i%n_variables_] += (data_[i]-average_vector[i%n_variables_])*(data_[i]-average_vector[i%n_variables_]); // calculate unbiased variance
 		}
 		err_vector = err_vector / (entries_per_variable_ - 1);
 		sqrt(err_vector); // standard deviation
+		Vector<number_type> standard_deviation(err_vector.size());
+		standard_deviation = err_vector;
 		err_vector *= sqrt(2./d_of_freedom/temperature); // fitting vector
 
 
-		// Calculation of its uncertainty
+		// Calculation of the statistical uncertainties
 		Vector<number_type> autocorr_times(average_vector.size());
 		Vector<number_type> autocorr_times_err(err_err.size());
 		autocorr_time(autocorr_times, autocorr_times_err); // calculate integrated autocorrelation times
@@ -282,6 +290,7 @@ public:
 		for (size_type i = 0; i<n_popt_; ++i)
 		{
 			number_type ESS = entries_per_variable_/(2.*autocorr_times[i]); //effective sample size
+			average_err[i] = standard_deviation[i]/sqrt(ESS);
 			err_err[i] = err_vector[i]*sqrt(2./(4.*ESS-1));
 		}
 	}
@@ -434,6 +443,22 @@ public:
 		}
 		result /= (entries_per_variable_ -1);
 		return result;
+	}
+
+	/* Calculate variance as well as its statistical uncertainty */
+	void variance(size_type index, number_type & result, number_type & result_err)
+	{
+		// variance
+		result = variance(index);
+		//autocorrelation time
+		number_type autocorrel_time;
+		number_type autocorrel_time_err;
+		autocorr_time(index, autocorrel_time, autocorrel_time_err);
+		// uncertainty
+		number_type ESS = entries_per_variable_/(2.*autocorrel_time);
+
+		result_err = result*sqrt(2./(ESS-1));
+
 	}
 
 	/* Calculate standard deviation of variable i */

@@ -719,18 +719,21 @@ public:
 		if (do_analysis_)
 		{
 			// Calculate fitting result
-			Vector<number_type> result(initial.size());
-			Vector<number_type> result_err(result.size());
-			Vector<number_type> result_err_err(result.size());
-			data.mean(result, result_err, result_err_err, model_.d_of_freedom(), temperature_ );
+			Vector<number_type> result_mean(initial.size());
+			Vector<number_type> result_uncertainty(result_mean.size());
+			Vector<number_type> result_mean_err(result_mean.size());
+			Vector<number_type> result_uncertainty_err(result_mean.size());
+			data.mean(result_mean, result_uncertainty, result_mean_err, result_uncertainty_err, model_.d_of_freedom(), temperature_ );
 			Vector<number_type> popt(initial.size());
-			Vector<number_type> perr(initial.size());
-			Vector<number_type> perrerr(initial.size());
+			Vector<number_type> pstd(initial.size());
+			Vector<number_type> popterr(initial.size());
+			Vector<number_type> pstderr(initial.size());
 			for (size_type i = 0; i < popt.size(); ++i)
 			{
-				popt[i] = result[i];
-				perr[i] = result_err[i];
-				perrerr[i] = result_err_err[i];
+				popt[i] = result_mean[i];
+				pstd[i] = result_uncertainty[i];
+				popterr[i] = result_mean_err[i];
+				pstderr[i] = result_uncertainty_err[i];
 			}
 
 			// Calculate minimal chi2_red and its error
@@ -784,7 +787,8 @@ public:
 			std::cout << "FITTING RESULT: \n";
 			for (size_type i = 0; i < initial.size(); ++i)
 			{
-				std::cout << "Parameter " << i << " : " << popt[i] << " + - " << perr[i]  << " + - " << perrerr[i] << "\n";
+				std::cout << "Parameter " << i << " : "  << std::setprecision(14) << "Best fit: " <<  popt[i] << " + - " << popterr[i] << "\n";
+				std::cout << "Parameter " << i << " : "  << std::setprecision(14) << "Uncertainty: " <<  pstd[i] << " + - " << pstderr[i] << "\n";
 			}
 
 			
@@ -793,13 +797,18 @@ public:
 			data.mean(popt.size(), chi2redmean, chi2redmean_err);
 			number_type chi2reddiff = chi2redmean - chi2redmin;
 			number_type chi2reddiff_theo = temperature_ * initial.size() / 2.;
-			std::cout << "chi2_red (best fit): " << chi2redmin << " + - " << chi2redmin_err << "\n";
-			std::cout << "chi2_red (mean): " << chi2redmean << " + - " << chi2redmean_err << "\n";
+			std::cout << std::setprecision(14) << "chi2_red (best fit): " << chi2redmin << " + - " << chi2redmin_err << "\n";
+			std::cout << std::setprecision(14) << "chi2_red (mean): " << chi2redmean << " + - " << chi2redmean_err << "\n";
 			std::cout << "Ratio of measured difference to theoretical difference: " 
 			<< chi2reddiff/chi2reddiff_theo << "\n";
 
-			number_type variance_measured = data.variance(popt.size());
+			number_type variance_measured;
+			number_type variance_measured_err;
+			data.variance(popt.size(), variance_measured, variance_measured_err);
 			number_type variance_theo = temperature_ * temperature_ * initial.size() / 2.;
+			std::cout << "Measured variance of chi2red: " << std::setprecision(14) << variance_measured << " + - " << variance_measured_err << "\n";
+			std::cout << "Theoretical variance of chi2red: " << std::setprecision(14) << variance_theo << "\n";
+			std::cout << "Variance discrepancy in units of the uncertainty: " << abs((variance_theo-variance_measured)/variance_measured_err ) << "\n";
 			std::cout << "Ratio of measured chi2red variance to theoretical variance: " << variance_measured/variance_theo << "\n";
 			
 

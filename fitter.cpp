@@ -115,84 +115,84 @@ int main (int argc, char* argv[])
 	// Characteristic length scales for the parameters // default 1
 	Vector<number_type> c_lengths(popt.size(), 1);
 	// characteristic length scales are here relative to range_max-range-min ...
-	range_min[0] = 0.985462;
-	range_max[0] = 0.985552;
+	range_min[0] = 0.9775;
+	range_max[0] = 0.9890;
 	c_lengths[0] = 1.0;
-	range_min[1] = 1.3633;
-	range_max[1] = 1.3654;
-	c_lengths[1] = 1.0;
-	range_min[2] = 0.26562;
-	range_max[2] = 0.26589;
+	range_min[1] = 1.21;
+	range_max[1] = 1.44;
+	c_lengths[1] = 0.5;
+	range_min[2] = 0.241;
+	range_max[2] = 0.278;
 	c_lengths[2] = 1.0;
-	range_min[3] = 0.5370;
-	range_max[3] = 0.5403;
-	c_lengths[3] = 1.0;
-	range_min[4] = 0.065316;
-	range_max[4] = 0.065371;
+	range_min[3] = 0.35;
+	range_max[3] = 0.65;
+	c_lengths[3] = 0.5;
+	range_min[4] = 0.060;
+	range_max[4] = 0.068;
 	c_lengths[4] = 1.0;
-	range_min[5] = 0.04283;
-	range_max[5] = 0.04310;
+	range_min[5] = 0.034;
+	range_max[5] = 0.051;
 	c_lengths[5] = 1.0;
-	range_min[6] = 0.17939;
-	range_max[6] = 0.17961;
+	range_min[6] = 0.161;
+	range_max[6] = 0.188;
 	c_lengths[6] = 1.0;
-	range_min[7] = 0.6059;
-	range_max[7] = 0.6100;
-	c_lengths[7] = 1.0;
-	range_min[8] = 0.022489;
-	range_max[8] = 0.022512;
+	range_min[7] = 0.35;
+	range_max[7] = 0.78;
+	c_lengths[7] = 0.5;
+	range_min[8] = 0.0204;
+	range_max[8] = 0.0235;
 	c_lengths[8] = 1.0;
-	range_min[9] = 0.03749;
-	range_max[9] = 0.03768;
-	c_lengths[9] = 1.0;
-	range_min[10] = 0.5426;//
-	range_max[10] = 0.5441;
+	range_min[9] = 0.028;
+	range_max[9] = 0.041;
+	c_lengths[9] = 0.5;
+	range_min[10] = 0.49;//
+	range_max[10] = 0.611;
 	c_lengths[10] = 1.0;
-	range_min[11] = -0.00526;//
-	range_max[11] = -0.00517;
+	range_min[11] = -0.0125;//
+	range_max[11] = 07;
 	c_lengths[11] = 1.0;
-	range_min[12] = 0.8026;//
-	range_max[12] = 0.8037;
+	range_min[12] = 0.75;//
+	range_max[12] = 0.85;
 	c_lengths[12] = 1.0;
 	range_min[13] = -0.003610;
 	range_max[13] = -0.003525;//
 	c_lengths[13] = 1.0;
-	range_min[14] = -0.00720;//
-	range_max[14] = -0.00710;
+	range_min[14] = -0.01;//
+	range_max[14] = 0;
 	c_lengths[14] = 1.0;
-	range_min[15] = 1.2894;//
-	range_max[15] = 1.2912;
-	c_lengths[15] = 1.0;
+	range_min[15] = 0;//
+	range_max[15] = 1.8;
+	c_lengths[15] = 0.8;
 	range_min[16] = -1.28;//
 	range_max[16] = 1.29;
-	c_lengths[16] = 0.01;
-	range_min[17] = -0.005400;//
-	range_max[17] = -0.005300;
+	c_lengths[16] = 1.0;
+	range_min[17] = -0.01;//
+	range_max[17] = 0;
 	c_lengths[17] = 1.0;
 	range_min[18] = 2.199;
-	range_max[18] = 2.2038;//
+	range_max[18] = 2.24;//
 	c_lengths[18] = 1.;
-	range_min[19] = 1.5350;
-	range_max[19] = 1.5440;//
+	range_min[19] = 1.4;
+	range_max[19] = 2.6;//
 	c_lengths[19] = 1.;
-	range_min[20] = 2.1412;
-	range_max[20] = 2.1440;//
-	c_lengths[20] = 1.0;
-	range_min[21] = 1.6575;
-	range_max[21] = 1.6650;//
+	range_min[20] = 1.97;
+	range_max[20] = 2.26;//
+	c_lengths[20] = 0.5;
+	range_min[21] = 1.3;
+	range_max[21] = 2.6;//
 	c_lengths[21] = 1.;
-	range_min[22] = 1.568;
-	range_max[22] = 1.574;//
+	range_min[22] = 1.25;
+	range_max[22] = 2.0;//
 	c_lengths[22] = 1.0;
-	range_min[23] = 2.1158;
-	range_max[23] = 2.1182;//
-	c_lengths[23] = 1.0;
-	range_min[24] = 2.11;
-	range_max[24] = 3;//
-	c_lengths[24] = 1.e-3;
-	range_min[25] = 1.7085;
-	range_max[25] = 1.7149;//
-	c_lengths[25] = 1.0;
+	range_min[23] = 1.7;
+	range_max[23] = 2.2;//
+	c_lengths[23] = 0.8;
+	range_min[24] = 1.9;
+	range_max[24] = 4;//
+	c_lengths[24] = 0.8;
+	range_min[25] = 1.25;
+	range_max[25] = 2.5;//
+	c_lengths[25] = 0.8;
 
 	
 	
@@ -201,7 +201,7 @@ int main (int argc, char* argv[])
 
 
 	//initialize HMC opbject
-	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 3e-1, 160, 190, 1e0);
+	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 3e-1, 160, 190, 1e-1);
 	//sampler.bounds_fixed(false);
 	//sampler.do_analysis(true);
 	
@@ -227,7 +227,7 @@ int main (int argc, char* argv[])
 	
 	
 
-	//sampler.walk_automatic();
+	sampler.walk_automatic();
 	//write_scripts(1, "script");
 
 
@@ -240,7 +240,7 @@ int main (int argc, char* argv[])
 	{
 		filenumber = argv[1];
 	}
-	sampler.walk_silently(2e3, "data", filenumber);
+	//sampler.walk_silently(2e3, "data", filenumber);
 	//sampler.walk_silently_disregarding(1e4, 40.225, "data", filenumber);
 
 	
