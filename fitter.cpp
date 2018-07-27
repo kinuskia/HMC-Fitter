@@ -15,98 +15,98 @@ int main (int argc, char* argv[])
 	typedef double number_type;
 	typedef std::size_t size_type;
 	Vector<number_type> t(0);
-	Vector<number_type> A0l_A0l(0);
-	Vector<number_type> A0l_A0s(0);
-	Vector<number_type> A0l_Pl(0);
-	Vector<number_type> A0l_Ps(0);
-	Vector<number_type> A0s_A0l(0);
-	Vector<number_type> A0s_A0s(0);
-	Vector<number_type> A0s_Pl(0);
-	Vector<number_type> A0s_Ps(0);
-	Vector<number_type> Pl_A0l(0);
-	Vector<number_type> Pl_A0s(0);
-	Vector<number_type> Pl_Pl(0);
-	Vector<number_type> Pl_Ps(0);
-	Vector<number_type> Ps_A0l(0);
-	Vector<number_type> Ps_A0s(0);
-	Vector<number_type> Ps_Pl(0);
-	Vector<number_type> Ps_Ps(0);
-	Vector<number_type> d_A0l_A0l(0);
-	Vector<number_type> d_A0l_A0s(0);
-	Vector<number_type> d_A0l_Pl(0);
-	Vector<number_type> d_A0l_Ps(0);
-	Vector<number_type> d_A0s_A0l(0);
-	Vector<number_type> d_A0s_A0s(0);
-	Vector<number_type> d_A0s_Pl(0);
-	Vector<number_type> d_A0s_Ps(0);
-	Vector<number_type> d_Pl_A0l(0);
-	Vector<number_type> d_Pl_A0s(0);
-	Vector<number_type> d_Pl_Pl(0);
-	Vector<number_type> d_Pl_Ps(0);
-	Vector<number_type> d_Ps_A0l(0);
-	Vector<number_type> d_Ps_A0s(0);
-	Vector<number_type> d_Ps_Pl(0);
-	Vector<number_type> d_Ps_Ps(0);
+	Vector<number_type> Vl_Vl(0);
+	Vector<number_type> Vl_Vs1(0);
+	Vector<number_type> Vl_Vs2(0);
+	Vector<number_type> Vl_Vs3(0);
+	Vector<number_type> Vs1_Vl(0);
+	Vector<number_type> Vs1_Vs1(0);
+	Vector<number_type> Vs1_Vs2(0);
+	Vector<number_type> Vs1_Vs3(0);
+	Vector<number_type> Vs2_Vl(0);
+	Vector<number_type> Vs2_Vs1(0);
+	Vector<number_type> Vs2_Vs2(0);
+	Vector<number_type> Vs2_Vs3(0);
+	Vector<number_type> Vs3_Vl(0);
+	Vector<number_type> Vs3_Vs1(0);
+	Vector<number_type> Vs3_Vs2(0);
+	Vector<number_type> Vs3_Vs3(0);
+	Vector<number_type> d_Vl_Vl(0);
+	Vector<number_type> d_Vl_Vs1(0);
+	Vector<number_type> d_Vl_Vs2(0);
+	Vector<number_type> d_Vl_Vs3(0);
+	Vector<number_type> d_Vs1_Vl(0);
+	Vector<number_type> d_Vs1_Vs1(0);
+	Vector<number_type> d_Vs1_Vs2(0);
+	Vector<number_type> d_Vs1_Vs3(0);
+	Vector<number_type> d_Vs2_Vl(0);
+	Vector<number_type> d_Vs2_Vs1(0);
+	Vector<number_type> d_Vs2_Vs2(0);
+	Vector<number_type> d_Vs2_Vs3(0);
+	Vector<number_type> d_Vs3_Vl(0);
+	Vector<number_type> d_Vs3_Vs1(0);
+	Vector<number_type> d_Vs3_Vs2(0);
+	Vector<number_type> d_Vs3_Vs3(0);
 
 	// Read in measured data, skip first row
-	read_data("correlators/correlator_A0l-A0l", t, A0l_A0l, d_A0l_A0l, 1);
-	read_data("correlators/correlator_A0l-A0s", t, A0l_A0s, d_A0l_A0s, 1);
-	read_data("correlators/correlator_A0l-Pl", t, A0l_Pl, d_A0l_Pl, 1);
-	read_data("correlators/correlator_A0l-Ps", t, A0l_Ps, d_A0l_Ps, 1);
-	read_data("correlators/correlator_A0s-A0l", t, A0s_A0l, d_A0s_A0l, 1);
-	read_data("correlators/correlator_A0s-A0s", t, A0s_A0s, d_A0s_A0s, 1);
-	read_data("correlators/correlator_A0s-Pl", t, A0s_Pl, d_A0s_Pl, 1);
-	read_data("correlators/correlator_A0s-Ps", t, A0s_Ps, d_A0s_Ps, 1);
-	read_data("correlators/correlator_Pl-A0l", t, Pl_A0l, d_Pl_A0l, 1);
-	read_data("correlators/correlator_Pl-A0s", t, Pl_A0s, d_Pl_A0s, 1);
-	read_data("correlators/correlator_Pl-Pl", t, Pl_Pl, d_Pl_Pl, 1);
-	read_data("correlators/correlator_Pl-Ps", t, Pl_Ps, d_Pl_Ps, 1);
-	read_data("correlators/correlator_Ps-A0l", t, Ps_A0l, d_Ps_A0l, 1);
-	read_data("correlators/correlator_Ps-A0s", t, Ps_A0s, d_Ps_A0s, 1);
-	read_data("correlators/correlator_Ps-Pl", t, Ps_Pl, d_Ps_Pl, 1);
-	read_data("correlators/correlator_Ps-Ps", t, Ps_Ps, d_Ps_Ps, 1);
+	read_data("correlators/correlator_Vl-Vl", t, Vl_Vl, d_Vl_Vl, 0);
+	read_data("correlators/correlator_Vl-Vs1", t, Vl_Vs1, d_Vl_Vs1, 0);
+	read_data("correlators/correlator_Vl-Vs2", t, Vl_Vs2, d_Vl_Vs2, 0);
+	read_data("correlators/correlator_Vl-Vs3", t, Vl_Vs3, d_Vl_Vs3, 0);
+	read_data("correlators/correlator_Vs1-Vl", t, Vs1_Vl, d_Vs1_Vl, 0);
+	read_data("correlators/correlator_Vs1-Vs1", t, Vs1_Vs1, d_Vs1_Vs1, 0);
+	read_data("correlators/correlator_Vs1-Vs2", t, Vs1_Vs2, d_Vs1_Vs2, 0);
+	read_data("correlators/correlator_Vs1-Vs3", t, Vs1_Vs3, d_Vs1_Vs3, 0);
+	read_data("correlators/correlator_Vs2-Vl", t, Vs2_Vl, d_Vs2_Vl, 0);
+	read_data("correlators/correlator_Vs2-Vs1", t, Vs2_Vs1, d_Vs2_Vs1, 0);
+	read_data("correlators/correlator_Vs2-Vs2", t, Vs2_Vs2, d_Vs2_Vs2, 0);
+	read_data("correlators/correlator_Vs2-Vs3", t, Vs2_Vs3, d_Vs2_Vs3, 0);
+	read_data("correlators/correlator_Vs3-Vl", t, Vs3_Vl, d_Vs3_Vl, 0);
+	read_data("correlators/correlator_Vs3-Vs1", t, Vs3_Vs1, d_Vs3_Vs1, 0);
+	read_data("correlators/correlator_Vs3-Vs2", t, Vs3_Vs2, d_Vs3_Vs2, 0);
+	read_data("correlators/correlator_Vs3-Vs3", t, Vs3_Vs3, d_Vs3_Vs3, 0);
 
 	// Set up fitting model
 	Model<number_type> correlators(
 	t,
-	A0l_A0l,
-	A0l_A0s,
-	A0l_Pl,
-	A0l_Ps,
-	A0s_A0l,
-	A0s_A0s,
-	A0s_Pl,
-	A0s_Ps,
-	Pl_A0l,
-	Pl_A0s,
-	Pl_Pl,
-	Pl_Ps,
-	Ps_A0l,
-	Ps_A0s,
-	Ps_Pl,
-	Ps_Ps,
-	d_A0l_A0l,
-	d_A0l_A0s,
-	d_A0l_Pl,
-	d_A0l_Ps,
-	d_A0s_A0l,
-	d_A0s_A0s,
-	d_A0s_Pl,
-	d_A0s_Ps,
-	d_Pl_A0l,
-	d_Pl_A0s,
-	d_Pl_Pl,
-	d_Pl_Ps,
-	d_Ps_A0l,
-	d_Ps_A0s,
-	d_Ps_Pl,
-	d_Ps_Ps
+	Vl_Vl,
+	Vl_Vs1,
+	Vl_Vs2,
+	Vl_Vs3,
+	Vs1_Vl,
+	Vs1_Vs1,
+	Vs1_Vs2,
+	Vs1_Vs3,
+	Vs2_Vl,
+	Vs2_Vs1,
+	Vs2_Vs2,
+	Vs2_Vs3,
+	Vs3_Vl,
+	Vs3_Vs1,
+	Vs3_Vs2,
+	Vs3_Vs3,
+	d_Vl_Vl,
+	d_Vl_Vs1,
+	d_Vl_Vs2,
+	d_Vl_Vs3,
+	d_Vs1_Vl,
+	d_Vs1_Vs1,
+	d_Vs1_Vs2,
+	d_Vs1_Vs3,
+	d_Vs2_Vl,
+	d_Vs2_Vs1,
+	d_Vs2_Vs2,
+	d_Vs2_Vs3,
+	d_Vs3_Vl,
+	d_Vs3_Vs1,
+	d_Vs3_Vs2,
+	d_Vs3_Vs3
 	);
 
 	//correlators.print_content();
 
 	// Vector for fitting parameters
-	Vector<number_type> popt(26);
+	Vector<number_type> popt(12);
 
 
 	// Estimated search region
@@ -115,84 +115,44 @@ int main (int argc, char* argv[])
 	// Characteristic length scales for the parameters // default 1
 	Vector<number_type> c_lengths(popt.size(), 1);
 	// characteristic length scales are here relative to range_max-range-min ...
-	range_min[0] = 0.9775;
-	range_max[0] = 0.9890;
-	c_lengths[0] = 1.0;
-	range_min[1] = 1.21;
-	range_max[1] = 1.44;
-	c_lengths[1] = 0.5;
-	range_min[2] = 0.241;
-	range_max[2] = 0.278;
+	range_min[0] = 0.4;
+	range_max[0] = 2.5;
+	c_lengths[0] = 1;
+	range_min[1] = 1.0;
+	range_max[1] = 5.0;
+	c_lengths[1] = 1;
+	range_min[2] = 0;
+	range_max[2] = 1;
 	c_lengths[2] = 1.0;
-	range_min[3] = 0.35;
-	range_max[3] = 0.65;
-	c_lengths[3] = 0.5;
-	range_min[4] = 0.060;
-	range_max[4] = 0.068;
+	range_min[3] = 0;
+	range_max[3] = 1;
+	c_lengths[3] = 1.0;
+	range_min[4] = -1;
+	range_max[4] = 1;
 	c_lengths[4] = 1.0;
-	range_min[5] = 0.034;
-	range_max[5] = 0.051;
+	range_min[5] = -1;
+	range_max[5] = 1;
 	c_lengths[5] = 1.0;
-	range_min[6] = 0.161;
-	range_max[6] = 0.188;
+	range_min[6] = -0.1;
+	range_max[6] = 0.1;
 	c_lengths[6] = 1.0;
-	range_min[7] = 0.35;
-	range_max[7] = 0.78;
-	c_lengths[7] = 0.5;
-	range_min[8] = 0.0204;
-	range_max[8] = 0.0235;
+	range_min[7] = -0.1;
+	range_max[7] = 0.1;
+	c_lengths[7] = 1.0;
+	range_min[8] = -0.1;
+	range_max[8] = 0.1;
 	c_lengths[8] = 1.0;
-	range_min[9] = 0.028;
-	range_max[9] = 0.041;
-	c_lengths[9] = 0.5;
-	range_min[10] = 0.49;//
-	range_max[10] = 0.611;
+	range_min[9] = 1.6;
+	range_max[9] = 3;
+	c_lengths[9] = 1.0;
+	range_min[10] = 1.6;//
+	range_max[10] = 3;
 	c_lengths[10] = 1.0;
-	range_min[11] = -0.0125;//
-	range_max[11] = 07;
+	range_min[11] = 1.6;//
+	range_max[11] = 3;
 	c_lengths[11] = 1.0;
-	range_min[12] = 0.75;//
-	range_max[12] = 0.85;
-	c_lengths[12] = 1.0;
-	range_min[13] = -0.003610;
-	range_max[13] = -0.003525;//
-	c_lengths[13] = 1.0;
-	range_min[14] = -0.01;//
-	range_max[14] = 0;
-	c_lengths[14] = 1.0;
-	range_min[15] = 0;//
-	range_max[15] = 1.8;
-	c_lengths[15] = 0.8;
-	range_min[16] = -1.28;//
-	range_max[16] = 1.29;
-	c_lengths[16] = 1.0;
-	range_min[17] = -0.01;//
-	range_max[17] = 0;
-	c_lengths[17] = 1.0;
-	range_min[18] = 2.199;
-	range_max[18] = 2.24;//
-	c_lengths[18] = 1.;
-	range_min[19] = 1.4;
-	range_max[19] = 2.6;//
-	c_lengths[19] = 1.;
-	range_min[20] = 1.97;
-	range_max[20] = 2.26;//
-	c_lengths[20] = 0.5;
-	range_min[21] = 1.3;
-	range_max[21] = 2.6;//
-	c_lengths[21] = 1.;
-	range_min[22] = 1.25;
-	range_max[22] = 2.0;//
-	c_lengths[22] = 1.0;
-	range_min[23] = 1.7;
-	range_max[23] = 2.2;//
-	c_lengths[23] = 0.8;
-	range_min[24] = 1.9;
-	range_max[24] = 4;//
-	c_lengths[24] = 0.8;
-	range_min[25] = 1.25;
-	range_max[25] = 2.5;//
-	c_lengths[25] = 0.8;
+
+	
 
 	
 	
@@ -201,7 +161,7 @@ int main (int argc, char* argv[])
 
 
 	//initialize HMC opbject
-	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 3e-1, 160, 190, 1e-1);
+	HMC<number_type> sampler(correlators, range_min, range_max, c_lengths, 1e-3, 90, 130, 1e6);
 	//sampler.bounds_fixed(false);
 	//sampler.do_analysis(true);
 	
@@ -223,7 +183,7 @@ int main (int argc, char* argv[])
 	*/
 	//sampler.discard_from(150.);
 	//fill_from_region(popt, range_min, range_max);
-	//sampler.walk(1e2, 10, 60*55, popt, 10);
+	//sampler.walk(2e3, 1, 60*55, popt, 10);
 	
 	
 

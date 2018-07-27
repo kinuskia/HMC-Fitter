@@ -222,6 +222,18 @@ public:
 		return result;
 	}
 
+/* Component-wise division of two vectors */
+	template<typename REAL1, typename REAL2>
+	Vector<REAL1> operator/ (const Vector<REAL1> & x, const Vector<REAL2> & y)
+	{
+		Vector<REAL1> result(x);
+		for (std::size_t i = 0; i < result.size(); ++i)
+		{
+			result[i] = x[i]/y[i];
+		}
+		return result;
+	}
+
 /* Component-wise square root */
 	template<typename REAL>
 	void sqrt(Vector<REAL> & x)

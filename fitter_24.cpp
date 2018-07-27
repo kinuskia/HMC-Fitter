@@ -252,7 +252,7 @@ int main (int argc, char* argv[])
 	
 	fill_from_region(popt, range_min, range_max);
 	//sampler.walk(2e4, 60*30, popt, 10);
-	sampler.walk(1e4, 60*30, popt, 10);
+	sampler.walk(2e5, 60*700, popt, 10);
 
 	
 

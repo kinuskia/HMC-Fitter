@@ -1,9 +1,9 @@
 import numpy as np 
 import matplotlib.pyplot as plt 
 
-x, y, dy = np.loadtxt("correlator_Pl-Pl", unpack = True, skiprows = 1)
-x2, y2, dy2 = np.loadtxt("correlator_Ps-A0l", unpack = True, skiprows = 1)
-x3, y3, dy3 = np.loadtxt("correlator_A0l-Ps", unpack = True, skiprows = 1)
+x, y, dy = np.loadtxt("correlator_A0s-Pl", unpack = True, skiprows = 1)
+x2, y2, dy2 = np.loadtxt("correlator_A0s-A0s", unpack = True, skiprows = 1)
+x3, y3, dy3 = np.loadtxt("correlator_Pl-Ps", unpack = True, skiprows = 1)
 
 # T = 64.
 # def fit(t, m1, m2, Z1, Z2, Ar, mr):
@@ -17,9 +17,9 @@ from scipy.optimize import curve_fit
 #popt, pcov = curve_fit(fit, x, y, p0 = [0.99, 1.64, 0.28, 1.03, 0.83, 3.58], sigma = dy, absolute_sigma=True) 
 #p0 = [0.99, 1.64, 0.28, 1.03, 0.83, 3.58]
 #plt.errorbar(x, y, yerr = dy, linestyle = "none", capsize = 2, label="Pl-Pl")
-#plt.errorbar(x2, y2, yerr = dy2, linestyle = "none", capsize = 2, label="A0l-A0s")
-plt.errorbar(x3, y3, yerr = dy3, linestyle = "none", capsize = 2, label="A0s-A0l")
-#plt.errorbar(x3, (y3-y2)/y2, yerr = np.sqrt(dy3*dy3+dy2*dy2)/y2, linestyle = "none", capsize = 2, label="difference")
+plt.errorbar(x2, y2, yerr = dy2, linestyle = "none", capsize = 2, label="A0s-A0s")
+plt.errorbar(x, y, yerr = dy, linestyle = "none", capsize = 2, label="A0s-Pl")
+plt.errorbar(x3, y3, yerr = dy3, linestyle = "none", capsize = 2, label="Pl-Ps")
 values = np.linspace(0., 29., num = 100)
 plt.yscale("log")
 plt.legend(loc = "best")

@@ -612,7 +612,7 @@ public:
 		// 	accepted = accepted && is_in_range(q) ; // automatical rejection if proposition is out of bounds
 		// }
 		
-		accepted = accepted && model_.constraints_respected(q); // automatical rejection if contraints not respected
+		//accepted = accepted && model_.constraints_respected(q); // automatical rejection if contraints not respected
 		if (accepted)
 		{
 			current_q = q; // accept
@@ -735,6 +735,9 @@ public:
 				popterr[i] = result_mean_err[i];
 				pstderr[i] = result_uncertainty_err[i];
 			}
+			// Largest statistical error on fitting uncertainty
+			Vector<number_type> rel = pstderr/pstd;
+			std::cout << "Largest relative uncertainty on fitting uncertainty: " << *std::max_element(rel.begin(), rel.end()) << "\n";
 
 			// Calculate minimal chi2_red and its error
 			number_type chi2redmin = potential(popt)*temperature_;
@@ -799,6 +802,8 @@ public:
 			number_type chi2reddiff_theo = temperature_ * initial.size() / 2.;
 			std::cout << std::setprecision(14) << "chi2_red (best fit): " << chi2redmin << " + - " << chi2redmin_err << "\n";
 			std::cout << std::setprecision(14) << "chi2_red (mean): " << chi2redmean << " + - " << chi2redmean_err << "\n";
+			number_type chi2reddiff_err = chi2redmean_err + chi2redmin_err;
+			std::cout << "Difference to theory difference in uncertainty units: " << abs(chi2reddiff-chi2reddiff_theo)/chi2reddiff_err << "\n";
 			std::cout << "Ratio of measured difference to theoretical difference: " 
 			<< chi2reddiff/chi2reddiff_theo << "\n";
 
@@ -811,6 +816,19 @@ public:
 			std::cout << "Variance discrepancy in units of the uncertainty: " << abs((variance_theo-variance_measured)/variance_measured_err ) << "\n";
 			std::cout << "Ratio of measured chi2red variance to theoretical variance: " << variance_measured/variance_theo << "\n";
 			
+
+			std::cout << "Temperature: " << temperature_ << "\n";
+			std::cout << "Chain length: " << counter << "\n";
+
+			std::cout << "chi2 sum for each correlator: \n";
+			for (size_type i = 0; i < 4; ++i)
+			{
+				for (size_type j = 0; j < 4; ++j)
+				{
+					std::cout << std::setprecision(5) << model_.potential_ij(popt, i, j) << " ";
+				}
+				std::cout << "\n";
+			}
 
 			//report lower and upper bounds for parameters
 			Vector<number_type> lower_bound(initial.size());

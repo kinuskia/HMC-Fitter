@@ -567,18 +567,32 @@ public:
 		assert(d_Ps_Pl_.size() == N);
 		assert(d_Ps_Ps_.size() == N);
 		number_type chi2 = 0;
-		for (size_type k = 0; k<t_.size(); ++k)
+		
+		for (size_type i = 0; i < 4; ++i)
 		{
-			for (size_type i = 0; i < 4; ++i)
+			for (size_type j = 0; j < 4; ++j)
 			{
-				for (size_type j = 0; j < 4; ++j)
+				for (size_type k = 0; k<t_.size(); ++k)
 				{
 					chi2 += pow(C(t_[k], i, j, q) - C_exp(k, i, j), 2)/pow(d_C_exp(k, i, j), 2);
 				}
 			}
 		}
+		
 
 		return chi2/d_of_freedom();
+
+	}
+
+	// Calculate chi2 for each correlator individually
+	number_type potential_ij(const Vector<number_type> & q, size_type i, size_type j)
+	{
+		number_type result = 0;
+		for (size_type k = 0; k<t_.size(); ++k)
+		{
+			result += pow(C(t_[k], i, j, q) - C_exp(k, i, j), 2)/pow(d_C_exp(k, i, j), 2);
+		}
+		return result/d_of_freedom();
 
 	}
 
