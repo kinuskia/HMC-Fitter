@@ -23,7 +23,7 @@ int main (int argc, char* argv[])
 	
 
 	// Read in measured data, save it to vectors t, y, dy, skip 0 rows
-	read_data("experimental_data/measurements.txt", t, y, dy, 0);
+	read_data("experimental_data/measurements.dat", t, y, dy, 0);
 
 
 	// Set up fitting model
