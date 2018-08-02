@@ -237,7 +237,7 @@ public:
 	- the statistical uncertainty of the mean
 	- the statistical uncertainty of the fitting uncertainty
 	 */
-	void mean(Vector<number_type> & average_vector, Vector<number_type> & err_vector, Vector<number_type> & average_err, Vector<number_type> & err_err, size_type d_of_freedom, number_type temperature)
+	void mean(Vector<number_type> & average_vector, Vector<number_type> & err_vector, Vector<number_type> & average_err, Vector<number_type> & err_err, size_type d_of_freedom, number_type beta)
 	{
 		assert(average_vector.size() == err_vector.size());
 		assert(average_vector.size() == err_err.size());
@@ -273,7 +273,7 @@ public:
 		sqrt(err_vector); // standard deviation
 		Vector<number_type> standard_deviation(err_vector.size());
 		standard_deviation = err_vector;
-		err_vector *= sqrt(2./d_of_freedom/temperature); // fitting vector
+		err_vector *= sqrt(2./d_of_freedom*beta); // fitting vector
 
 
 		// Calculation of the statistical uncertainties

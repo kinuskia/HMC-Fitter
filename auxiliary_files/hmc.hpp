@@ -19,11 +19,9 @@ public:
 	typedef std::size_t size_type;
 	typedef REAL number_type;
 	/* Standard constructor, fed with measured data */
-	HMC(Model<number_type> model, Vector<number_type> range_min, Vector<number_type> range_max, Vector<number_type> c_lengths, number_type stepsize, size_type n_steps_min, size_type n_steps_max, number_type temperature)
+	HMC(Model<number_type> model, Vector<number_type> range_min, Vector<number_type> range_max, Vector<number_type> c_lengths, number_type stepsize, size_type n_steps_min, size_type n_steps_max, number_type beta)
 	: range_min_(range_min)
 	, range_max_(range_max) 
-	, bounds_fixed_(false) // OBSOLETE
-	, do_analysis_(true) // OBSOLETE
 	, chi2redmax_(1e2)
 	, c_lengths_(c_lengths)
 	, stepsize_(stepsize)
@@ -31,43 +29,20 @@ public:
 	, n_steps_max_(n_steps_max)
 	, counter_(0)
 	, counter_accepted_(0)
-	, temperature_(temperature)
+	, beta_(beta)
 	, model_(model)
 	{
 	}
 
 
-	/* reduced (!) chi2 sum divided by the global temperature used as potential energy */
+	/* reduced (!) chi2 sum multiplied by the global inverse temperature beta used as potential energy */
 	number_type potential(const Vector<number_type> & q)
 	{
-		return model_.potential(q)/temperature_;
+		return model_.potential(q)*beta_;
 
 	}
 
-	/* setter for whether bounds are supposed to be fixed */
-	void bounds_fixed(bool fixed)
-	{
-		bounds_fixed_ = fixed;
-	}
 
-	/* Setter of whether output includes analysis */
-	void do_analysis (bool yes)
-	{
-		do_analysis_ = yes;
-	}
-
-	/* Setter for maximal chi2red value */
-	void discard_from(number_type value)
-	{
-		chi2redmax_ = value;
-		//discard_data_ = true;
-	}
-
-	//  Setter for whether data above chi2redmax should be discarded 
-	// void discard_data(bool yes)
-	// {
-	// 	discard_data_ = yes;
-	// }
 
 	/* check if given position is within bounds */
 	bool is_in_range(Vector<number_type> position) const
@@ -100,174 +75,10 @@ public:
 			output[i] = (potential(position_forward)-potential(position_backward))/2.0/h;
 		}
 
-		// // fourth order formula
-		// for (size_type i = 0; i < output.size(); ++i)
-		// {
-		// 	// estimation of partial derivative with respect to q_i
-		// 	number_type h = stepsize_*c_lengths_[i];
-		// 	Vector<number_type> position_ff = position;
-		// 	position_ff[i] += 2.*h;
-		// 	Vector<number_type> position_f = position;
-		// 	position_f[i] += h;
-		// 	Vector<number_type> position_bb = position;
-		// 	position_bb[i] -= 2.*h;
-		// 	Vector<number_type> position_b = position;
-		// 	position_b[i] -= h;
-		// 	output[i] = (-potential(position_ff)+8.*potential(position_f)-8.*potential(position_b)+potential(position_bb))/12.0/h;
-		// }
-
 	}
 
 	
-	/* second derivative of the potential with respect to parameter i */
-	number_type sec_deriv_potential (const Vector<number_type> & position, size_type i)
-	{
-		assert( i >= 0 && i < position.size()); // Verify that index is not out of bounds 
-		number_type h = 1e-1 * c_lengths_[i]*stepsize_;
-		Vector<number_type> position_f = position;
-		position_f[i] += h;
-		number_type pot_f = potential(position_f);
-		Vector<number_type> position_ff = position;
-		position_ff[i] += 2.*h;
-		number_type pot_ff = potential(position_ff);
-		Vector<number_type> position_b = position;
-		position_b[i] -= h;
-		number_type pot_b = potential(position_b);
-		Vector<number_type> position_bb = position;
-		position_bb[i] -= 2.*h;
-		number_type pot_bb = potential(position_bb);
-		number_type pot = potential(position);
 
-		return (-1.*pot_ff + 16.*pot_f -30.*pot + 16.*pot_b -1.*pot_bb)/12./h/h;
-	}
-
-	/* mixed second derivative of the potential with respect to parameters i ans j */
-	number_type sec_deriv_potential (const Vector<number_type> & position, size_type i, size_type j)
-	{
-		if (i == j)
-		{
-			return sec_deriv_potential(position, i);
-		}
-		else
-		{
-			assert( i >= 0 && i < position.size()); // Verify that index is not out of bounds
-			assert( j >= 0 && j < position.size());
-			number_type hi = 1e-1 * c_lengths_[i]*stepsize_;
-			number_type hj = 1e-1 * c_lengths_[j]*stepsize_;
-
-			Vector<number_type> position_2b_2b = position; // f: forward, b: backward
-			position_2b_2b[i] -= 2.*hi;
-			position_2b_2b[j] -= 2.*hj;
-			number_type pot_2b_2b = potential(position_2b_2b);
-
-			Vector<number_type> position_2b_1b = position; 
-			position_2b_1b[i] -= 2.*hi;
-			position_2b_1b[j] -= 1.*hj;
-			number_type pot_2b_1b = potential(position_2b_1b);
-
-			Vector<number_type> position_2b_1f = position; 
-			position_2b_1f[i] -= 2.*hi;
-			position_2b_1f[j] += 1.*hj;
-			number_type pot_2b_1f = potential(position_2b_1f);
-
-			Vector<number_type> position_2b_2f = position; 
-			position_2b_2f[i] -= 2.*hi;
-			position_2b_2f[j] += 2.*hj;
-			number_type pot_2b_2f = potential(position_2b_2f);
-
-			Vector<number_type> position_1b_2b = position; 
-			position_1b_2b[i] -= 1.*hi;
-			position_1b_2b[j] -= 2.*hj;
-			number_type pot_1b_2b = potential(position_1b_2b);
-
-			Vector<number_type> position_1b_1b = position; 
-			position_1b_1b[i] -= 1.*hi;
-			position_1b_1b[j] -= 1.*hj;
-			number_type pot_1b_1b = potential(position_1b_1b);
-
-			Vector<number_type> position_1b_1f = position; 
-			position_1b_1f[i] -= 1.*hi;
-			position_1b_1f[j] += 1.*hj;
-			number_type pot_1b_1f = potential(position_1b_1f);
-
-			Vector<number_type> position_1b_2f = position; 
-			position_1b_2f[i] -= 1.*hi;
-			position_1b_2f[j] += 2.*hj;
-			number_type pot_1b_2f = potential(position_1b_2f);
-
-			Vector<number_type> position_1f_2b = position; 
-			position_1f_2b[i] += 1.*hi;
-			position_1f_2b[j] -= 2.*hj;
-			number_type pot_1f_2b = potential(position_1f_2b);
-
-			Vector<number_type> position_1f_1b = position; 
-			position_1f_1b[i] += 1.*hi;
-			position_1f_1b[j] -= 1.*hj;
-			number_type pot_1f_1b = potential(position_1f_1b);
-
-			Vector<number_type> position_1f_1f = position; 
-			position_1f_1f[i] += 1.*hi;
-			position_1f_1f[j] += 1.*hj;
-			number_type pot_1f_1f = potential(position_1f_1f);
-
-			Vector<number_type> position_1f_2f = position; 
-			position_1f_2f[i] += 1.*hi;
-			position_1f_2f[j] += 2.*hj;
-			number_type pot_1f_2f = potential(position_1f_2f);
-
-			Vector<number_type> position_2f_2b = position; 
-			position_2f_2b[i] += 2.*hi;
-			position_2f_2b[j] -= 2.*hj;
-			number_type pot_2f_2b = potential(position_2f_2b);
-
-			Vector<number_type> position_2f_1b = position; 
-			position_2f_1b[i] += 2.*hi;
-			position_2f_1b[j] -= 1.*hj;
-			number_type pot_2f_1b = potential(position_2f_1b);
-
-			Vector<number_type> position_2f_1f = position; 
-			position_2f_1f[i] += 2.*hi;
-			position_2f_1f[j] += 1.*hj;
-			number_type pot_2f_1f = potential(position_2f_1f);
-
-			Vector<number_type> position_2f_2f = position; 
-			position_2f_2f[i] += 2.*hi;
-			position_2f_2f[j] += 2.*hj;
-			number_type pot_2f_2f = potential(position_2f_2f);
-
-			number_type result = 
-			(pot_2b_2b - 8. * pot_2b_1b + 8. * pot_2b_1f - pot_2b_2f) +
-			(pot_1b_2b - 8. * pot_1b_1b + 8. * pot_1b_1f - pot_1b_2f) * (-8.) +
-			(pot_1f_2b - 8. * pot_1f_1b + 8. * pot_1f_1f - pot_1f_2f) * 8. -
-			(pot_2f_2b - 8. * pot_2f_1b + 8. * pot_2f_1f - pot_2f_2f);
-			result /= (144. * hi * hi);
-			
-
-			return result;
-		}
-	}
-
-
-
-
-	// void grad_potential_exact(Vector<number_type> & output, const Vector<number_type> & position)
-	// {
-	// 	output[0] = 0;
-	// 	for (size_type i = 0; i < x_data_.size(); ++i)
-	// 	{
-	// 		output[0] += -2.0*(y_data_[i]-model_.f(x_data_[i], position))/dy_data_[i]/dy_data_[i]*1;
-	// 	}
-	// 	output[1] = 0;
-	// 	for (size_type i = 0; i < x_data_.size(); ++i)
-	// 	{
-	// 		output[1] += -2.0*(y_data_[i]-model_.f(x_data_[i], position))/dy_data_[i]/dy_data_[i]*exp(-position[2]*x_data_[i]);
-	// 	}
-	// 	output[2] = 0;
-	// 	for (size_type i = 0; i < x_data_.size(); ++i)
-	// 	{
-	// 		output[2] += -2.0*(y_data_[i]-model_.f(x_data_[i], position))/dy_data_[i]/dy_data_[i]*(-x_data_[i]*position[1])*exp(-position[2]*x_data_[i]);
-	// 	}
-	// }
 	/* kinetic energy function */
 	number_type kinetic (const Vector<number_type> & p)
 	{
@@ -307,201 +118,7 @@ public:
 		p -= stepsizes * grad_U / 2;
 	}
 
-	/* fourth order integrator */
-	void forest_ruth(Vector<number_type> & q, Vector<number_type> & p, size_type n_steps)
-	{
-		// Introducing a step size vector: We scale the vector of characteristic length scales with the stepsize_ scalar
-		Vector<number_type> stepsizes = stepsize_ * c_lengths_;
-		Vector<number_type> grad_U(q.size());
-		grad_potential(grad_U, q);
 
-		//coefficients d1 and d2 of the algorithm
-		number_type d1 = 1.3512071919596576341;
-		number_type d2 = -1.7024143839193152682;
-
-		// Do momentum half step at the beginning
-		p -= stepsizes * d1/2 * grad_U;
-		
-
-		// do the steps
-		for (size_type i = 0; i < n_steps; ++i)
-		{
-			//p -= stepsizes * d1/2 * grad_U; 
-			q += stepsizes * d1 * p;
-
-			grad_potential(grad_U, q);
-			p -= stepsizes * (d1+d2)/2 * grad_U;
-			q += stepsizes * d2 * p;
-
-			grad_potential(grad_U, q);
-			p -= stepsizes * (d1+d2)/2 * grad_U;
-			q += stepsizes * d1 * p;
-			//std::cout << i  << "\t" << q[0] << "\n";
-
-			grad_potential(grad_U, q);
-			if (i != n_steps - 1) // Full steps because d4 = 0, and c1=c4. Special treatment for end of trajectory
-			{
-				p -= stepsizes * d1 * grad_U; 
-			}
-		}
-
-		p -= stepsizes * d1/2 * grad_U; // momentum half step at the end of the trajectory
-	
-	}
-
-
-	/* 
-	Leapfrog integrator with a tempering parameter alpha:
-	During the first half of the trajectory, there is a multiplication
-	of the momenta by alpha. In the second half, correspondingly, there 
-	is a division. The tempering scheme is supposed to be symmetrical
-	*/
-	// void leapfrog (Vector<number_type> & q, Vector<number_type> & p, number_type temperature_max)
-	// {
-	// 	// Draw random number of leapfrog steps
-	// 	std::random_device rd;
-	// 	std::mt19937 gen(rd());
-	// 	std::uniform_int_distribution<> dis_unif(n_steps_min_, n_steps_max_);
-	// 	size_type n_steps = dis_unif(gen);
-
-	// 	// Adjust tempering parameter alpha according to maximal temperature to be reached
-	// 	number_type alpha = pow(temperature_max, 2.0/n_steps);
-
-	// 	// Make a half step for momentum at the beginning
-	// 	Vector<number_type> grad_U(q.size());
-	// 	grad_potential(grad_U, q);
-	// 	p *= sqrt(alpha); //tempering
-	// 	p -= stepsize_ * grad_U / 2;
-		
-
-	// 	// Alternate full steps for position and momentum
-	// 	for (size_type i = 0; i < n_steps; ++i)
-	// 	{
-	// 		// Make a full step for the position, update gradient of potential
-	// 		q += stepsize_ * p;
-
-	// 		grad_potential(grad_U, q);
-	// 		// Make a full step for the momentum, except at the end of the trajectory
-	// 		if (i != n_steps - 1)
-	// 		{
-	// 			p -= stepsize_ * grad_U;
-
-	// 			// tempering
-	// 			if (i < n_steps/2)
-	// 			{
-	// 				p *= alpha;
-	// 			}
-	// 			else if ((n_steps%2 == 1) && (i == n_steps/2)) // special treatment of odd number of steps
-	// 			{
-	// 				// do nothing
-	// 			}
-	// 			else 
-	// 			{
-	// 				p /= alpha;
-	// 			}
-	// 		}
-	// 	}
-	// 	// make a half step for momentum at the end
-	// 	p -= stepsize_ * grad_U / 2;
-	// 	p /= sqrt(alpha); // tempering
-
-	// }
-
-	/* 
-	Leapfrog integrator with a tempering parameter and adjustable number of leapfrog steps
-	*/
-	// void leapfrog (Vector<number_type> & q, Vector<number_type> & p, Storage<number_type> & q_copy, number_type temperature_max, size_type n_steps)
-	// {
-	// 	// Adjust tempering parameter alpha according to maximal temperature to be reached
-	// 	number_type alpha = pow(temperature_max, 2.0/n_steps);
-
-	// 	// Make a half step for momentum at the beginning
-	// 	Vector<number_type> grad_U(q.size());
-	// 	grad_potential(grad_U, q);
-	// 	p *= sqrt(alpha); //tempering
-	// 	p -= stepsize_ * grad_U / 2;
-		
-
-	// 	// Alternate full steps for position and momentum
-	// 	for (size_type i = 0; i < n_steps; ++i)
-	// 	{
-	// 		// Make a full step for the position, update gradient of potential
-	// 		q += stepsize_ * p;
-
-	// 		// Read values of q into the storage vector
-	// 		q_copy.read_in(q);
-
-	// 		grad_potential(grad_U, q);
-	// 		// Make a full step for the momentum, except at the end of the trajectory
-	// 		if (i != n_steps - 1)
-	// 		{
-	// 			p -= stepsize_ * grad_U;
-
-	// 			// tempering
-	// 			if (i < n_steps/2)
-	// 			{
-	// 				p *= alpha;
-	// 			}
-	// 			else if ((n_steps%2 == 1) && (i == n_steps/2)) // special treatment of odd number of steps
-	// 			{
-	// 				// do nothing
-	// 			}
-	// 			else 
-	// 			{
-	// 				p /= alpha;
-	// 			}
-	// 		}
-	// 	}
-	// 	// make a half step for momentum at the end
-	// 	p -= stepsize_ * grad_U / 2;
-	// 	p /= sqrt(alpha); // tempering
-
-	// }
-
-	/* fourth order integrator copying position to external vector after each step
-		and offering adjustable number of iterations */
-	void forest_ruth(Vector<number_type> & q, Vector<number_type> & p, Storage<number_type> & q_copy, size_type nb_iterations)
-	{
-		// Introducing a step size vector: We scale the vector of characteristic length scales with the stepsize_ scalar
-		Vector<number_type> stepsizes = stepsize_ * c_lengths_;
-		Vector<number_type> grad_U(q.size());
-		grad_potential(grad_U, q);
-
-		//coefficients d1 and d2 of the algorithm
-		number_type d1 = 1.3512071919596576341;
-		number_type d2 = -1.7024143839193152682;
-
-		// Do momentum half step at the beginning
-		p -= stepsizes * d1/2 * grad_U;
-		
-
-		// do the steps
-		for (size_type i = 0; i < nb_iterations; ++i)
-		{
-			//p -= stepsizes * d1/2 * grad_U; 
-			q += stepsizes * d1 * p;
-
-			grad_potential(grad_U, q);
-			p -= stepsizes * (d1+d2)/2 * grad_U;
-			q += stepsizes * d2 * p;
-
-			grad_potential(grad_U, q);
-			p -= stepsizes * (d1+d2)/2 * grad_U;
-			q += stepsizes * d1 * p;
-
-			// Read values of q into the storage vector
-			q_copy.read_in(q);
-
-			grad_potential(grad_U, q);
-			if (i != nb_iterations - 1) // Full steps because d4 = 0, and c1=c4. Special treatment for end of trajectory
-			{
-				p -= stepsizes * d1 * grad_U; 
-			}
-		}
-
-		p -= stepsizes * d1/2 * grad_U; // momentum half step at the end of the trajectory
-	
-	}
 
 
 	/* 
@@ -540,21 +157,7 @@ public:
 		p -= stepsizes * grad_U / 2;
 	}
 
-	/* Set periodic boundary constraints if demanded */
-	void periodic_boundaries(Vector<number_type> & q)
-	{
-		std::random_device rd;
-		std::mt19937 gen(rd());
-		for (size_type i = 0; i < q.size(); ++i)
-		{
-			// Draw random number of q[i] if it is out of bounds
-			if (q[i] < range_min_[i] || q[i] > range_max_[i])
-			{
-				std::uniform_real_distribution<> dis_unif_real(range_min_[i], range_max_[i]);
-				q[i] = dis_unif_real(gen);
-			}
-		}
-	}
+	
 
 
 
@@ -578,15 +181,6 @@ public:
 		// Compute trajectory using the Leapfrog method
 		leapfrog(q, p, n_steps);
 
-		if (bounds_fixed_)
-		{
-			periodic_boundaries(q);
-		}
-
-		// Compute trajectory using the Forest Ruth method
-		//forest_ruth(q, p);
-
-		//leapfrog(q, p, temperature_);
 
 		/* Negate momentum at the end of the trajectory to make the proposal symmetric
 		(doesn't change the outcome of the algorithm, but is mathematically nicer)
@@ -607,12 +201,9 @@ public:
 		number_type H_change = -current_U-current_K+proposed_U+proposed_K;
 		std::uniform_real_distribution<> dis_unif(0, 1);
 		bool accepted = dis_unif(gen) < exp(-H_change);
-		// if (bounds_fixed_)
-		// {
-		// 	accepted = accepted && is_in_range(q) ; // automatical rejection if proposition is out of bounds
-		// }
 		
-		//accepted = accepted && model_.constraints_respected(q); // automatical rejection if contraints not respected
+		
+		accepted = accepted && model_.constraints_respected(q); // automatical rejection if contraints not respected
 		if (accepted)
 		{
 			current_q = q; // accept
@@ -622,35 +213,7 @@ public:
 
 	}
 
-		/* returns the change of H (H_old - H_new) after one leapfrog step */
-	number_type H_error_per_step(Vector<number_type> & current_q)
-	{
-		Vector<number_type> q = current_q;
-
-		// generate momenta from gaussian distribution
-		std::normal_distribution<> dis_norm(0, 1); // mean 0, std deviation 1
-		Vector<number_type> p(q.size());
-		fill_random(p, dis_norm);
-		Vector<number_type> current_p = p;
-
-		// Compute new state after one Leapfrog method
-		leapfrog(q, p, 1);
-		//forest_ruth(q, p, 1);
-		// for (size_type i = 0; i < q.size(); ++i)
-		// {
-		// 	std::cout << current_q[i] << " " << q[i] << "\n";
-		// }
-
-		// Evaluate potential (U) and kinetic (K) energies at start and end of trajectory
-		number_type current_U = potential(current_q);
-		number_type current_K = kinetic(current_p);
-		number_type proposed_U = potential(q);
-		number_type proposed_K = kinetic(p);
-
 	
-
-		return current_U+current_K-proposed_U-proposed_K;
-	}
 
 	/* do n steps */
 	void walk (size_type nb_steps, number_type max_duration, Vector<number_type> & initial, size_type progress_steps)
@@ -676,7 +239,7 @@ public:
 
 			// save updated data to storage
 			data.read_in(initial); // save fitting parameters
-			data.read_in(potential(initial)*temperature_); // save chi2_red
+			data.read_in(potential(initial)/beta_); // save chi2_red
 			data.read_in(acceptance_rate()); // save acceptance rate
 
 			// After 10s: Estimate duration of the walk
@@ -710,136 +273,121 @@ public:
 		// write data to output file
 		data.write("data.txt");
 		
-		// if (discard_data_)
-		// {
-		// 	data.write("data_kept.txt", chi2redmax_);
-		// }
 
-		// do analysis if requested
-		if (do_analysis_)
+		
+		// Calculate fitting result
+		Vector<number_type> result_mean(initial.size());
+		Vector<number_type> result_uncertainty(result_mean.size());
+		Vector<number_type> result_mean_err(result_mean.size());
+		Vector<number_type> result_uncertainty_err(result_mean.size());
+		data.mean(result_mean, result_uncertainty, result_mean_err, result_uncertainty_err, model_.d_of_freedom(), beta_ );
+		Vector<number_type> popt(initial.size());
+		Vector<number_type> pstd(initial.size());
+		Vector<number_type> popterr(initial.size());
+		Vector<number_type> pstderr(initial.size());
+		for (size_type i = 0; i < popt.size(); ++i)
 		{
-			// Calculate fitting result
-			Vector<number_type> result_mean(initial.size());
-			Vector<number_type> result_uncertainty(result_mean.size());
-			Vector<number_type> result_mean_err(result_mean.size());
-			Vector<number_type> result_uncertainty_err(result_mean.size());
-			data.mean(result_mean, result_uncertainty, result_mean_err, result_uncertainty_err, model_.d_of_freedom(), temperature_ );
-			Vector<number_type> popt(initial.size());
-			Vector<number_type> pstd(initial.size());
-			Vector<number_type> popterr(initial.size());
-			Vector<number_type> pstderr(initial.size());
-			for (size_type i = 0; i < popt.size(); ++i)
+			popt[i] = result_mean[i];
+			pstd[i] = result_uncertainty[i];
+			popterr[i] = result_mean_err[i];
+			pstderr[i] = result_uncertainty_err[i];
+		}
+		// Largest statistical error on fitting uncertainty
+		Vector<number_type> rel = pstderr/pstd;
+		std::cout << "Largest relative uncertainty on fitting uncertainty: " << *std::max_element(rel.begin(), rel.end()) << "\n";
+
+		// Calculate minimal chi2_red and its error
+		number_type chi2redmin = potential(popt)/beta_;
+		Vector<number_type> derivatives(popt.size());
+		grad_potential(derivatives, popt);
+		derivatives /= beta_;
+		 	// procedure to calculate integrated autocorrelation time
+		number_type C_F = abs(data.gamma_chi2red(derivatives, 0));
+		size_type W = 0;
+		number_type gamma_old;
+		number_type gamma_current;
+		for (size_type t = 1; t <= data.entries_per_variable(); ++t)
+		{
+			gamma_current = abs(data.gamma_chi2red(derivatives, t));
+
+			C_F += 2.0 * gamma_current;
+
+			// finding optimal summation window W
+			if (t>1)
 			{
-				popt[i] = result_mean[i];
-				pstd[i] = result_uncertainty[i];
-				popterr[i] = result_mean_err[i];
-				pstderr[i] = result_uncertainty_err[i];
-			}
-			// Largest statistical error on fitting uncertainty
-			Vector<number_type> rel = pstderr/pstd;
-			std::cout << "Largest relative uncertainty on fitting uncertainty: " << *std::max_element(rel.begin(), rel.end()) << "\n";
-
-			// Calculate minimal chi2_red and its error
-			number_type chi2redmin = potential(popt)*temperature_;
-			Vector<number_type> derivatives(popt.size());
-			grad_potential(derivatives, popt);
-			derivatives *= temperature_;
-			 	// procedure to calculate integrated autocorrelation time
-			number_type C_F = abs(data.gamma_chi2red(derivatives, 0));
-			size_type W = 0;
-			number_type gamma_old;
-			number_type gamma_current;
-			for (size_type t = 1; t <= data.entries_per_variable(); ++t)
-			{
-				gamma_current = abs(data.gamma_chi2red(derivatives, t));
-
-				C_F += 2.0 * gamma_current;
-
-				// finding optimal summation window W
-				if (t>1)
+				if (gamma_old < gamma_current)
 				{
-					if (gamma_old < gamma_current)
-					{
-						W = t;
-						break;
-					}
+					W = t;
+					break;
 				}
-
-				gamma_old = abs(gamma_current);
 			}
-			number_type v_F = abs(data.gamma_chi2red(derivatives, 0));
 
-			number_type time_F = C_F/2.0/v_F;
-			number_type time_F_err = time_F * sqrt(4./data.entries_per_variable()*(W+1./2- time_F )) + C_F*exp(-1.*W/time_F);
+			gamma_old = abs(gamma_current);
+		}
+		number_type v_F = abs(data.gamma_chi2red(derivatives, 0));
+
+		number_type time_F = C_F/2.0/v_F;
+		number_type time_F_err = time_F * sqrt(4./data.entries_per_variable()*(W+1./2- time_F )) + C_F*exp(-1.*W/time_F);
 			
-			std::cout << "Integrated autocorrelation time for chi2_red_min: "
-			<< time_F << " + - " << time_F_err << "\n";
-			number_type ESS = data.entries_per_variable()/(2.*time_F); // effective sample size
-			number_type chi2redmin_err = sqrt(v_F/ESS);
+		std::cout << "Integrated autocorrelation time for chi2_red_min: "
+		<< time_F << " + - " << time_F_err << "\n";
+		number_type ESS = data.entries_per_variable()/(2.*time_F); // effective sample size
+		number_type chi2redmin_err = sqrt(v_F/ESS);
 		
 
-			// report total calculation time
-			std::time_t end = std::time(nullptr);
-			number_type diff = (end - start)/60;
-			std::cout << "Total calculation time in min : " << diff << "\n";
+		// report total calculation time
+		std::time_t end = std::time(nullptr);
+		number_type diff = (end - start)/60;
+		std::cout << "Total calculation time in min : " << diff << "\n";
 
-			// report burn-in length
-			std::cout << "Burn-in length: " << data.get_burn_in_length() << "\n";
+		// report burn-in length
+		std::cout << "Burn-in length: " << data.get_burn_in_length() << "\n";
 
-			// report fitting result
-			std::cout << "FITTING RESULT: \n";
-			for (size_type i = 0; i < initial.size(); ++i)
-			{
-				std::cout << "Parameter " << i << " : "  << std::setprecision(14) << "Best fit: " <<  popt[i] << " + - " << popterr[i] << "\n";
-				std::cout << "Parameter " << i << " : "  << std::setprecision(14) << "Uncertainty: " <<  pstd[i] << " + - " << pstderr[i] << "\n";
-			}
-
-			
-			number_type chi2redmean;
-			number_type chi2redmean_err;
-			data.mean(popt.size(), chi2redmean, chi2redmean_err);
-			number_type chi2reddiff = chi2redmean - chi2redmin;
-			number_type chi2reddiff_theo = temperature_ * initial.size() / 2.;
-			std::cout << std::setprecision(14) << "chi2_red (best fit): " << chi2redmin << " + - " << chi2redmin_err << "\n";
-			std::cout << std::setprecision(14) << "chi2_red (mean): " << chi2redmean << " + - " << chi2redmean_err << "\n";
-			number_type chi2reddiff_err = chi2redmean_err + chi2redmin_err;
-			std::cout << "Difference to theory difference in uncertainty units: " << abs(chi2reddiff-chi2reddiff_theo)/chi2reddiff_err << "\n";
-			std::cout << "Ratio of measured difference to theoretical difference: " 
-			<< chi2reddiff/chi2reddiff_theo << "\n";
-
-			number_type variance_measured;
-			number_type variance_measured_err;
-			data.variance(popt.size(), variance_measured, variance_measured_err);
-			number_type variance_theo = temperature_ * temperature_ * initial.size() / 2.;
-			std::cout << "Measured variance of chi2red: " << std::setprecision(14) << variance_measured << " + - " << variance_measured_err << "\n";
-			std::cout << "Theoretical variance of chi2red: " << std::setprecision(14) << variance_theo << "\n";
-			std::cout << "Variance discrepancy in units of the uncertainty: " << abs((variance_theo-variance_measured)/variance_measured_err ) << "\n";
-			std::cout << "Ratio of measured chi2red variance to theoretical variance: " << variance_measured/variance_theo << "\n";
-			
-
-			std::cout << "Temperature: " << temperature_ << "\n";
-			std::cout << "Chain length: " << counter << "\n";
-
-			std::cout << "chi2 sum for each correlator: \n";
-			for (size_type i = 0; i < 4; ++i)
-			{
-				for (size_type j = 0; j < 4; ++j)
-				{
-					std::cout << std::setprecision(5) << model_.potential_ij(popt, i, j) << " ";
-				}
-				std::cout << "\n";
-			}
-
-			//report lower and upper bounds for parameters
-			Vector<number_type> lower_bound(initial.size());
-			Vector<number_type> upper_bound(initial.size());
-			data.min_max_percentile(lower_bound, upper_bound, chi2redmax_, 0.0015);
-			std::cout << "Lower and upper bounds for the parameters: \n";
-			for (size_type i = 0; i < lower_bound.size(); ++i)
-			{
-				std::cout << "Parameter " << i << " : " << lower_bound[i] << " -> " << upper_bound[i] << "\n";
-			}
+		// report fitting result
+		std::cout << "FITTING RESULT: \n";
+		for (size_type i = 0; i < initial.size(); ++i)
+		{
+			std::cout << "Parameter " << i << " : "  << std::setprecision(14) << "Best fit: " <<  popt[i] << " + - " << popterr[i] << "\n";
+			std::cout << "Parameter " << i << " : "  << std::setprecision(14) << "Uncertainty: " <<  pstd[i] << " + - " << pstderr[i] << "\n";
 		}
+
+			
+		number_type chi2redmean;
+		number_type chi2redmean_err;
+		data.mean(popt.size(), chi2redmean, chi2redmean_err);
+		number_type chi2reddiff = chi2redmean - chi2redmin;
+		number_type chi2reddiff_theo = 1./beta_ * initial.size() / 2.;
+		std::cout << std::setprecision(14) << "chi2_red (best fit): " << chi2redmin << " + - " << chi2redmin_err << "\n";
+		std::cout << std::setprecision(14) << "chi2_red (mean): " << chi2redmean << " + - " << chi2redmean_err << "\n";
+		number_type chi2reddiff_err = chi2redmean_err + chi2redmin_err;
+		std::cout << "Difference to theory difference in uncertainty units: " << abs(chi2reddiff-chi2reddiff_theo)/chi2reddiff_err << "\n";
+		std::cout << "Ratio of measured difference to theoretical difference: " 
+		<< chi2reddiff/chi2reddiff_theo << "\n";
+
+		number_type variance_measured;
+		number_type variance_measured_err;
+		data.variance(popt.size(), variance_measured, variance_measured_err);
+		number_type variance_theo = 1./beta_ / beta_ * initial.size() / 2.;
+		std::cout << "Measured variance of chi2red: " << std::setprecision(14) << variance_measured << " + - " << variance_measured_err << "\n";			std::cout << "Theoretical variance of chi2red: " << std::setprecision(14) << variance_theo << "\n";
+		std::cout << "Variance discrepancy in units of the uncertainty: " << abs((variance_theo-variance_measured)/variance_measured_err ) << "\n";
+		std::cout << "Ratio of measured chi2red variance to theoretical variance: " << variance_measured/variance_theo << "\n";
+			
+
+		std::cout << "Beta: " << beta_ << "\n";
+		std::cout << "Chain length: " << counter << "\n";
+
+		
+
+		//report lower and upper bounds for parameters
+		Vector<number_type> lower_bound(initial.size());
+		Vector<number_type> upper_bound(initial.size());
+		data.min_max_percentile(lower_bound, upper_bound, chi2redmax_, 0.0015);
+		std::cout << "Lower and upper bounds for the parameters: \n";
+		for (size_type i = 0; i < lower_bound.size(); ++i)
+		{
+			std::cout << "Parameter " << i << " : " << lower_bound[i] << " -> " << upper_bound[i] << "\n";
+		}
+		
 	}
 
 	/* do n steps for m starting points without analysis */
@@ -872,7 +420,7 @@ public:
 
 				// save updated data to storage
 				data.read_in(initial); // save fitting parameters
-				data.read_in(potential(initial)*temperature_); // save chi2_red
+				data.read_in(potential(initial)/beta_); // save chi2_red
 				data.read_in(acceptance_rate()); // save acceptance rate
 
 				// After 10s: Estimate duration of the walk
@@ -969,7 +517,7 @@ public:
 
 			// save updated data to storage
 			data.read_in(initial); // save fitting parameters
-			data.read_in(potential(initial)*temperature_); // save chi2_red
+			data.read_in(potential(initial)/beta_); // save chi2_red
 			data.read_in(acceptance_rate()); // save acceptance rate
 						
 			counter++;
@@ -1017,7 +565,7 @@ public:
 
 			// save updated data to storage
 			data.read_in(initial); // save fitting parameters
-			data.read_in(potential(initial)*temperature_); // save chi2_red
+			data.read_in(potential(initial)/beta_); // save chi2_red
 			data.read_in(acceptance_rate()); // save acceptance rate
 						
 			counter++;
@@ -1035,7 +583,7 @@ public:
 
 			// start over if chi2 is not below threshold after 200 steps
 			
-			if (counter == 100 && potential(initial)*temperature_ > threshold_chi2)
+			if (counter == 100 && potential(initial)/beta_ > threshold_chi2)
 			{
 				find_start(initial);
 				counter = 0;
@@ -1056,9 +604,8 @@ public:
 	}
 
 	/* partially automatic walk to find to global minimum region */
-	void walk_automatic()
+	void tune_parameters()
 	{
-		bounds_fixed_ = true;
 		std::string user_input = "";
 		std::string quit = "quit";
 		std::string next = "next";
@@ -1073,89 +620,32 @@ public:
 			// Set up storage vector
 			Storage<number_type> data(model_.n_parameters(), 2); // records values of fitting vector and two additional things
 			
-			// Step 1: Set new temperature
+			// Step 1: Set new inverse temperature beta
 			if (next_step == 1)
 			{
 				number_type mean;
 				number_type dev;
 				get_H(1e3, mean, dev);
-				std::cout << "Mean of the potential: " << mean << " +/- " << dev << "\n";
-				std::cout << "Set the temperature of the system (currently ";
-				std::cout << temperature_ << "): ";
-				std::cin >> temperature_;
-				std::cout << "Are bounds supposed to be fixed? \n";
-				std::cin >> user_input;
-				if (user_input == yes)
-				{
-					bounds_fixed_ = true;
-				}
-				else if (user_input == no)
-				{
-					bounds_fixed_ = false;
-				}
-				// std::cout << "Set a step size (currently: ";
-				// std::cout << stepsize_ << "): ";
-				// std::cin >> stepsize_;
+				std::cout << "Logarithmic mean of the potential: " << mean << " +/- " << dev << "\n";
+				std::cout << "Set the value of beta of the system (currently ";
+				std::cout << beta_ << "): ";
+				std::cin >> beta_;
+			
 				next_step = 2;
 			}
 
-			// // Step 2: Reset temperature to get high acceptance rate
-			// while (next_step == 2)
-			// {
-			// 	stepsize_ = 3e-2;
-			// 	n_steps_min_ = round(0.8/stepsize_);
-			// 	n_steps_max_ = round(1.2/stepsize_);
-			// 	get_acceptance_rates(range_min_, range_max_, 40, 30, "preliminary_tools/acceptrates.txt");
-			// 	std::cout << "Enter new temperature, or \"next\" if you want to go the next step, or \"continue\" to proceed with in-depth analysis: ";
-			// 	std::cin >> user_input;
-			// 	if (user_input == next)
-			// 	{
-			// 		next_step = 4;
-			// 	}
-			// 	else if (user_input == next_chain)
-			// 	{
-			// 		next_step = 6;
-			// 	}
-			// 	else 
-			// 	{
-			// 		temperature_ = std::stod(user_input);
-			// 	}
-			// }
-
-			// // Step 2: Set step size while keeping h*L = 1/3
-			// while (next_step == 2)
-			// {
-			// 	n_steps_min_ = round(0.8/stepsize_/3);
-			// 	n_steps_max_ = round(1.2/stepsize_/3);
-			// 	get_acceptance_rates(range_min_, range_max_, 40, 30, "preliminary_tools/acceptrates.txt");
-			// 	std::cout << "Enter new step size, or \"next\" if you want to go the next step, or \"continue\" to proceed with in-depth analysis: ";
-			// 	std::cin >> user_input;
-			// 	if (user_input == next)
-			// 	{
-			// 		next_step = 4;
-			// 	}
-			// 	else if (user_input == next_chain)
-			// 	{
-			// 		next_step = 6;
-			// 	}
-			// 	else 
-			// 	{
-			// 		stepsize_ = std::stod(user_input);
-			// 	}
-
-			// }
 
 
 			// Step 2: Set step size
-			std::cout << "Set a step size (currently: ";
-			std::cout << stepsize_ << "): ";
-			std::cin >> stepsize_;
 			while(next_step == 2)
 			{
+				std::cout << "Set a step size (currently: ";
+				std::cout << stepsize_ << "): ";
+				std::cin >> stepsize_;
 				n_steps_min_ = 4;
 				n_steps_max_ = 5;
 				get_acceptance_rates(range_min_, range_max_, 50, 50, "preliminary_tools/acceptrates.txt");
-				std::cout << "Set new step size or go to next step (\"next\"), or back (\"back\"): \n";
+				std::cout << "Enter \"repeat\" to set a new step size or go to next step (\"next\"), or back (\"back\"): \n";
 				std::cin >> user_input;
 				if (user_input == next)
 				{
@@ -1163,48 +653,40 @@ public:
 				}
 				else if (user_input == back)
 				{
-					next_step = 2;
+					next_step = 1;
 				}
 				else
 				{
-					stepsize_ = std::stod(user_input);
+					stepsize_ = next_step = 2;
 				}
 			}
 	
-			// Step 3: Check step size for L leapfrog steps
+			// Step 3: Set number of leapfrog steps
 			while (next_step == 3)
 			{
-				std::cout << "Enter number of leapfrog steps: ";
-				size_type length;
-				std::cin >> length;
-				get_optimal_number_of_steps(range_min_, range_max_, 50, length, "preliminary_tools/correlation_times.txt");
-				std::cout << "Do you wish to change the number of leapfrog steps (yes/no)? ";
+				std::cout << "Set minimal number of leapfrog steps: ";
+				std::cin >> n_steps_min_;
+				std::cout << "Set maximal number of leapfrog steps: ";
+				std::cin >> n_steps_max_;
+				std::cout << "Set number of chains: ";
+				size_type n_chains;
+				std::cin >> n_chains;
+				get_acceptance_rates(range_min_, range_max_, n_chains, 50, "preliminary_tools/acceptrates.txt");
+				std::cout << "Enter \"repeat\" to try a different range of Leapfrog steps, \"next\" if you want to go the next step, or \"back\" to get to the previous step ";
 				std::cin >> user_input;
-				if (user_input == no)
+				if (user_input == repeat)
 				{
-					std::cout << "Set minimal number of leapfrog steps: ";
-					std::cin >> n_steps_min_;
-					std::cout << "Set maximal number of leapfrog steps: ";
-					std::cin >> n_steps_max_;
-					std::cout << "Set number of chains: ";
-					size_type n_chains;
-					std::cin >> n_chains;
-					get_acceptance_rates(range_min_, range_max_, n_chains, 50, "preliminary_tools/acceptrates.txt");
-					std::cout << "Enter \"next\" if you want to go the next step, or \"back\" to get to the previous step, or \"continue\" to proceed with in-depth analysis: ";
-					std::cin >> user_input;
-					if (user_input == next)
-					{
-						next_step = 4;
-					}
-					else if (user_input == back)
-					{
-						next_step = 2;
-					}
-					else if (user_input == next_chain)
-					{
-						next_step = 6;
-					}
+					next_step = 3;
 				}
+				else if (user_input == next)
+				{
+					next_step = 4;
+				}
+				else if (user_input == back)
+				{
+					next_step = 2;
+				}
+				
 			}
 
 
@@ -1250,27 +732,17 @@ public:
 							data.clear();
 							break;
 						}
-						// if (counter == 300 && potential(initial)*temperature_ > 40.225)
-						// {
-						// 	--i;
-						// 	std::cout << "Convergence too slow. Recalculating current chain...\n";
-						// 	bad_starting_point = true;
-						// 	data.clear();
-						// 	break;
-						// }
+				
 						if (acceptance_rate() < 0.95 && !region_change)
 						{
 							region_change = true;
-							// size_type n_steps_mean = (n_steps_max_ + n_steps_min_)/2.;
-							// n_steps_max_ = 1.0*n_steps_mean  + 10;
-							// n_steps_min_ = 1.0*n_steps_mean -10;
-							// stepsize_ *= 0.5;
+						
 						}
 						step_forward(initial);
 
 						// save updated data to storage
 						data.read_in(initial); // save fitting parameters
-						data.read_in(potential(initial)*temperature_); // save chi2_red
+						data.read_in(potential(initial)/beta_); // save chi2_red
 						data.read_in(acceptance_rate()); // save acceptance rate
 
 						// Calculate time
@@ -1291,29 +763,6 @@ public:
 							data_saved = false;
 						}
 
-						// // After 10s: Estimate duration of the walk
-						// if ( (diff > 10) && !estimate_given)
-						// {
-						// 	expected_duration = nb_steps * nb_initials * diff / counter_ / 60;
-						// 	std::cout << "Computation time in min: " << expected_duration << "\n";
-						// 	estimate_given = true;
-						// }
-
-						// // Cancel calculation if time exceeds max_duration
-						// if (diff > max_duration) 
-						// {
-						// 	std::cout << "Computation aborted as time ran out. " << "\n";
-						// 	break;
-						// }
-
-						// // Print progress
-						// for (size_type i = 1; i < progress_steps; ++i)
-						// {
-						// 	if (counter_ == size_type(i*nb_steps*nb_initials/progress_steps))
-						// 	{
-						// 		std::cout << "Progress: " << size_type(i*100./progress_steps) << "%" << "\n";
-						// 	}
-						// }
 						counter++;
 
 						if (counter == nb_steps && i == 1) // set length of chain and number of chain
@@ -1343,9 +792,9 @@ public:
 							if (user_input != next_chain && user_input != repeat)
 							{
 								nb_steps = size_type(std::stod(user_input));
-								std::cout << "Change temperature to (currently ";
-								std::cout << temperature_ << "): ";
-								std::cin >> temperature_;
+								std::cout << "Change beta to (currently ";
+								std::cout << beta_ << "): ";
+								std::cin >> beta_;
 							}
 							if (user_input == repeat)
 							{
@@ -1371,9 +820,9 @@ public:
 					if (i == nb_initials)
 					{
 						data.write("data.txt");
-						std::cout << "Requested chains have been generated. Increase number of chains or go to next step: ";
+						std::cout << "Requested chains have been generated. Increase number of chains, exit (\"next\") or go back one step (\"back\"): ";
 						std::cin >> user_input;
-						if (user_input != next)
+						if (user_input != next && user_input != back)
 						{
 							nb_initials = size_type(std::stod(user_input));
 							std::cout << "Change chain length to (currently ";
@@ -1386,9 +835,13 @@ public:
 							std::cout << n_steps_max_ << "): ";
 							std::cin >> n_steps_max_;
 						}
-						else
+						else if (user_input == next)
 						{
 							next_step = 5;
+						}
+						else
+						{
+							next_step = 3;
 						}
 					}
 					
@@ -1396,57 +849,10 @@ public:
 			
 			}
 
-			// Step 5: determine new parameter range
-
 			if (next_step == 5)
 			{
-				std::cout << "Data with up to which chi2red are supposed to be taken into account? ";
-				std::cin >> chi2redmax_;
-				data.min_max_percentile(range_min_, range_max_, chi2redmax_, 0.0015);
-				std::cout << "Do you want to add characteristic length scales to your parameters? (yes/no) ";
-				std::cin >> user_input;
-				if (user_input == yes)
-				{
-					c_lengths_ = range_max_ - range_min_;	
-				}
-				else
-				{
-					c_lengths_ = 1;
-				}
-
-
-				std::cout << "Lower and upper bounds for the parameters: \n";
-				for (size_type i = 0; i < range_min_.size(); ++i)
-				{
-					std::cout << "Parameter " << i << " : " << range_min_[i] << " -> " << range_max_[i] << "\n";
-				}
-
-				next_step = 1;
+				break;
 			}
-
-
-
-			
-
-		
-		
-
-			// Final part: In-depth walk with analysis:
-			if (next_step == 6)
-			{
-				std::cout << "Enter chain length: ";
-				std::cin >> user_input;
-				size_type length = std::stod(user_input);
-				std::cout << "chain length: " << length << "\n";
-				std::cout << "Enter maximal computation time in min: ";
-				std::cin >> user_input;
-				number_type minutes = std::stod(user_input);
-				std::cout << "computation time: " << minutes << "\n";
-				Vector<number_type> popt(model_.n_parameters());
-				fill_from_region(popt, range_min_, range_max_);
-				walk(length, minutes*60, popt, 10);
-			}
-			
 
 		}
 			
@@ -1459,33 +865,7 @@ public:
 	}
 
 
-	/* preliminary run that returns the change of H after one leapfrog step */
-	void get_H_errors(size_type nb_positions, std::string filename)
-	{
-		Vector<number_type> H_errors(0);
-		Vector<number_type> H_values(0);
-		size_type counter_nan = 0;
 
-		for (size_type i = 0; i<nb_positions; ++i)
-		{
-			// Draw random but permitted position from the search region
-			Vector<number_type> popt(range_min_.size());
-			find_start(popt);
-		
-
-			// Get change of H for that position
-			number_type error = H_error_per_step(popt);
-			if (!isnan(error))
-			{
-				H_errors.push_back(error);
-				H_values.push_back(model_.potential(popt));
-			}
-			else
-			{
-				counter_nan++;
-			}
-		}
-	}
 
 		/* preliminary run that returns the mean and standard deviation of the order of the potential in the search region
 			=> potential ~ 10 to the power of order
@@ -1592,15 +972,13 @@ private:
 	Model<number_type> model_;
 	Vector<number_type> range_min_;
 	Vector<number_type> range_max_;
-	bool bounds_fixed_;
-	bool do_analysis_;
 	number_type chi2redmax_;
 
 	/* parameters for the leapfrog integrator */
 	number_type stepsize_;
 	size_type n_steps_min_;
 	size_type n_steps_max_;
-	number_type temperature_;
+	number_type beta_;
 	Vector<number_type> c_lengths_; // characteristic length scales for parameters
 
 	/* some statistics */
