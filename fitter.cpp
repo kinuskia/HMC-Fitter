@@ -7,7 +7,6 @@
 #include "auxiliary_files/read_data.hpp"
 #include "auxiliary_files/write_scripts.hpp"
 #include "auxiliary_files/hmc.hpp"
-#include "auxiliary_files/curve_fit.hpp"
 #include <fstream>
 
 
@@ -44,14 +43,14 @@ int main (int argc, char* argv[])
 	// Characteristic length scales for the parameters // default 1
 	Vector<number_type> c_lengths(popt.size(), 1);
 	// characteristic length scales are here relative to range_max-range-min ...
-	range_min[0] = 5.5;
-	range_max[0] = 6.6;
+	range_min[0] = 4;
+	range_max[0] = 6;
 	c_lengths[0] = 1;
-	range_min[1] = 3.96;
-	range_max[1] = 4.04;
+	range_min[1] = 3;
+	range_max[1] = 5;
 	c_lengths[1] = 1;
-	range_min[2] = 0.76;
-	range_max[2] = 0.84;
+	range_min[2] = 0.2;
+	range_max[2] = 2;
 	c_lengths[2] = 1.0;
 
 
@@ -64,13 +63,13 @@ int main (int argc, char* argv[])
 
 
 	//initialize HMC object
-	HMC<number_type> sampler(gaussian, range_min, range_max, c_lengths, 1e-2, 90, 130, 1e2);
+	HMC<number_type> sampler(gaussian, range_min, range_max, c_lengths, 3e-3, 90, 130, 1e0);
 	
 	
 
 	/* PRELIMINARY RUN TOOLS */
 	
-	sampler.tune_parameters();
+	//sampler.tune_parameters();
 
 
 	/* 	

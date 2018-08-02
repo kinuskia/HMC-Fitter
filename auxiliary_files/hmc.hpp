@@ -657,7 +657,7 @@ public:
 				}
 				else
 				{
-					stepsize_ = next_step = 2;
+					next_step = 2;
 				}
 			}
 	
