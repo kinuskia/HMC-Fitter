@@ -1,10 +1,19 @@
 # HMC-Fitter
 
-In the following, I would like to explain briefly how the methods of the Hybrid Monte Carlo (HMC) class are used to find the global minimum of a function. They are defined in the folder "auxiliary_files". For this project,
+In the following, I would like to explain briefly how the methods of the Hybrid Monte Carlo (HMC) class are used to fit a function to experimental data. 
+
+The HMC method is an algorithm commonly used to sample from a Boltzmann distribution. The idea is therefore to define a Boltzmann distribution with the reduced chi2 as an energy function. We will keep the inverse temperature beta characterizing a canonical ensemble as a free parameter of the Boltzmann distribution to be tuned.
+
+The folder is structured as follows: 
+1. The file "fitter.cpp" contains the main function. Preliminary runs as well as the actual run to generate a Markov chain for the fitting result are controlled from here.
+2. The fitting function is defined in "model.hpp". The user sets the number of fitting parameters, degrees of freedom, the fitting function, the reduced chi2 sum and possible constraints.
+3. The folder "auxiliary_files" contains the code for the HMC class as well as for the auxiliary classes needed in this project. For instance,
 I wrote some useful classes to deal with Euklidian vectors and matrices. 
 Especially the vector class is broadly used throughout this project. It is inherited from the C++ STL vector class. For instance, one
 initializes a vector with 14 double entries as follows:
 	Vector<double> q(14);
+4. The folder "preliminary tools", certain auxiliary text files originating from preliminary runs are saved.
+5. The python script
 
 The central object is a HMC type which I would like to call "sampler". It provides methods to generate Markov chains following a Boltzmann distribution with the function to be minimized as energy function, divided by a (hypothetical) temperature which can be set manually. The starting point of a Markov chain is drawn randomly from a range that can be set as well 
 It is initialized as follows:

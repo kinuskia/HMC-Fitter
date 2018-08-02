@@ -25,7 +25,7 @@ public:
 	{
 		return 3;
 	}
-public: // needs to become private once I focus on intrinsic errors
+public: 
 	/* degrees of freedom */
 	size_type d_of_freedom() const
 	{
