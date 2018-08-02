@@ -12,6 +12,7 @@ I wrote some useful classes to deal with Euklidian vectors and matrices.
 Especially the vector class is broadly used throughout this project. It is inherited from the C++ STL vector class. For instance, one
 initializes a vector with 14 double entries as follows:
 	Vector<double> q(14);
+		
 4. The folder "preliminary tools", certain auxiliary text files originating from preliminary runs are saved.
 5. The python script
 
